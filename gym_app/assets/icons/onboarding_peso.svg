@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Báscula/Peso -->
+  <g transform="translate(100, 100)">
+    <!-- Base de la báscula -->
+    <rect x="-55" y="20" width="110" height="15" fill="#00BCD4" rx="3"/>
+    
+    <!-- Display/Pantalla -->
+    <rect x="-45" y="-35" width="90" height="40" fill="#00BCD4" rx="5" opacity="0.3"/>
+    <rect x="-40" y="-30" width="80" height="30" fill="#00BCD4" rx="3" opacity="0.5"/>
+    
+    <!-- Números en display -->
+    <text x="0" y="-5" text-anchor="middle" font-size="20" font-weight="bold" fill="#00BCD4" font-family="monospace">75</text>
+    
+    <!-- Soporte central -->
+    <rect x="-8" y="0" width="16" height="25" fill="#00BCD4" rx="2"/>
+    
+    <!-- Pies de la báscula -->
+    <circle cx="-35" cy="35" r="6" fill="#00BCD4"/>
+    <circle cx="35" cy="35" r="6" fill="#00BCD4"/>
+    
+    <!-- Líneas decorativas (progreso) -->
+    <line x1="-50" y1="-50" x2="50" y2="-50" stroke="#00BCD4" stroke-width="2" opacity="0.2"/>
+    <line x1="-50" y1="-45" x2="30" y2="-45" stroke="#00BCD4" stroke-width="3" opacity="0.8"/>
+  </g>
+</svg>

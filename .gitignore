@@ -1,0 +1,44 @@
+# Supabase
+.env
+.env.local
+supabase/.branches
+supabase/.temp
+
+# Flutter
+gym_app/.dart_tool/
+gym_app/.flutter-plugins
+gym_app/.flutter-plugins-dependencies
+gym_app/.packages
+gym_app/.pub-cache/
+gym_app/.pub/
+gym_app/build/
+gym_app/*.iml
+gym_app/.idea/
+gym_app/.vscode/
+
+# Android
+gym_app/android/.gradle
+gym_app/android/local.properties
+gym_app/android/captures/
+gym_app/android/gradlew
+gym_app/android/gradlew.bat
+gym_app/android/.externalNativeBuild
+
+# iOS
+gym_app/ios/Pods/
+gym_app/ios/.symlinks/
+gym_app/ios/Flutter/Flutter.framework
+gym_app/ios/Flutter/Flutter.podspec
+gym_app/ios/.generated/
+gym_app/ios/Runner.xcworkspace/
+
+# Web
+admin-panel/node_modules/
+admin-panel/.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
