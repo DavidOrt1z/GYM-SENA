@@ -68,11 +68,11 @@ class AppLocalizationsProvider extends InheritedWidget {
   final ValueNotifier<String> idioma;
 
   const AppLocalizationsProvider({
-    Key? key,
+    super.key,
     required this.localizations,
     required this.idioma,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static AppLocalizations? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<AppLocalizationsProvider>()

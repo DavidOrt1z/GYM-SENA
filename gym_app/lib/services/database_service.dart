@@ -66,7 +66,7 @@ class DatabaseService {
           .eq('id', reservationId)
           .single();
 
-      return ReservationModel.fromJson(response as Map<String, dynamic>);
+      return ReservationModel.fromJson(response);
     } catch (e) {
       return null;
     }
@@ -86,7 +86,7 @@ class DatabaseService {
           .select()
           .single();
 
-      return ReservationModel.fromJson(response as Map<String, dynamic>);
+      return ReservationModel.fromJson(response);
     } catch (e) {
       print('Error creating reservation: $e');
       return null;
@@ -143,7 +143,7 @@ class DatabaseService {
           .eq('id', slotId)
           .single();
 
-      return SlotModel.fromJson(response as Map<String, dynamic>);
+      return SlotModel.fromJson(response);
     } catch (e) {
       return null;
     }
@@ -222,7 +222,7 @@ class DatabaseService {
           .select()
           .single();
 
-      return WeightLogModel.fromJson(response as Map<String, dynamic>);
+      return WeightLogModel.fromJson(response);
     } catch (e) {
       print('Error adding weight log: $e');
       return null;

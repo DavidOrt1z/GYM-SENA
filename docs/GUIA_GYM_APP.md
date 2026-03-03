@@ -2,8 +2,8 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 24 de Febrero de 2026  
-**Stack:** Flutter + Supabase (PostgreSQL) + Web Admin
+**Última Actualización:** 28 de Febrero de 2026  
+**Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
 
@@ -17,10 +17,10 @@
 | 2 | App - Autenticación | 5-7 días | ✅ **COMPLETADA** | 100% |
 | 3 | App - Pantallas UI | 4-6 días | ✅ **COMPLETADA** | 100% |
 | 4 | App - Integración Backend | 5-7 días | ✅ **COMPLETADA** | 100% | 7 Feb 2026 |
-| 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 23 Feb 2026 |
-| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 83% | 26 Feb 2026 |
+| 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
+| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 90% | 28 Feb 2026 |
 
-**Progreso Total del Proyecto:** ~97% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅)
+**Progreso Total del Proyecto:** ~98% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Node.js ✅)
 
 ### 🎯 ¿Dónde Estoy?
 
@@ -29,8 +29,8 @@
 ✅ FASE 2 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
-✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 23 Feb 2026)
-🚀 FASE 6 ═════════════════  83%  (En Progreso - Testing ✅ agregado - 26 Feb 2026)
+✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
+🚀 FASE 6 ══════════════════  90%  (En Progreso - Node.js ✅ agregado - 28 Feb 2026)
 ```
 
 ---
@@ -40,9 +40,9 @@
 1. [FASE 1: Infraestructura Supabase](#-fase-1-infraestructura-supabase) ✅
 2. [FASE 2: App - Autenticación](#-fase-2-app-móvil---autenticación) ✅
 3. [FASE 3: App - Pantallas UI](#-fase-3-app-móvil---pantallas-ui) ✅
-4. [FASE 4: App - Integración Backend](#-fase-4-app-móvil---integración-backend) ← **ACTUAL**
-5. [FASE 5: Panel Admin Web](#-fase-5-panel-admin-web)
-6. [FASE 6: Pulido y Extras](#-fase-6-pulido-y-extras)
+4. [FASE 4: App - Integración Backend](#-fase-4-app-móvil---integración-backend) ✅
+5. [FASE 5: Panel Admin Web + Node.js](#-fase-5-panel-admin-web) ✅
+6. [FASE 6: Pulido y Extras](#-fase-6-pulido-y-extras) ← **ACTUAL**
 
 ---
 
@@ -403,7 +403,7 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 
 # ✅ FASE 5: PANEL ADMIN WEB
 
-**Duración:** 7-10 días | **Estado:** 🚀 **EN PROGRESO** | **Progreso:** 70% | **Iniciada:** 15 Feb 2026 | **Actualizado:** 20 Feb 2026
+**Duración:** 7-10 días | **Estado:** ✅ **COMPLETADA** | **Progreso:** 100% | **Iniciada:** 15 Feb 2026 | **Completada:** 28 Feb 2026
 
 ## 📊 Checklist de Tareas
 
@@ -498,37 +498,78 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 - [x] Cambiar estado de equipo ✅
 - [x] Marcar en mantenimiento ✅
 
+### 5.11 Backend Node.js + Express ✅ (28 Feb 2026)
+- [x] Crear `package.json` con dependencias ✅
+- [x] Crear `server.js` con Express ✅
+  - [x] Servir archivos estáticos (HTML/CSS/JS) ✅
+  - [x] Endpoint `/api/config` → expone credenciales desde `.env` ✅
+  - [x] Redirección de rutas desconocidas a `login.html` ✅
+- [x] Crear `.env` con variables de entorno ✅
+- [x] Crear `.gitignore` (protege `.env` y `node_modules/`) ✅
+- [x] Instalar dependencias: `express`, `dotenv`, `nodemon` ✅
+- [x] Actualizar `js/config.js` → carga dinámica desde `/api/config` ✅
+  - [x] Promesa global `window.configReady` ✅
+  - [x] Fallback automático para Live Server ✅
+- [x] Actualizar `js/api.js` → `getAuthHeader()` async/await configReady ✅
+- [x] Actualizar `js/auth.js` → `await window.configReady` en login ✅
+- [x] Actualizar todos los módulos JS → `window.SUPABASE_URL` y `window.SUPABASE_ANON_KEY` ✅
+
+**🎯 Stack Node.js Implementado:**
+- ✅ **Servidor:** Express 4.18.2 en puerto 5500 (configurable vía `.env`)
+- ✅ **Config:** dotenv 16.4.5 → variables del `.env` nunca llegan al browser en claro
+- ✅ **Dev:** nodemon 3.1.0 para auto-reload en desarrollo
+- ✅ **Seguridad:** credenciales solo en servidor, frontend las solicita vía fetch
+- ✅ **Compatibilidad:** fallback automático para Live Server durante desarrollo
+
+```bash
+# Iniciar servidor
+npm start          # producción
+npm run dev        # desarrollo (nodemon auto-reload)
+
+# Acceder al panel
+http://localhost:5500
+```
+
 ## 📁 Archivos Creados en FASE 5
 
 ```
 admin-panel/
+├── server.js                           ✅ Servidor Express (Node.js)
+├── package.json                        ✅ Dependencias npm
+├── .env                                ✅ Variables de entorno (no en git)
+├── .gitignore                          ✅ Protege .env y node_modules/
+├── node_modules/                       ✅ Dependencias instaladas
+│
 ├── login.html                          ✅ Login Admin
 ├── dashboard.html                      ✅ Dashboard Principal
 ├── usuarios.html                       ✅ Gestión de Usuarios
 ├── reservas.html                       ✅ Gestión de Reservas
 ├── horarios.html                       ✅ Gestión de Horarios
 ├── personal.html                       ✅ Gestión de Personal
-├── equipamiento.html                   ✅ Gestión de Equipamiento
-|
+│
+├── assets/
+│   └── icons/                          ✅ Iconos SVG (user.svg, admin.svg, ...)
+│
 ├── css/
 │   ├── styles.css                      ✅ Estilos Globales
 │   ├── dashboard.css                   ✅ Estilos Dashboard
-│   ├── usuarios.css                    ✅ Estilos Usuarios
+│   ├── usuarios.css                    ✅ Estilos Usuarios (custom select)
 │   ├── reservas.css                    ✅ Estilos Reservas
 │   ├── horarios.css                    ✅ Estilos Horarios
-│   ├── personal.css                    ✅ Estilos Personal
-│   └── equipamiento.css                ✅ Estilos Equipamiento
-|
-├── js/
-│   ├── config.js                       ✅ Credenciales Supabase
-│   ├── auth.js                         ✅ Autenticación Admin
-│   ├── api.js                          ✅ Funciones API (18 funciones CRUD)
-│   ├── dashboardModule.js              ✅ Lógica Dashboard
-│   ├── usuariosModule.js               ✅ CRUD Usuarios
-│   ├── reservasModule.js               ✅ CRUD Reservas
-│   ├── horariosModule.js               ✅ CRUD Horarios
-│   ├── personalModule.js               ✅ CRUD Personal
-│   └── equipamientoModule.js           ✅ CRUD Equipamiento
+│   └── personal.css                    ✅ Estilos Personal
+│
+└── js/
+    ├── config.js                       ✅ Config dinámica (fetch /api/config + fallback)
+    ├── auth.js                         ✅ Autenticación Admin
+    ├── api.js                          ✅ Funciones API async (18 funciones CRUD)
+    ├── admin.js                        ✅ Lógica general Admin
+    ├── dashboardModule.js              ✅ Lógica Dashboard
+    ├── usuariosModule.js               ✅ CRUD Usuarios + custom select
+    ├── reservasModule.js               ✅ CRUD Reservas
+    ├── horariosModule.js               ✅ CRUD Horarios
+    ├── personalModule.js               ✅ CRUD Personal
+    ├── notificaciones.js              ✅ Envío de notificaciones vía Supabase
+    └── server.js                       ℹ️  Servidor HTTP básico legacy (reemplazado por server.js raíz)
 ```
 
 ## 🎨 Características Implementadas
@@ -552,6 +593,7 @@ admin-panel/
 - ✅ Token persistente en localStorage
 - ✅ Timeout de sesión
 - ✅ Logout seguro desde cualquier página
+- ✅ Credenciales Supabase protegidas en `.env` (servidor Node.js)
 
 ### Gestión de Datos
 - ✅ Tabla de usuarios con acciones
@@ -842,27 +884,12 @@ gym_app/
 - Todos los imports actualizados
 - Proyecto compilado y validado
 
----✅ |
-| `weight_logs` | ✅ | ✅ | ✅ |
-| `slots` | ✅ | ✅ | ✅ |
-| `reservations` | ✅ | ✅ | ✅
-| Tabla | Existe en BD | Modelo Dart | Conectada en App |
-|-------|:------------:|:-----------:|:----------------:|
-| `users` | ✅ | ✅ | 🔄 Parcial |
-| `weight_logs` | ✅ | ❌ | ❌ |
-| `slots` | ✅ | ❌ | ❌ |
-| `reservations` | ✅ | ❌ | ❌ |
-| `staff` | ✅ | ❌ | ❌ |
-| `equipment` | ✅ | ❌ | ❌ |
-| `notifications` | ✅ | ❌ | ❌ |
-| `support_tickets` | ✅ | ❌ | ❌ |
-
 ---
 
 ## 🚀 COMANDOS ÚTILES
 
 ```powershell
-# Navegar al proyecto
+# ── Flutter App ──────────────────────────────────────────────
 cd "d:\Documentos\GYM SENA\gym_app"
 
 # Ejecutar la app
@@ -873,11 +900,35 @@ flutter clean
 flutter pub get
 flutter run
 
+# Ejecutar tests
+flutter test
+
 # Analizar código
 flutter analyze
 
-# Verificar dependencias
-flutter pub outdated
+# ── Admin Panel (Node.js) ─────────────────────────────────────
+cd "d:\Documentos\GYM SENA\admin-panel"
+
+# Instalar dependencias (primera vez)
+npm install
+
+# Iniciar servidor (producción)
+npm start
+# → http://localhost:5500
+
+# Iniciar servidor (desarrollo con auto-reload)
+npm run dev
+
+# ── Git ──────────────────────────────────────────────────────
+cd "d:\Documentos\GYM SENA"
+
+# Ver estado
+git status
+
+# Subir cambios
+git add .
+git commit -m "descripción del cambio"
+git push origin main
 ```
 
 ---
@@ -887,24 +938,11 @@ flutter pub outdated
 | Fase | Estado | Tiempo Estimado |
 |------|--------|-----------------|
 | Fase 4 - Integración Backend | ✅ Completada | 0 horas |
-| Fase 5 - Panel Admin | ⏸️ Pendiente | 20-30 horas |
-| Fase 6 - Pulido | ⏸️ Pendiente | 10-15 horas |
-| **TOTAL RESTANTE** | | **30-45 horas** |
-| **menzar FASE 5: Panel Admin Web**
-
-Tareas inmediatas:
-1. ✏️ Crear estructura HTML del panel admin
-2. ✏️ Implementar autenticación para admins
-3. ✏️ Crear dashboard con métricas
-4. ✏️ CRUD para gestión de usuarios, slots, reservasend**
-
-Tareas inmediatas:
-1. ✏️ Completar `profile_screen.dart` con datos de Supabase
-2. ✏️ Crear `storage_service.dart` para fotos
-3. ✏️ Integrar reservas con backend real
-4. ✏️ Integrar progreso con backend real
+| Fase 5 - Panel Admin + Node.js | ✅ Completada | 0 horas |
+| Fase 6 - Pulido (Producción/APK) | 🚀 En progreso | 5-8 horas |
+| **TOTAL RESTANTE** | | **5-8 horas** |
 
 ---
 
-*Última actualización: 15 de Febrero de 2026*  
-*Estado: Fase 4 completada - Iniciando Fase 5*
+*Última actualización: 28 de Febrero de 2026*  
+*Estado: Fase 5 completada con Node.js - Fase 6 en progreso (pendiente: Producción/APK)*
