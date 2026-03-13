@@ -27,11 +27,11 @@ class AuthService {
         try {
           await _supabase.from('users').insert({
             'id': response.user!.id,
-            'email': email,
-            'full_name': fullName,
-            'role': 'member',
-            'status': 'active',
-            'created_at': DateTime.now().toIso8601String(),
+            'correo_electronico': email,
+            'nombre_completo': fullName,
+            'rol': 'member',
+            'estado': 'active',
+            'fecha_creacion': DateTime.now().toIso8601String(),
           });
         } catch (dbError) {
           print('Error creando perfil en BD: $dbError');

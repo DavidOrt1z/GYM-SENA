@@ -43,9 +43,9 @@ class DatabaseService {
   Future<List<ReservationModel>> getUserReservations(String userId) async {
     try {
       final response = await _supabase
-          .from('reservations')
+          .from('reservas')
           .select()
-          .eq('user_id', userId)
+          .eq('id_usuario', userId)
           .order('reserved_at', ascending: false);
 
       return (response as List)
@@ -61,7 +61,7 @@ class DatabaseService {
   Future<ReservationModel?> getReservation(int reservationId) async {
     try {
       final response = await _supabase
-          .from('reservations')
+          .from('reservas')
           .select()
           .eq('id', reservationId)
           .single();
@@ -76,11 +76,11 @@ class DatabaseService {
   Future<ReservationModel?> createReservation(String userId, int slotId) async {
     try {
       final response = await _supabase
-          .from('reservations')
+          .from('reservas')
           .insert({
-            'user_id': userId,
-            'slot_id': slotId,
-            'status': 'confirmed',
+            'id_usuario': userId,
+            'id_franja_horaria': slotId,
+            'estado': 'confirmed',
             'reserved_at': DateTime.now().toIso8601String(),
           })
           .select()
@@ -97,9 +97,9 @@ class DatabaseService {
   Future<bool> cancelReservation(int reservationId, String reason) async {
     try {
       await _supabase
-          .from('reservations')
+          .from('reservas')
           .update({
-            'status': 'cancelled',
+            'estado': 'cancelled',
             'cancelled_at': DateTime.now().toIso8601String(),
             'notes': reason,
           })
@@ -119,9 +119,9 @@ class DatabaseService {
   Future<List<SlotModel>> getAvailableSlots() async {
     try {
       final response = await _supabase
-          .from('slots')
+          .from('franjas_horarias')
           .select()
-          .eq('status', 'active')
+          .eq('estado', 'active')
           .order('day_of_week', ascending: true)
           .order('start_time', ascending: true);
 
@@ -138,7 +138,7 @@ class DatabaseService {
   Future<SlotModel?> getSlot(int slotId) async {
     try {
       final response = await _supabase
-          .from('slots')
+          .from('franjas_horarias')
           .select()
           .eq('id', slotId)
           .single();
@@ -155,8 +155,8 @@ class DatabaseService {
       final slot = await getSlot(slotId);
       if (slot != null) {
         await _supabase
-            .from('slots')
-            .update({'reserved_count': slot.reservedCount + 1})
+            .from('franjas_horarias')
+            .update({'cantidad_reservada': slot.reservedCount + 1})
             .eq('id', slotId);
         return true;
       }
@@ -173,8 +173,8 @@ class DatabaseService {
       final slot = await getSlot(slotId);
       if (slot != null && slot.reservedCount > 0) {
         await _supabase
-            .from('slots')
-            .update({'reserved_count': slot.reservedCount - 1})
+            .from('franjas_horarias')
+            .update({'cantidad_reservada': slot.reservedCount - 1})
             .eq('id', slotId);
         return true;
       }
@@ -193,9 +193,9 @@ class DatabaseService {
   Future<List<WeightLogModel>> getWeightLogs(String userId) async {
     try {
       final response = await _supabase
-          .from('weight_logs')
+          .from('registros_peso')
           .select()
-          .eq('user_id', userId)
+          .eq('id_usuario', userId)
           .order('recorded_at', ascending: true);
 
       return (response as List)
@@ -212,9 +212,9 @@ class DatabaseService {
     try {
       final now = DateTime.now();
       final response = await _supabase
-          .from('weight_logs')
+          .from('registros_peso')
           .insert({
-            'user_id': userId,
+            'id_usuario': userId,
             'weight': weight,
             'unit': unit,
             'recorded_at': now.toIso8601String(),
@@ -233,11 +233,11 @@ class DatabaseService {
   Future<bool> updateWeightLog(int logId, double weight, String unit) async {
     try {
       await _supabase
-          .from('weight_logs')
+          .from('registros_peso')
           .update({
             'weight': weight,
             'unit': unit,
-            'updated_at': DateTime.now().toIso8601String(),
+            'fecha_actualizacion': DateTime.now().toIso8601String(),
           })
           .eq('id', logId);
       return true;
@@ -251,7 +251,7 @@ class DatabaseService {
   Future<bool> deleteWeightLog(int logId) async {
     try {
       await _supabase
-          .from('weight_logs')
+          .from('registros_peso')
           .delete()
           .eq('id', logId);
       return true;

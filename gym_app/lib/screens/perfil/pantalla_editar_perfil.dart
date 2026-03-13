@@ -122,10 +122,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Construir mapa de actualización con solo los campos disponibles
       final updateData = {
-        'full_name': _nameController.text,
-        if (_lastNameController.text.isNotEmpty) 'last_name': _lastNameController.text,
-        if (age != null) 'age': age,
-        if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty) 'avatar_url': _currentAvatarUrl,
+        'nombre_completo': _nameController.text,
+        if (_lastNameController.text.isNotEmpty) 'apellido': _lastNameController.text,
+        if (age != null) 'edad': age,
+        if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty) 'url_avatar': _currentAvatarUrl,
       };
 
       print('DEBUG: Guardando datos: $updateData');

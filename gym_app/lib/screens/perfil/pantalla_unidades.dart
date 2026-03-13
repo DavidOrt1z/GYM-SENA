@@ -39,14 +39,14 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
       final response = await Supabase.instance.client
           .from('users')
-          .select('units, weight_kg, height_cm')
+          .select('unidades, peso_kg, altura_cm')
           .eq('id', userId)
           .single();
 
-      if (response['units'] != null) {
-        final units = response['units'];
-        double? weight = response['weight_kg'] as double?;
-        double? height = response['height_cm'] as double?;
+      if (response['unidades'] != null) {
+        final units = response['unidades'];
+        double? weight = response['peso_kg'] as double?;
+        double? height = response['altura_cm'] as double?;
 
         setState(() {
           if (units == 'metric') {
@@ -112,9 +112,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
       await Supabase.instance.client
           .from('users')
           .update({
-            'units': unitsType,
-            'weight_kg': weight,
-            'height_cm': height,
+            'unidades': unitsType,
+            'peso_kg': weight,
+            'altura_cm': height,
           })
           .eq('id', userId);
 

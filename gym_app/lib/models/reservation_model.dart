@@ -99,10 +99,10 @@ class ReservationModel {
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     return ReservationModel(
       id: json['id'] as int,
-      userId: json['user_id'] as String,
-      slotId: json['slot_id'] as int,
-      status: (json['status'] as String?) ?? 'confirmed',
-      qrToken: json['qr_token'] as String?,
+      userId: json['id_usuario'] as String,
+      slotId: json['id_franja_horaria'] as int,
+      status: (json['estado'] as String?) ?? 'confirmed',
+      qrToken: json['token_qr'] as String?,
       reservedAt: DateTime.parse(json['reserved_at'] as String),
       cancelledAt: json['cancelled_at'] != null
           ? DateTime.parse(json['cancelled_at'] as String)
@@ -111,8 +111,8 @@ class ReservationModel {
           ? DateTime.parse(json['completed_at'] as String)
           : null,
       notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['fecha_creacion'] as String),
+      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
     );
   }
 
@@ -120,25 +120,25 @@ class ReservationModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'slot_id': slotId,
-      'status': status,
-      'qr_token': qrToken,
+      'id_usuario': userId,
+      'id_franja_horaria': slotId,
+      'estado': status,
+      'token_qr': qrToken,
       'reserved_at': reservedAt.toIso8601String(),
       'cancelled_at': cancelledAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
       'notes': notes,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'fecha_creacion': createdAt.toIso8601String(),
+      'fecha_actualizacion': updatedAt.toIso8601String(),
     };
   }
 
   // 📋 JSON para INSERT (sin ID ni timestamps)
   Map<String, dynamic> toInsertJson() {
     return {
-      'user_id': userId,
-      'slot_id': slotId,
-      'status': 'confirmed',
+      'id_usuario': userId,
+      'id_franja_horaria': slotId,
+      'estado': 'confirmed',
       'reserved_at': reservedAt.toIso8601String(),
       'notes': notes,
     };
@@ -147,7 +147,7 @@ class ReservationModel {
   // 📋 JSON para UPDATE
   Map<String, dynamic> toUpdateJson() {
     return {
-      'status': status,
+      'estado': status,
       'cancelled_at': cancelledAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
       'notes': notes,

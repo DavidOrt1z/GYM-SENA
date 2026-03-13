@@ -352,10 +352,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         return;
       }
 
-      await Supabase.instance.client.from('feedback').insert({
-        'user_id': user.id,
-        'email': user.email,
-        'message': _feedbackController.text,
+      await Supabase.instance.client.from('comentarios').insert({
+        'id_usuario': user.id,
+        'correo_electronico': user.email,
+        'mensaje': _feedbackController.text,
       });
 
       if (mounted) {

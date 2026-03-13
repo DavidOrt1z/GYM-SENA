@@ -100,13 +100,13 @@ class WeightLogModel {
   factory WeightLogModel.fromJson(Map<String, dynamic> json) {
     return WeightLogModel(
       id: json['id'] as int,
-      userId: json['user_id'] as String,
+      userId: json['id_usuario'] as String,
       weight: (json['weight'] as num).toDouble(),
       unit: (json['unit'] as String?) ?? 'kg',
       recordedAt: DateTime.parse(json['recorded_at'] as String),
       notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['fecha_creacion'] as String),
+      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
     );
   }
 
@@ -119,16 +119,16 @@ class WeightLogModel {
       'unit': unit,
       'recorded_at': recordedAt.toIso8601String(),
       'notes': notes,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'fecha_creacion': createdAt.toIso8601String(),
+      'fecha_actualizacion': updatedAt.toIso8601String(),
     };
   }
 
   // 📋 JSON para INSERT (sin ID ni timestamps)
   Map<String, dynamic> toInsertJson() {
     return {
-      'user_id': userId,
-      'weight': weight,
+      'id_usuario': userId,
+      'peso_kg': weight,
       'unit': unit,
       'recorded_at': recordedAt.toIso8601String(),
       'notes': notes,

@@ -31,11 +31,11 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
       // Buscar reserva activa del usuario
       final response = await Supabase.instance.client
-          .from('reservations')
-          .select('*, slots(*)')
-          .eq('user_id', userId)
-          .eq('status', 'confirmed')
-          .order('created_at', ascending: false)
+          .from('reservas')
+          .select('*, franjas_horarias(*)')
+          .eq('id_usuario', userId)
+          .eq('estado', 'confirmed')
+          .order('fecha_creacion', ascending: false)
           .limit(1)
           .maybeSingle();
 
@@ -55,8 +55,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
     try {
       await Supabase.instance.client
-          .from('reservations')
-          .update({'status': 'cancelled'})
+          .from('reservas')
+          .update({'estado': 'cancelled'})
           .eq('id', _reservation!['id']);
 
       if (mounted) {

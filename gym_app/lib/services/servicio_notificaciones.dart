@@ -225,7 +225,7 @@ class ServicioNotificaciones {
           .from('notificaciones_historial')
           .select()
           .eq('usuario_id', usuarioId)
-          .order('created_at', ascending: false)
+          .order('fecha_creacion', ascending: false)
           .limit(50);
 
       return (datos as List).cast<Map<String, dynamic>>();
@@ -244,7 +244,7 @@ class ServicioNotificaciones {
       await supabase
           .from('notificaciones_historial')
           .delete()
-          .lt('created_at', fecha);
+          .lt('fecha_creacion', fecha);
 
       print('✅ Notificaciones antiguas eliminadas');
     } catch (e) {

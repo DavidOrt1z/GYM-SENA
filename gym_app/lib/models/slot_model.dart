@@ -110,9 +110,9 @@ class SlotModel {
       endTime: json['end_time'] as String,
       capacity: json['capacity'] as int,
       reservedCount: (json['reserved_count'] as int?) ?? 0,
-      status: (json['status'] as String?) ?? 'active',
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      status: (json['estado'] as String?) ?? 'active',
+      createdAt: DateTime.parse(json['fecha_creacion'] as String),
+      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
     );
   }
 
@@ -126,9 +126,9 @@ class SlotModel {
       'end_time': endTime,
       'capacity': capacity,
       'reserved_count': reservedCount,
-      'status': status,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'estado': status,
+      'fecha_creacion': createdAt.toIso8601String(),
+      'fecha_actualizacion': updatedAt.toIso8601String(),
     };
   }
 
