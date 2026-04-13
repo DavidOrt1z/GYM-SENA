@@ -1,10 +1,10 @@
 class WeightLogModel {
-  final int id;
-  final String userId;          // ID del usuario
-  final double weight;          // Peso en kg
-  final String unit;            // "kg" o "lbs"
-  final DateTime recordedAt;    // Fecha/hora del registro
-  final String? notes;          // Notas adicionales
+  final String id;
+  final String userId; // ID del usuario
+  final double weight; // Peso en kg
+  final String unit; // "kg" o "lbs"
+  final DateTime recordedAt; // Fecha/hora del registro
+  final String? notes; // Notas adicionales
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -70,7 +70,7 @@ class WeightLogModel {
       'Jueves',
       'Viernes',
       'Sábado',
-      'Domingo'
+      'Domingo',
     ];
     return days[(recordedAt.weekday - 1) % 7];
   }
@@ -98,15 +98,41 @@ class WeightLogModel {
 
   // 🔄 FACTORY: Convertir JSON de Supabase a WeightLogModel
   factory WeightLogModel.fromJson(Map<String, dynamic> json) {
+    final rawDate =
+        json['fecha'] ??
+        json['recorded_at'] ??
+        json['date'] ??
+        json['fecha_creacion'] ??
+        json['created_at'];
+
+    final parsedDate = rawDate != null
+        ? DateTime.parse(rawDate as String)
+        : DateTime.now();
+
+    final rawCreatedAt =
+        json['fecha_creacion'] ?? json['created_at'] ?? rawDate;
+
+    final parsedCreatedAt = rawCreatedAt != null
+        ? DateTime.parse(rawCreatedAt as String)
+        : parsedDate;
+
+    final rawUpdatedAt =
+        json['fecha_actualizacion'] ?? json['updated_at'] ?? rawCreatedAt;
+
+    final parsedUpdatedAt = rawUpdatedAt != null
+        ? DateTime.parse(rawUpdatedAt as String)
+        : parsedCreatedAt;
+
     return WeightLogModel(
-      id: json['id'] as int,
-      userId: json['id_usuario'] as String,
-      weight: (json['weight'] as num).toDouble(),
+      id: json['id'].toString(),
+      userId: (json['id_usuario'] ?? json['user_id']).toString(),
+      weight: ((json['peso_kg'] ?? json['weight_kg'] ?? json['weight']) as num)
+          .toDouble(),
       unit: (json['unit'] as String?) ?? 'kg',
-      recordedAt: DateTime.parse(json['recorded_at'] as String),
+      recordedAt: parsedDate,
       notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['fecha_creacion'] as String),
-      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
+      createdAt: parsedCreatedAt,
+      updatedAt: parsedUpdatedAt,
     );
   }
 
@@ -114,10 +140,9 @@ class WeightLogModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'weight': weight,
-      'unit': unit,
-      'recorded_at': recordedAt.toIso8601String(),
+      'id_usuario': userId,
+      'peso_kg': weight,
+      'fecha': recordedAt.toIso8601String(),
       'notes': notes,
       'fecha_creacion': createdAt.toIso8601String(),
       'fecha_actualizacion': updatedAt.toIso8601String(),
@@ -129,8 +154,7 @@ class WeightLogModel {
     return {
       'id_usuario': userId,
       'peso_kg': weight,
-      'unit': unit,
-      'recorded_at': recordedAt.toIso8601String(),
+      'fecha': recordedAt.toIso8601String(),
       'notes': notes,
     };
   }
@@ -138,16 +162,15 @@ class WeightLogModel {
   // 📋 JSON para UPDATE
   Map<String, dynamic> toUpdateJson() {
     return {
-      'weight': weight,
-      'unit': unit,
-      'recorded_at': recordedAt.toIso8601String(),
+      'peso_kg': weight,
+      'fecha': recordedAt.toIso8601String(),
       'notes': notes,
     };
   }
 
   // 📋 CopyWith para actualizar selectivamente
   WeightLogModel copyWith({
-    int? id,
+    String? id,
     String? userId,
     double? weight,
     String? unit,
@@ -196,10 +219,10 @@ class WeightLogModel {
   /// Texto de progreso (Ej: "Bajaste 2.5 kg", "Subiste 0.5 kg")
   String getProgressText(WeightLogModel? previous) {
     if (previous == null) return 'Primer registro';
-    
+
     final diff = getDifference(previous);
     final absDiff = diff.abs().toStringAsFixed(1);
-    
+
     if (diff < -0.1) {
       return '📉 Bajaste $absDiff kg';
     } else if (diff > 0.1) {
@@ -251,7 +274,7 @@ class WeightLogModel {
       'Sep',
       'Oct',
       'Nov',
-      'Dic'
+      'Dic',
     ];
     return months[(month - 1) % 12];
   }

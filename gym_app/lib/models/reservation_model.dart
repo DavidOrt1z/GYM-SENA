@@ -1,13 +1,15 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class ReservationModel {
-  final int id;
-  final String userId;          // ID del usuario que hace la reserva
-  final int slotId;             // ID del horario (slot)
-  final String status;          // "confirmed", "cancelled", "completed", "no_show"
-  final String? qrToken;        // Token QR para check-in
-  final DateTime reservedAt;    // Cuándo se hizo la reserva
-  final DateTime? cancelledAt;  // Cuándo se canceló (si aplica)
-  final DateTime? completedAt;  // Cuándo se completó (si aplica)
-  final String? notes;          // Notas adicionales
+  final String id;
+  final String userId; // ID del usuario que hace la reserva
+  final String slotId; // ID del horario (slot)
+  final String status; // "active", "cancelled", "completed"
+  final String? qrToken; // Token QR para check-in
+  final DateTime reservedAt; // Cuándo se hizo la reserva
+  final DateTime? cancelledAt; // Cuándo se canceló (si aplica)
+  final DateTime? completedAt; // Cuándo se completó (si aplica)
+  final String? notes; // Notas adicionales
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -28,7 +30,7 @@ class ReservationModel {
   // ✅ PROPIEDADES CALCULADAS
 
   /// ¿La reserva está confirmada?
-  bool get isConfirmed => status == 'confirmed';
+  bool get isConfirmed => status == 'active';
 
   /// ¿Fue cancelada?
   bool get isCancelled => status == 'cancelled';
@@ -37,22 +39,20 @@ class ReservationModel {
   bool get isCompleted => status == 'completed';
 
   /// ¿No asistió?
-  bool get isNoShow => status == 'no_show';
+  bool get isNoShow => false;
 
   /// ¿Está activa? (confirmada y no cancelada)
-  bool get isActive => status == 'confirmed';
+  bool get isActive => status == 'active';
 
   /// Texto del estado en español
   String get statusText {
     switch (status) {
-      case 'confirmed':
-        return 'Confirmada';
+      case 'active':
+        return 'Activa';
       case 'cancelled':
         return 'Cancelada';
       case 'completed':
         return 'Completada';
-      case 'no_show':
-        return 'No asistió';
       default:
         return 'Desconocido';
     }
@@ -61,14 +61,12 @@ class ReservationModel {
   /// Color del estado (para UI)
   String get statusColor {
     switch (status) {
-      case 'confirmed':
+      case 'active':
         return '#1273D4'; // Azul
       case 'cancelled':
         return '#D32F2F'; // Rojo
       case 'completed':
         return '#388E3C'; // Verde
-      case 'no_show':
-        return '#FF9800'; // Naranja
       default:
         return '#91ADC9'; // Gris
     }
@@ -97,13 +95,19 @@ class ReservationModel {
 
   // 🔄 FACTORY: Convertir JSON de Supabase a ReservationModel
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
+    final created = DateTime.parse(json['fecha_creacion'] as String);
+    final updated = DateTime.parse(
+      (json['fecha_actualizacion'] ?? json['fecha_creacion']) as String,
+    );
     return ReservationModel(
-      id: json['id'] as int,
+      id: json['id'].toString(),
       userId: json['id_usuario'] as String,
-      slotId: json['id_franja_horaria'] as int,
-      status: (json['estado'] as String?) ?? 'confirmed',
+      slotId: json['id_franja_horaria'].toString(),
+      status: (json['estado'] as String?) ?? 'active',
       qrToken: json['token_qr'] as String?,
-      reservedAt: DateTime.parse(json['reserved_at'] as String),
+      reservedAt: DateTime.parse(
+        (json['reserved_at'] ?? json['fecha_creacion']) as String,
+      ),
       cancelledAt: json['cancelled_at'] != null
           ? DateTime.parse(json['cancelled_at'] as String)
           : null,
@@ -111,8 +115,8 @@ class ReservationModel {
           ? DateTime.parse(json['completed_at'] as String)
           : null,
       notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['fecha_creacion'] as String),
-      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
+      createdAt: created,
+      updatedAt: updated,
     );
   }
 
@@ -138,9 +142,8 @@ class ReservationModel {
     return {
       'id_usuario': userId,
       'id_franja_horaria': slotId,
-      'estado': 'confirmed',
-      'reserved_at': reservedAt.toIso8601String(),
-      'notes': notes,
+      'estado': 'active',
+      'token_qr': qrToken ?? id,
     };
   }
 
@@ -156,9 +159,9 @@ class ReservationModel {
 
   // 📋 CopyWith para actualizar selectivamente
   ReservationModel copyWith({
-    int? id,
+    String? id,
     String? userId,
-    int? slotId,
+    String? slotId,
     String? status,
     String? qrToken,
     DateTime? reservedAt,
@@ -202,15 +205,6 @@ class ReservationModel {
     );
   }
 
-  // ❌ Marcar como no asistió
-  ReservationModel markAsNoShow() {
-    return copyWith(
-      status: 'no_show',
-      completedAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
-
   // 📊 Información para debug
   @override
   String toString() {
@@ -242,13 +236,7 @@ class ReservationModel {
 
   /// Obtener nombre del día en español (Lunes a Viernes)
   String _getDayName(int weekday) {
-    const days = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-    ];
+    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
     final index = (weekday - 1) % 5;
     return index < days.length ? days[index] : 'Desconocido';
   }
@@ -266,12 +254,33 @@ class ReservationModel {
       'Septiembre',
       'Octubre',
       'Noviembre',
-      'Diciembre'
+      'Diciembre',
     ];
     // Mes 1 = Febrero (índice 0), Mes 12 = Diciembre (índice 10)
     if (month >= 2 && month <= 12) {
       return months[month - 2];
     }
     return 'Mes no disponible';
+  }
+
+  // 🔍 Validar token QR
+  Future<bool> validateQRToken(String token) async {
+    try {
+      final result = await Supabase.instance.client.rpc(
+        'validar_ingreso_qr',
+        params: {'token': token},
+      );
+
+      if (result is Map<String, dynamic>) {
+        return result['valid'] == true;
+      }
+
+      if (result is bool) return result;
+
+      return false;
+    } catch (e) {
+      print('Error validando token QR: $e');
+      return false;
+    }
   }
 }

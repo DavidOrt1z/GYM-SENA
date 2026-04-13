@@ -18,7 +18,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -35,7 +36,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          AppLocalizations.of(context, 'registrarse') ?? 'Registro',
+          AppLocalizations.of(context, 'registrarse'),
           style: const TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -55,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 24),
                 // Título principal
                 Text(
-                  AppLocalizations.of(context, 'bienvenida') ?? 'Crea tu cuenta',
+                  AppLocalizations.of(context, 'bienvenida'),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -70,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.name,
                   style: const TextStyle(color: WHITE),
                   decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'nombre') ?? 'Nombre Completo',
+                    labelText: AppLocalizations.of(context, 'nombre'),
                     labelStyle: const TextStyle(color: SECONDARY_COLOR),
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     border: OutlineInputBorder(
@@ -83,7 +84,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                      borderSide: const BorderSide(
+                        color: PRIMARY_COLOR,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: DARK_BG,
@@ -103,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: WHITE),
                   decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'email') ?? 'Email',
+                    labelText: AppLocalizations.of(context, 'email'),
                     labelStyle: const TextStyle(color: SECONDARY_COLOR),
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     border: OutlineInputBorder(
@@ -116,7 +120,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                      borderSide: const BorderSide(
+                        color: PRIMARY_COLOR,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: DARK_BG,
@@ -139,12 +146,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: WHITE),
                   decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'contrasena') ?? 'Contraseña',
+                    labelText: AppLocalizations.of(context, 'contrasena'),
                     labelStyle: const TextStyle(color: SECONDARY_COLOR),
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: PRIMARY_COLOR,
                       ),
                       onPressed: () {
@@ -163,7 +172,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                      borderSide: const BorderSide(
+                        color: PRIMARY_COLOR,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: DARK_BG,
@@ -186,12 +198,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscureConfirmPassword,
                   style: const TextStyle(color: WHITE),
                   decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'confirmar_contrasena') ?? 'Confirmar Contraseña',
+                    labelText: AppLocalizations.of(
+                      context,
+                      'confirmar_contrasena',
+                    ),
                     labelStyle: const TextStyle(color: SECONDARY_COLOR),
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: PRIMARY_COLOR,
                       ),
                       onPressed: () {
@@ -210,7 +227,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                      borderSide: const BorderSide(
+                        color: PRIMARY_COLOR,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: DARK_BG,
@@ -240,10 +260,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _passwordController.text,
                                   _nameController.text.trim(),
                                 );
-                                if (success && mounted) {
-                                  Navigator.of(context).push(
+                                if (!mounted) return;
+                                if (success) {
+                                  Navigator.of(this.context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => const SuccessScreen(),
+                                      builder: (_) => const SuccessScreen(),
                                     ),
                                   );
                                 }
@@ -269,7 +290,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             )
                           : Text(
-                              AppLocalizations.of(context, 'registrarse') ?? 'Registrarse',
+                              AppLocalizations.of(context, 'registrarse'),
                               style: const TextStyle(
                                 color: WHITE,
                                 fontSize: 16,
@@ -295,7 +316,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 18,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -328,7 +353,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontSize: 11,
                       ),
                       children: [
-                        TextSpan(text: AppLocalizations.of(context, 'acepto_terminos') ?? 'Al continuar, aceptas nuestra '),
+                        TextSpan(
+                          text: AppLocalizations.of(context, 'acepto_terminos'),
+                        ),
                         WidgetSpan(
                           alignment: PlaceholderAlignment.baseline,
                           baseline: TextBaseline.alphabetic,
@@ -337,12 +364,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PrivacyPolicyScreen(),
+                                  builder: (context) =>
+                                      const PrivacyPolicyScreen(),
                                 ),
                               );
                             },
                             child: Text(
-                              AppLocalizations.of(context, 'politicas_privacidad') ?? 'Política de Privacidad',
+                              AppLocalizations.of(
+                                context,
+                                'politicas_privacidad',
+                              ),
                               style: const TextStyle(
                                 color: PRIMARY_COLOR,
                                 fontSize: 11,
@@ -360,12 +391,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const TermsOfUseScreen(),
+                                  builder: (context) =>
+                                      const TermsOfUseScreen(),
                                 ),
                               );
                             },
                             child: Text(
-                              AppLocalizations.of(context, 'terminos_uso') ?? 'Términos de uso',
+                              AppLocalizations.of(context, 'terminos_uso'),
                               style: const TextStyle(
                                 color: PRIMARY_COLOR,
                                 fontSize: 11,

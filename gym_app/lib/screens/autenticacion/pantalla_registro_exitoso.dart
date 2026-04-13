@@ -67,7 +67,7 @@ class SuccessScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home',
+                      '/login',
                       (Route<dynamic> route) => false,
                     );
                   },
@@ -79,7 +79,7 @@ class SuccessScreen extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Comenzar a explorar',
+                    'Iniciar sesión',
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 15,

@@ -7,14 +7,102 @@ import 'package:gym_app/models/slot_model.dart';
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  List<String> _candidateUserIds(String authUserId, String? dbUserId) {
+    final candidates = <String>[];
+    if (dbUserId != null && dbUserId.isNotEmpty) {
+      candidates.add(dbUserId);
+    }
+    if (authUserId.isNotEmpty && !candidates.contains(authUserId)) {
+      candidates.add(authUserId);
+    }
+    return candidates;
+  }
+
+  Future<Map<String, dynamic>?> _safeUserQuery({
+    required String column,
+    required String value,
+    String select = 'id',
+  }) async {
+    try {
+      final row = await _supabase
+          .from('users')
+          .select(select)
+          .eq(column, value)
+          .maybeSingle();
+
+      if (row == null) return null;
+      return Map<String, dynamic>.from(row);
+    } on PostgrestException catch (error) {
+      // Si la columna no existe en este esquema, seguimos con el siguiente fallback.
+      if (error.code == 'PGRST204') return null;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _resolveDbUserId(String authUserId) async {
+    try {
+      final byAuthId = await _safeUserQuery(
+        column: 'id_autenticacion',
+        value: authUserId,
+      );
+
+      if (byAuthId != null && byAuthId['id'] != null) {
+        return byAuthId['id'].toString();
+      }
+
+      final legacyById = await _safeUserQuery(column: 'id', value: authUserId);
+
+      if (legacyById != null && legacyById['id'] != null) {
+        return legacyById['id'].toString();
+      }
+
+      final authEmail = _supabase.auth.currentUser?.email;
+      if (authEmail != null && authEmail.isNotEmpty) {
+        final bySpanishEmail = await _safeUserQuery(
+          column: 'correo_electronico',
+          value: authEmail,
+        );
+
+        if (bySpanishEmail != null && bySpanishEmail['id'] != null) {
+          final resolvedId = bySpanishEmail['id'].toString();
+          try {
+            await _supabase
+                .from('users')
+                .update({'id_autenticacion': authUserId})
+                .eq('id', resolvedId);
+          } catch (_) {}
+          return resolvedId;
+        }
+      }
+
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Obtener perfil del usuario
   Future<UserModel?> getUserProfile(String userId) async {
     try {
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .single();
+      final byAuthId = await _safeUserQuery(
+        column: 'id_autenticacion',
+        value: userId,
+        select: '*',
+      );
+
+      if (byAuthId != null) {
+        return UserModel.fromJson(byAuthId);
+      }
+
+      final response = await _safeUserQuery(
+        column: 'id',
+        value: userId,
+        select: '*',
+      );
+
+      if (response == null) return null;
 
       return UserModel.fromJson(response);
     } catch (e) {
@@ -23,12 +111,12 @@ class DatabaseService {
   }
 
   // Actualizar perfil
-  Future<bool> updateUserProfile(String userId, Map<String, dynamic> data) async {
+  Future<bool> updateUserProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
     try {
-      await _supabase
-          .from('users')
-          .update(data)
-          .eq('id', userId);
+      await _supabase.from('users').update(data).eq('id', userId);
       return true;
     } catch (e) {
       return false;
@@ -42,15 +130,35 @@ class DatabaseService {
   /// Obtener reservas del usuario
   Future<List<ReservationModel>> getUserReservations(String userId) async {
     try {
-      final response = await _supabase
-          .from('reservas')
-          .select()
-          .eq('id_usuario', userId)
-          .order('reserved_at', ascending: false);
+      final dbUserId = await _resolveDbUserId(userId);
+      final userIds = _candidateUserIds(userId, dbUserId);
+      if (userIds.isEmpty) return [];
 
-      return (response as List)
-          .map((json) => ReservationModel.fromJson(json as Map<String, dynamic>))
-          .toList();
+      PostgrestException? lastError;
+
+      for (final candidateId in userIds) {
+        try {
+          final response = await _supabase
+              .from('reservas')
+              .select()
+              .eq('id_usuario', candidateId)
+              .order('fecha_creacion', ascending: false);
+
+          return (response as List)
+              .map(
+                (json) =>
+                    ReservationModel.fromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+        } on PostgrestException catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (lastError != null) {
+        print('Error fetching user reservations: $lastError');
+      }
+      return [];
     } catch (e) {
       print('Error fetching user reservations: $e');
       return [];
@@ -58,7 +166,7 @@ class DatabaseService {
   }
 
   /// Obtener reserva por ID
-  Future<ReservationModel?> getReservation(int reservationId) async {
+  Future<ReservationModel?> getReservation(String reservationId) async {
     try {
       final response = await _supabase
           .from('reservas')
@@ -73,20 +181,49 @@ class DatabaseService {
   }
 
   /// Crear nueva reserva
-  Future<ReservationModel?> createReservation(String userId, int slotId) async {
+  Future<ReservationModel?> createReservation(
+    String userId,
+    String slotId,
+  ) async {
     try {
-      final response = await _supabase
-          .from('reservas')
-          .insert({
-            'id_usuario': userId,
-            'id_franja_horaria': slotId,
-            'estado': 'confirmed',
-            'reserved_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .single();
+      if (userId.isEmpty) {
+        print('Error creating reservation: usuario autenticado no disponible');
+        return null;
+      }
 
-      return ReservationModel.fromJson(response);
+      final dbUserId = await _resolveDbUserId(userId);
+      final userIds = _candidateUserIds(userId, dbUserId);
+      if (userIds.isEmpty) {
+        print('Error creating reservation: no se pudo resolver id_usuario');
+        return null;
+      }
+
+      PostgrestException? lastError;
+
+      for (final candidateId in userIds) {
+        try {
+          final response = await _supabase
+              .from('reservas')
+              .insert({
+                'id_usuario': candidateId,
+                'id_franja_horaria': slotId,
+                'estado': 'active',
+                'token_qr': 'tmp_${DateTime.now().millisecondsSinceEpoch}',
+              })
+              .select()
+              .single();
+
+          return ReservationModel.fromJson(response);
+        } on PostgrestException catch (error) {
+          lastError = error;
+          continue;
+        }
+      }
+
+      if (lastError != null) {
+        print('Error creating reservation: $lastError');
+      }
+      return null;
     } catch (e) {
       print('Error creating reservation: $e');
       return null;
@@ -94,17 +231,26 @@ class DatabaseService {
   }
 
   /// Cancelar reserva
-  Future<bool> cancelReservation(int reservationId, String reason) async {
+  Future<bool> cancelReservation(String reservationId, String reason) async {
     try {
-      await _supabase
+      final response = await _supabase
           .from('reservas')
           .update({
             'estado': 'cancelled',
-            'cancelled_at': DateTime.now().toIso8601String(),
-            'notes': reason,
+            'fecha_actualizacion': DateTime.now().toIso8601String(),
           })
-          .eq('id', reservationId);
-      return true;
+          .eq('id', reservationId)
+          .select('id, estado');
+
+      // Si RLS bloquea el UPDATE, PostgREST puede responder sin error pero con 0 filas.
+      if (response is List && response.isNotEmpty) {
+        return true;
+      }
+
+      print(
+        'Error cancelling reservation: no se actualizó ninguna fila para $reservationId',
+      );
+      return false;
     } catch (e) {
       print('Error cancelling reservation: $e');
       return false;
@@ -121,9 +267,8 @@ class DatabaseService {
       final response = await _supabase
           .from('franjas_horarias')
           .select()
-          .eq('estado', 'active')
-          .order('day_of_week', ascending: true)
-          .order('start_time', ascending: true);
+          .order('fecha', ascending: true)
+          .order('hora_inicio', ascending: true);
 
       return (response as List)
           .map((json) => SlotModel.fromJson(json as Map<String, dynamic>))
@@ -135,7 +280,7 @@ class DatabaseService {
   }
 
   /// Obtener slot por ID
-  Future<SlotModel?> getSlot(int slotId) async {
+  Future<SlotModel?> getSlot(String slotId) async {
     try {
       final response = await _supabase
           .from('franjas_horarias')
@@ -150,7 +295,7 @@ class DatabaseService {
   }
 
   /// Incrementar reservas en un slot
-  Future<bool> incrementSlotReservations(int slotId) async {
+  Future<bool> incrementSlotReservations(String slotId) async {
     try {
       final slot = await getSlot(slotId);
       if (slot != null) {
@@ -168,7 +313,7 @@ class DatabaseService {
   }
 
   /// Decrementar reservas en un slot
-  Future<bool> decrementSlotReservations(int slotId) async {
+  Future<bool> decrementSlotReservations(String slotId) async {
     try {
       final slot = await getSlot(slotId);
       if (slot != null && slot.reservedCount > 0) {
@@ -192,11 +337,13 @@ class DatabaseService {
   /// Obtener todos los registros de peso del usuario
   Future<List<WeightLogModel>> getWeightLogs(String userId) async {
     try {
+      final dbUserId = await _resolveDbUserId(userId) ?? userId;
+
       final response = await _supabase
           .from('registros_peso')
           .select()
-          .eq('id_usuario', userId)
-          .order('recorded_at', ascending: true);
+          .eq('id_usuario', dbUserId)
+          .order('fecha', ascending: true);
 
       return (response as List)
           .map((json) => WeightLogModel.fromJson(json as Map<String, dynamic>))
@@ -208,16 +355,21 @@ class DatabaseService {
   }
 
   /// Agregar nuevo registro de peso
-  Future<WeightLogModel?> addWeightLog(String userId, double weight, String unit) async {
+  Future<WeightLogModel?> addWeightLog(
+    String userId,
+    double weight,
+    String unit,
+  ) async {
     try {
       final now = DateTime.now();
+      final dbUserId = await _resolveDbUserId(userId) ?? userId;
+
       final response = await _supabase
           .from('registros_peso')
           .insert({
-            'id_usuario': userId,
-            'weight': weight,
-            'unit': unit,
-            'recorded_at': now.toIso8601String(),
+            'id_usuario': dbUserId,
+            'peso_kg': weight,
+            'fecha': now.toIso8601String(),
           })
           .select()
           .single();
@@ -230,15 +382,11 @@ class DatabaseService {
   }
 
   /// Actualizar registro de peso
-  Future<bool> updateWeightLog(int logId, double weight, String unit) async {
+  Future<bool> updateWeightLog(String logId, double weight, String unit) async {
     try {
       await _supabase
           .from('registros_peso')
-          .update({
-            'weight': weight,
-            'unit': unit,
-            'fecha_actualizacion': DateTime.now().toIso8601String(),
-          })
+          .update({'peso_kg': weight})
           .eq('id', logId);
       return true;
     } catch (e) {
@@ -248,12 +396,9 @@ class DatabaseService {
   }
 
   /// Eliminar registro de peso
-  Future<bool> deleteWeightLog(int logId) async {
+  Future<bool> deleteWeightLog(String logId) async {
     try {
-      await _supabase
-          .from('registros_peso')
-          .delete()
-          .eq('id', logId);
+      await _supabase.from('registros_peso').delete().eq('id', logId);
       return true;
     } catch (e) {
       print('Error deleting weight log: $e');

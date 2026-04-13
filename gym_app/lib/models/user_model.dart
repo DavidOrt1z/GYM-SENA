@@ -10,6 +10,7 @@ class UserModel {
   final double? heightCm;
   final double? weightKg;
   final String? language;
+  final String? units;
   final String? theme;
   final String? avatarUrl;
   final DateTime? createdAt;
@@ -26,6 +27,7 @@ class UserModel {
     this.heightCm,
     this.weightKg,
     this.language,
+    this.units,
     this.theme,
     this.avatarUrl,
     this.createdAt,
@@ -44,6 +46,7 @@ class UserModel {
       heightCm: json['altura_cm']?.toDouble(),
       weightKg: json['peso_kg']?.toDouble(),
       language: json['idioma'] ?? 'es',
+      units: json['unidades'] ?? 'metric',
       theme: json['theme'] ?? 'system',
       avatarUrl: json['url_avatar'],
       createdAt: json['fecha_creacion'] != null ? DateTime.parse(json['fecha_creacion']) : null,
@@ -63,6 +66,7 @@ class UserModel {
       'altura_cm': heightCm,
       'peso_kg': weightKg,
       'idioma': language,
+      'unidades': units,
       'theme': theme,
       'url_avatar': avatarUrl,
       'fecha_creacion': createdAt?.toIso8601String(),

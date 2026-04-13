@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
             pinned: true,
             automaticallyImplyLeading: false,
             title: Text(
-              AppLocalizations.of(context, 'inicio') ?? 'Inicio',
+              AppLocalizations.of(context, 'inicio'),
               style: const TextStyle(
                 color: WHITE,
                 fontSize: 18,
@@ -63,7 +63,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildMainBanner() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -83,10 +82,7 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withOpacity(0.85),
-            ],
+            colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
           ),
         ),
         child: const Align(
@@ -111,7 +107,7 @@ class HomeScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Text(
-        AppLocalizations.of(context, titleKey) ?? titleKey,
+        AppLocalizations.of(context, titleKey),
         style: const TextStyle(
           color: WHITE,
           fontSize: 18,
@@ -172,11 +168,7 @@ class HomeScreen extends StatelessWidget {
             color: DARK_BG,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: WHITE,
-            size: 22,
-          ),
+          child: Icon(icon, color: WHITE, size: 22),
         ),
         const SizedBox(width: 16),
         Column(
@@ -193,10 +185,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(
-                color: SECONDARY_COLOR,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: SECONDARY_COLOR, fontSize: 13),
             ),
           ],
         ),
@@ -217,7 +206,8 @@ class HomeScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildEquipamientoCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=400',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=400',
                   title: 'Cintas de correr',
                   subtitle: 'De última generación',
                 ),
@@ -225,7 +215,8 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildEquipamientoCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=400',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=400',
                   title: 'Máquinas de peso',
                   subtitle: 'gama de equipos',
                 ),
@@ -239,7 +230,8 @@ class HomeScreen extends StatelessWidget {
             child: SizedBox(
               width: cardWidth,
               child: _buildEquipamientoCard(
-                imageUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400',
+                imageUrl:
+                    'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400',
                 title: 'Pesas libres',
                 subtitle: 'Para todos los niveles de\ncondición física',
               ),
@@ -280,10 +272,7 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: SECONDARY_COLOR,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
         ),
       ],
     );

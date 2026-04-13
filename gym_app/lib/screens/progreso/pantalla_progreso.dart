@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:gym_app/utils/constants.dart';
-import 'package:gym_app/services/database_service.dart';
+import 'package:flutter/material.dart';
 import 'package:gym_app/models/weight_log_model.dart';
+import 'package:gym_app/services/database_service.dart';
+import 'package:gym_app/utils/constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -13,10 +13,12 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  List<WeightLogModel> _weightLogs = [];
-  double _currentWeight = 0;
-  bool _isLoading = true;
+  static const Color _chartLineColor = Color(0xFF8FB1D3);
+
   final DatabaseService _databaseService = DatabaseService();
+
+  List<WeightLogModel> _weightLogs = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,417 +31,285 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final currentUser = Supabase.instance.client.auth.currentUser;
       final userId = currentUser?.id;
 
-      print('DEBUG: Current User ID: $userId');
-
       if (userId != null) {
         final logs = await _databaseService.getWeightLogs(userId);
-        
-        print('DEBUG: Weight logs retrieved: ${logs.length}');
-        for (var log in logs) {
-          print('DEBUG: Log - ${log.weight}kg on ${log.recordedAt}');
-        }
 
         if (mounted) {
           setState(() {
             _weightLogs = logs;
-            if (_weightLogs.isNotEmpty) {
-              _currentWeight = _weightLogs.last.weight;
-            }
             _isLoading = false;
           });
         }
+      } else {
+        setState(() => _isLoading = false);
       }
-    } catch (e) {
-      print('Error loading weight logs: $e');
+    } catch (_) {
       setState(() => _isLoading = false);
     }
   }
 
-  /// Convertir WeightLogModels a FlSpot para la gráfica
   List<FlSpot> get _chartData {
     return _weightLogs.asMap().entries.map((entry) {
-      return FlSpot(
-        entry.key.toDouble(),
-        entry.value.weight,
-      );
+      return FlSpot(entry.key.toDouble(), entry.value.weight);
     }).toList();
   }
 
-  /// Calcular progreso y porcentaje
-  String get _progressText {
-    if (_weightLogs.length < 2) return 'Sin datos aún';
-
-    final last = _weightLogs.last;
-
-    return '${last.weight.toStringAsFixed(0)} kg';
+  String get _currentWeightText {
+    if (_weightLogs.isEmpty) return '-- kg';
+    return '${_weightLogs.last.weight.toStringAsFixed(0)} kg';
   }
 
-  String get _progressPercentage {
-    if (_weightLogs.length < 2) return '';
+  double get _recentChangePercent {
+    if (_weightLogs.length < 2) return 0;
 
-    final first = _weightLogs.first;
-    final last = _weightLogs.last;
-    final difference = last.weight - first.weight;
-    final percentage = ((difference / first.weight) * 100).toStringAsFixed(1);
-    final sign = difference >= 0 ? '+' : '';
+    final cutoff = DateTime.now().subtract(const Duration(days: 30));
+    final recentLogs = _weightLogs
+        .where((log) => log.recordedAt.isAfter(cutoff))
+        .toList();
 
-    return 'Últimos 30 días $sign$percentage%';
+    if (recentLogs.length < 2) return 0;
+
+    final first = recentLogs.first;
+    final last = recentLogs.last;
+    if (first.weight == 0) return 0;
+
+    return ((last.weight - first.weight) / first.weight) * 100;
   }
 
-  /// Calcular estadísticas
-  double get _minWeight {
-    if (_weightLogs.isEmpty) return 0;
-    return _weightLogs.map((w) => w.weight).reduce((a, b) => a < b ? a : b);
+  bool get _isChangePositive => _recentChangePercent >= 0;
+
+  String get _recentChangeText {
+    if (_weightLogs.length < 2) return '0%';
+    final sign = _isChangePositive ? '+' : '';
+    return '$sign${_recentChangePercent.toStringAsFixed(0)}%';
   }
 
-  double get _maxWeight {
-    if (_weightLogs.isEmpty) return 0;
-    return _weightLogs.map((w) => w.weight).reduce((a, b) => a > b ? a : b);
+  Set<int> get _labelIndexes {
+    final count = _weightLogs.length;
+    if (count == 0) return {};
+    if (count <= 4) {
+      return List<int>.generate(count, (index) => index).toSet();
+    }
+
+    return {
+      0,
+      ((count - 1) * 0.33).round(),
+      ((count - 1) * 0.66).round(),
+      count - 1,
+    };
   }
 
-  double get _avgWeight {
-    if (_weightLogs.isEmpty) return 0;
-    final sum = _weightLogs.map((w) => w.weight).reduce((a, b) => a + b);
-    return sum / _weightLogs.length;
+  double get _chartMinY {
+    if (_chartData.isEmpty) return 0;
+    final minY = _chartData
+        .map((point) => point.y)
+        .reduce((a, b) => a < b ? a : b);
+    return minY - 2;
+  }
+
+  double get _chartMaxY {
+    if (_chartData.isEmpty) return 100;
+    final maxY = _chartData
+        .map((point) => point.y)
+        .reduce((a, b) => a > b ? a : b);
+    return maxY + 2;
+  }
+
+  Widget _buildChart() {
+    if (_chartData.isEmpty) {
+      return const Center(
+        child: Text(
+          'Sin registros de peso aún',
+          style: TextStyle(
+            color: SECONDARY_COLOR,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    return LineChart(
+      LineChartData(
+        minX: 0,
+        maxX: (_chartData.length - 1).toDouble(),
+        minY: _chartMinY,
+        maxY: _chartMaxY,
+        gridData: const FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              interval: 1,
+              getTitlesWidget: (value, meta) {
+                final index = value.round();
+                if (index < 0 ||
+                    index >= _weightLogs.length ||
+                    !_labelIndexes.contains(index)) {
+                  return const SizedBox.shrink();
+                }
+
+                return Text(
+                  _weightLogs[index].shortDate,
+                  style: const TextStyle(
+                    color: SECONDARY_COLOR,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: _chartData,
+            isCurved: true,
+            curveSmoothness: 0.32,
+            barWidth: 3,
+            color: _chartLineColor,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DARKER_BG,
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: PRIMARY_COLOR),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(width: double.infinity),
-                  const Text(
-                    'Progreso',
-                    style: TextStyle(
-                      color: WHITE,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+      body: SafeArea(
+        bottom: false,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: PRIMARY_COLOR),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    const Center(
+                      child: Text(
+                        'Progreso',
+                        style: TextStyle(
+                          color: WHITE,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Peso section title
-                        const Text(
-                          'Peso',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: WHITE,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Current Weight Card
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: DARK_BG,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Peso actual',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: SECONDARY_COLOR,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${_currentWeight.toStringAsFixed(0)} kg',
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: WHITE,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Progress section title
-                        const Text(
-                          'Progreso de peso',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: WHITE,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Progress Card
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _progressText,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: WHITE,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _progressPercentage,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: _weightLogs.length >= 2 && 
-                                    (_weightLogs.last.weight - _weightLogs.first.weight) >= 0
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Statistics Row
-                        if (_weightLogs.isNotEmpty)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Min Weight
-                              Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: DARK_BG,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Mínimo',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: SECONDARY_COLOR,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${_minWeight.toStringAsFixed(0)} kg',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: WHITE,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // Avg Weight
-                              Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: DARK_BG,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Promedio',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: SECONDARY_COLOR,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${_avgWeight.toStringAsFixed(0)} kg',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: WHITE,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // Max Weight
-                              Expanded(
-                                child: Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: DARK_BG,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Máximo',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: SECONDARY_COLOR,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${_maxWeight.toStringAsFixed(0)} kg',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: WHITE,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 32),
-
-                        // Weight Chart
-                        SizedBox(
-                          width: double.infinity,
-                          height: 280,
-                          child: _chartData.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'Sin registros aún. ¡Agrega tu peso desde el perfil!',
-                                    style: TextStyle(
-                                      color: SECONDARY_COLOR,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                )
-                              : LineChart(
-                                  LineChartData(
-                                    gridData: FlGridData(
-                                      show: true,
-                                      drawVerticalLine: true,
-                                      horizontalInterval: 2,
-                                      verticalInterval: 1,
-                                      getDrawingHorizontalLine: (value) {
-                                        return FlLine(
-                                          color: Colors.white.withOpacity(0.08),
-                                          strokeWidth: 1,
-                                        );
-                                      },
-                                      getDrawingVerticalLine: (value) {
-                                        return FlLine(
-                                          color: Colors.white.withOpacity(0.08),
-                                          strokeWidth: 1,
-                                        );
-                                      },
-                                    ),
-                                    titlesData: FlTitlesData(
-                                      show: true,
-                                      rightTitles: AxisTitles(
-                                          sideTitles:
-                                              SideTitles(showTitles: false)),
-                                      topTitles: AxisTitles(
-                                          sideTitles:
-                                              SideTitles(showTitles: false)),
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          reservedSize: 30,
-                                          interval: 1,
-                                          getTitlesWidget:
-                                              (double value, TitleMeta meta) {
-                                            final index = value.toInt();
-                                            if (index >= 0 &&
-                                                index < _weightLogs.length) {
-                                              return Text(
-                                                _weightLogs[index].shortDate,
-                                                style: const TextStyle(
-                                                  color: SECONDARY_COLOR,
-                                                  fontSize: 11,
-                                                ),
-                                              );
-                                            }
-                                            return const SizedBox();
-                                          },
-                                        ),
-                                      ),
-                                      leftTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          interval: 2,
-                                          reservedSize: 40,
-                                          getTitlesWidget:
-                                              (double value, TitleMeta meta) {
-                                            return Text(
-                                              '${value.toInt()} kg',
-                                              style: const TextStyle(
-                                                color: SECONDARY_COLOR,
-                                                fontSize: 11,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    borderData: FlBorderData(
-                                      show: false,
-                                    ),
-                                    minX: 0,
-                                    maxX: (_chartData.length - 1).toDouble(),
-                                    minY: (_chartData.isNotEmpty
-                                            ? _chartData
-                                                .map((e) => e.y)
-                                                .reduce((a, b) => a < b ? a : b)
-                                            : 0) -
-                                        2,
-                                    maxY: (_chartData.isNotEmpty
-                                            ? _chartData
-                                                .map((e) => e.y)
-                                                .reduce((a, b) => a > b ? a : b)
-                                            : 100) +
-                                        2,
-                                    lineBarsData: [
-                                      LineChartBarData(
-                                        spots: _chartData,
-                                        isCurved: false,
-                                        barWidth: 2.5,
-                                        dotData: FlDotData(show: true),
-                                        belowBarData: BarAreaData(show: false),
-                                        color: PRIMARY_COLOR,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                        ),
-                      ],
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Peso',
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w700,
+                        color: WHITE,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: DARK_BG,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Peso actual',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: WHITE,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _currentWeightText,
+                            style: const TextStyle(
+                              fontSize: 44,
+                              height: 1,
+                              fontWeight: FontWeight.w700,
+                              color: WHITE,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Progreso de peso',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: WHITE,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _currentWeightText,
+                      style: const TextStyle(
+                        fontSize: 48,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: WHITE,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Últimos 30 días ',
+                            style: TextStyle(
+                              color: SECONDARY_COLOR,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          TextSpan(
+                            text: _recentChangeText,
+                            style: TextStyle(
+                              color: _isChangePositive
+                                  ? const Color(0xFF27E27A)
+                                  : ERROR_COLOR,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Expanded(child: _buildChart()),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

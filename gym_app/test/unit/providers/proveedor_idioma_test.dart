@@ -3,10 +3,12 @@ import 'package:gym_app/providers/proveedor_idioma.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('ProveedorIdioma Tests', () {
     setUp(() {
       // Configurar SharedPreferences para pruebas
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'idioma_app': 'es'});
     });
 
     test('Idioma inicial es español por defecto', () async {

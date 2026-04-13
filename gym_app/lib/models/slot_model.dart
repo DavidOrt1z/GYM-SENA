@@ -1,5 +1,5 @@
 class SlotModel {
-  final int id;
+  final String id;
   final int gymId;
   final int dayOfWeek;      // 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
   final String startTime;   // Formato: "06:30"
@@ -102,17 +102,23 @@ class SlotModel {
 
   // 🔄 FACTORY: Convertir JSON de Supabase a SlotModel
   factory SlotModel.fromJson(Map<String, dynamic> json) {
+    final fecha = DateTime.parse(json['fecha'] as String);
+    final startRaw = (json['hora_inicio'] ?? '').toString();
+    final endRaw = (json['hora_fin'] ?? '').toString();
+    final start = startRaw.length >= 5 ? startRaw.substring(0, 5) : startRaw;
+    final end = endRaw.length >= 5 ? endRaw.substring(0, 5) : endRaw;
+
     return SlotModel(
-      id: json['id'] as int,
-      gymId: json['gym_id'] as int,
-      dayOfWeek: json['day_of_week'] as int,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String,
-      capacity: json['capacity'] as int,
-      reservedCount: (json['reserved_count'] as int?) ?? 0,
+      id: json['id'].toString(),
+      gymId: (json['gym_id'] as int?) ?? 1,
+      dayOfWeek: fecha.weekday - 1,
+      startTime: start,
+      endTime: end,
+      capacity: (json['capacidad'] as int?) ?? 0,
+      reservedCount: (json['cantidad_reservada'] as int?) ?? 0,
       status: (json['estado'] as String?) ?? 'active',
-      createdAt: DateTime.parse(json['fecha_creacion'] as String),
-      updatedAt: DateTime.parse(json['fecha_actualizacion'] as String),
+      createdAt: DateTime.parse((json['fecha_creacion'] ?? DateTime.now().toIso8601String()) as String),
+      updatedAt: DateTime.parse((json['fecha_actualizacion'] ?? json['fecha_creacion'] ?? DateTime.now().toIso8601String()) as String),
     );
   }
 
@@ -120,13 +126,11 @@ class SlotModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'gym_id': gymId,
-      'day_of_week': dayOfWeek,
-      'start_time': startTime,
-      'end_time': endTime,
-      'capacity': capacity,
-      'reserved_count': reservedCount,
-      'estado': status,
+      'fecha': DateTime.now().toIso8601String().split('T').first,
+      'hora_inicio': startTime,
+      'hora_fin': endTime,
+      'capacidad': capacity,
+      'cantidad_reservada': reservedCount,
       'fecha_creacion': createdAt.toIso8601String(),
       'fecha_actualizacion': updatedAt.toIso8601String(),
     };
@@ -135,19 +139,16 @@ class SlotModel {
   // 📋 JSON para UPDATE sin timestamps
   Map<String, dynamic> toUpdateJson() {
     return {
-      'gym_id': gymId,
-      'day_of_week': dayOfWeek,
-      'start_time': startTime,
-      'end_time': endTime,
-      'capacity': capacity,
-      'reserved_count': reservedCount,
-      'status': status,
+      'hora_inicio': startTime,
+      'hora_fin': endTime,
+      'capacidad': capacity,
+      'cantidad_reservada': reservedCount,
     };
   }
 
   // 📋 CopyWith para actualizar selectivamente
   SlotModel copyWith({
-    int? id,
+    String? id,
     int? gymId,
     int? dayOfWeek,
     String? startTime,

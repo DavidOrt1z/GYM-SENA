@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 28 de Febrero de 2026  
+**Última Actualización:** 12 de Abril de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -18,9 +18,9 @@
 | 3 | App - Pantallas UI | 4-6 días | ✅ **COMPLETADA** | 100% |
 | 4 | App - Integración Backend | 5-7 días | ✅ **COMPLETADA** | 100% | 7 Feb 2026 |
 | 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
-| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 90% | 28 Feb 2026 |
+| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 92% | 12 Abr 2026 |
 
-**Progreso Total del Proyecto:** ~98% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Node.js ✅)
+**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes Admin/Reservas ✅)
 
 ### 🎯 ¿Dónde Estoy?
 
@@ -30,7 +30,7 @@
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
 ✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
-🚀 FASE 6 ══════════════════  90%  (En Progreso - Node.js ✅ agregado - 28 Feb 2026)
+🚀 FASE 6 ══════════════════  92%  (En Progreso - Ajustes UI + flujo reservas/admin - 12 Abr 2026)
 ```
 
 ---
@@ -470,6 +470,7 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 - [x] Ver QR code de reserva ✅
 - [x] Cambiar estado de reserva ✅
 - [x] Cancelar reservas con confirmación ✅
+- [x] Eliminación real de reserva con `DELETE` (no solo cambio de estado) ✅ (Abr 2026)
 - [x] Mostrar información del usuario ✅
 
 ### 5.8 Gestión de Horarios ✅
@@ -497,6 +498,97 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 - [x] Modal para editar equipo ✅
 - [x] Cambiar estado de equipo ✅
 - [x] Marcar en mantenimiento ✅
+
+### 5.10 Validación de Ingreso por QR ✅
+
+#### Función RPC en Supabase: `validar_ingreso_qr`
+
+**Propósito:**
+Validar el ingreso de un usuario al gimnasio escaneando su QR de reserva.
+Centraliza toda la lógica en el backend para evitar aprobaciones sin reglas
+desde cualquier cliente (panel admin o app Flutter).
+
+**Entrada:**
+- `token_qr` (string) - o alternativamente: `reservation_id` + `token`
+
+**Validaciones que debe ejecutar (en orden):**
+1. La reserva existe en la base de datos
+2. La reserva está activa (no cancelada)
+3. La fecha/hora actual está dentro de la franja horaria permitida
+4. El QR no fue usado antes (evitar reuso / doble ingreso)
+
+**Acción:**
+- Marcar check-in en la reserva (campo `checked_in = true`, `checked_in_at = now()`)
+
+**Salida:**
+- `ok` o `error` con mensaje descriptivo
+- Datos del usuario y reserva para mostrar en pantalla al momento del escaneo
+
+**SQL / RPC sugerido para crear en Supabase:**
+```sql
+CREATE OR REPLACE FUNCTION validar_ingreso_qr(p_token_qr TEXT)
+RETURNS JSON AS $$
+DECLARE
+  v_reserva RECORD;
+  v_ahora TIMESTAMP := NOW();
+BEGIN
+  -- Buscar reserva por token
+  SELECT * INTO v_reserva
+  FROM reservations
+  WHERE token_qr = p_token_qr;
+
+  -- Validar existencia
+  IF NOT FOUND THEN
+    RETURN json_build_object('ok', false, 'error', 'QR no valido');
+  END IF;
+
+  -- Validar que no esté cancelada
+  IF v_reserva.status = 'cancelled' THEN
+    RETURN json_build_object('ok', false, 'error', 'Reserva cancelada');
+  END IF;
+
+  -- Validar franja horaria (30 min antes y después)
+  IF v_ahora < v_reserva.start_time - INTERVAL '30 minutes'
+  OR v_ahora > v_reserva.end_time + INTERVAL '30 minutes' THEN
+    RETURN json_build_object('ok', false, 'error', 'Fuera del horario permitido');
+  END IF;
+
+  -- Validar que no haya sido usado antes
+  IF v_reserva.checked_in = TRUE THEN
+    RETURN json_build_object('ok', false, 'error', 'QR ya fue usado anteriormente');
+  END IF;
+
+  -- Marcar check-in
+  UPDATE reservations
+  SET checked_in = TRUE,
+      checked_in_at = v_ahora,
+      status = 'completed'
+  WHERE token_qr = p_token_qr;
+
+  RETURN json_build_object(
+    'ok', true,
+    'mensaje', 'Ingreso registrado correctamente',
+    'usuario_id', v_reserva.user_id,
+    'reserva_id', v_reserva.id,
+    'horario', v_reserva.start_time
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+**Checklist de implementación:**
+- [x] Crear función RPC `validar_ingreso_qr` en Supabase
+- [x] Añadir columnas `checked_in` (boolean) y `checked_in_at` (timestamp) a tabla `reservations`
+- [x] Crear endpoint o llamada RPC desde el panel admin web
+- [x] Implementar lector de cámara QR en Flutter (añadir `mobile_scanner` en pubspec.yaml)
+- [x] Conectar lector Flutter -> llamada RPC -> mostrar resultado en pantalla
+- [x] Mostrar datos del usuario en pantalla al validar ingreso exitoso
+- [x] Manejar errores y mostrarlos visualmente al staff
+
+**Estado actual del proyecto (pendiente):**
+- Solo existe ver/generar QR (reservasModule.js línea 57)
+- No hay lector de cámara en Flutter
+- No existe la función RPC en Supabase
 
 ### 5.11 Backend Node.js + Express ✅ (28 Feb 2026)
 - [x] Crear `package.json` con dependencias ✅
@@ -529,6 +621,14 @@ npm run dev        # desarrollo (nodemon auto-reload)
 # Acceder al panel
 http://localhost:5500
 ```
+
+### 5.12 Ajustes y Correcciones (Abr 2026) ✅
+- [x] Corrección crítica en `reservasModule.js`: botón eliminar ahora ejecuta `DELETE` real sobre `public.reservas` y valida filas eliminadas.
+- [x] Ajuste de UX en selector de estados de reservas: evita bloqueos por auto-refresh durante selección.
+- [x] Estandarización visual en botones primarios (texto blanco en hover/focus) en reservas, usuarios, horarios y personal.
+- [x] Corrección visual del icono de flecha del select de estados (no se oculta en hover).
+- [x] Dashboard admin: traducción de estados de actividad reciente a español (`active` -> `activa`, `cancelled` -> `cancelada`, etc.).
+- [x] `config.js` preparado para despliegue: usa `localhost` solo en desarrollo y `window.location.origin` en producción.
 
 ## 📁 Archivos Creados en FASE 5
 
@@ -612,7 +712,7 @@ admin-panel/
 
 # 🚀 FASE 6: PULIDO Y EXTRAS
 
-**Duración:** 5-7 días | **Estado:** 🚀 **EN PROGRESO** | **Progreso:** 65% | **Iniciada:** 24 Febrero 2026 | **Actualizado:** 24 Feb 2026 (Notificaciones, Multiidioma, Onboarding y Animaciones completadas)
+**Duración:** 5-7 días | **Estado:** 🚀 **EN PROGRESO** | **Progreso:** 92% | **Iniciada:** 24 Febrero 2026 | **Actualizado:** 12 Abr 2026 (Ajustes reservas Flutter + estabilidad panel admin + preparación despliegue)
 
 > ✅ **Notificaciones Push completadas** - Usando Supabase Realtime (sin Firebase)
 
@@ -635,8 +735,8 @@ admin-panel/
   - [x] Función enviar broadcast
   - [x] Función enviar a topics (admins, personal)
   - [x] Confirmación de reserva
-  - [x] Recordatorios automáticos
-  - [x] Alertas de equipamiento
+  - [x] Recordatorio de Reserva (30min antes)
+  - [x] Alerta de Equipamiento
 - [x] Crear migration para BD ✅
   - [x] Tabla `notificaciones_historial`
   - [x] Tabla `notif_configuracion`
@@ -939,10 +1039,10 @@ git push origin main
 |------|--------|-----------------|
 | Fase 4 - Integración Backend | ✅ Completada | 0 horas |
 | Fase 5 - Panel Admin + Node.js | ✅ Completada | 0 horas |
-| Fase 6 - Pulido (Producción/APK) | 🚀 En progreso | 5-8 horas |
-| **TOTAL RESTANTE** | | **5-8 horas** |
+| Fase 6 - Pulido (Producción/APK + despliegue panel) | 🚀 En progreso | 4-6 horas |
+| **TOTAL RESTANTE** | | **4-6 horas** |
 
 ---
 
-*Última actualización: 28 de Febrero de 2026*  
-*Estado: Fase 5 completada con Node.js - Fase 6 en progreso (pendiente: Producción/APK)*
+*Última actualización: 12 de Abril de 2026*  
+*Estado: Fase 5 completada con Node.js - Fase 6 en progreso (pendiente: Producción/APK y publicación estable del panel)*

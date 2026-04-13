@@ -24,15 +24,12 @@ class WelcomeScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    DARKER_BG.withOpacity(0.95),
-                  ],
+                  colors: [Colors.transparent, DARKER_BG.withOpacity(0.95)],
                 ),
               ),
             ),
           ),
-          
+
           // Content
           SafeArea(
             child: Column(
@@ -40,7 +37,12 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 // Logo at top
                 Padding(
-                  padding: const EdgeInsets.only(top: 60, bottom: 24, left: 24, right: 24),
+                  padding: const EdgeInsets.only(
+                    top: 60,
+                    bottom: 24,
+                    left: 24,
+                    right: 24,
+                  ),
                   child: Image.asset(
                     'assets/images/logo.png',
                     height: 120,
@@ -67,7 +69,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          AppLocalizations.of(context, 'iniciar_sesion') ?? 'Iniciar sesión',
+                          AppLocalizations.of(context, 'iniciar_sesion'),
                           style: const TextStyle(
                             color: WHITE,
                             fontSize: 16,
@@ -82,7 +84,7 @@ class WelcomeScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            AppLocalizations.of(context, 'no_tienes_cuenta') ?? '¿No tienes una cuenta? ',
+                            AppLocalizations.of(context, 'no_tienes_cuenta'),
                             style: const TextStyle(
                               color: SECONDARY_COLOR,
                               fontSize: 14,
@@ -93,7 +95,7 @@ class WelcomeScreen extends StatelessWidget {
                               Navigator.pushNamed(context, '/register');
                             },
                             child: Text(
-                              AppLocalizations.of(context, 'registrarse') ?? 'Registrarse',
+                              AppLocalizations.of(context, 'registrarse'),
                               style: const TextStyle(
                                 color: PRIMARY_COLOR,
                                 fontSize: 14,

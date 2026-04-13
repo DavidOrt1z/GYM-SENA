@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:gym_app/models/reservation_model.dart';
+import 'package:gym_app/screens/navegacion_principal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/constants.dart';
 
 class QrCodeScreen extends StatefulWidget {
-  const QrCodeScreen({super.key});
+  final ReservationModel? reservation;
+
+  const QrCodeScreen({super.key, this.reservation});
 
   @override
   State<QrCodeScreen> createState() => _QrCodeScreenState();
@@ -18,7 +22,18 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
   @override
   void initState() {
     super.initState();
-    _checkReservation();
+    if (widget.reservation != null) {
+      _reservation = {
+        'id': widget.reservation!.id,
+        'token_qr': widget.reservation!.qrToken,
+        'estado': widget.reservation!.status,
+        'fecha_creacion': widget.reservation!.createdAt.toIso8601String(),
+      };
+      _hasActiveReservation = widget.reservation!.isActive;
+      _isLoading = false;
+    } else {
+      _checkReservation();
+    }
   }
 
   Future<void> _checkReservation() async {
@@ -29,12 +44,25 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         return;
       }
 
-      // Buscar reserva activa del usuario
+      // Resolver posibles IDs de usuario en BD (id y/o id_autenticacion).
+      final users = await Supabase.instance.client
+          .from('users')
+          .select('id')
+          .or('id.eq.$userId,id_autenticacion.eq.$userId');
+
+      final userIds = <String>{userId};
+      for (final row in users) {
+        final id = row['id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          userIds.add(id);
+        }
+      }
+
       final response = await Supabase.instance.client
           .from('reservas')
           .select('*, franjas_horarias(*)')
-          .eq('id_usuario', userId)
-          .eq('estado', 'confirmed')
+          .inFilter('id_usuario', userIds.toList())
+          .eq('estado', 'active')
           .order('fecha_creacion', ascending: false)
           .limit(1)
           .maybeSingle();
@@ -54,43 +82,60 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     if (_reservation == null) return;
 
     try {
-      await Supabase.instance.client
+      final updated = await Supabase.instance.client
           .from('reservas')
-          .update({'estado': 'cancelled'})
-          .eq('id', _reservation!['id']);
+          .update({
+            'estado': 'cancelled',
+            'fecha_actualizacion': DateTime.now().toIso8601String(),
+          })
+          .eq('id', _reservation!['id'])
+          .select('id');
+
+      if (updated.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo cancelar la reserva'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      await _checkReservation();
 
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Reserva cancelada'),
-            backgroundColor: Colors.red,
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const MainNavigationScreen(
+              initialIndex: 1,
+              initialMessage: 'Reserva cancelada',
+            ),
           ),
+          (_) => false,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cancelar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cancelar: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final userId = user?.id ?? '';
-    final userEmail = user?.email ?? '';
-    
-    // Datos que contendrá el QR
-    final qrData = 'GYM_SENA:$userId:${_reservation?['id'] ?? 'NO_RESERVATION'}';
+    final reservationId = (_reservation?['id']?.toString() ?? '').trim();
+    final qrData = reservationId.isNotEmpty ? reservationId : 'SIN_RESERVA';
 
     return Scaffold(
-      backgroundColor: DARKER_BG,
+      backgroundColor: const Color(0xFF071423),
       appBar: AppBar(
-        backgroundColor: DARKER_BG,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: WHITE),
           onPressed: () => Navigator.pop(context),
@@ -105,154 +150,186 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: PRIMARY_COLOR))
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    
-                    // Descripción
-                    Text(
-                      _hasActiveReservation
-                          ? 'Este código es la entrada para acceder al gimnasio.'
-                          : 'No tienes ninguna reserva activa.',
-                      style: const TextStyle(
-                        color: SECONDARY_COLOR,
-                        fontSize: 14,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF081627), Color(0xFF071322), Color(0xFF06111D)],
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: PRIMARY_COLOR),
+                )
+              : _hasActiveReservation
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Este código es la entrada para acceder al gimnasio.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFFD9E5F4),
+                          fontSize: 31 / 2,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    if (_hasActiveReservation) ...[
-                      // Título QR
+                      const SizedBox(height: 34),
                       const Text(
                         'Codigo QR',
                         style: TextStyle(
                           color: WHITE,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 34 / 2,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Contenedor del QR
+                      const SizedBox(height: 26),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 32),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: DARK_BG,
-                          borderRadius: BorderRadius.circular(20),
+                          color: const Color(0xFF263A51),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Center(
-                          child: QrImageView(
-                            data: qrData,
-                            version: QrVersions.auto,
-                            size: 240,
-                            backgroundColor: Colors.white,
-                            eyeStyle: const QrEyeStyle(
-                              eyeShape: QrEyeShape.square,
-                              color: Colors.black,
-                            ),
-                            dataModuleStyle: const QrDataModuleStyle(
-                              dataModuleShape: QrDataModuleShape.square,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      const Spacer(),
-                      
-                      // Botón Cancelar reserva
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                backgroundColor: DARK_BG,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                title: const Text(
-                                  'Cancelar reserva',
-                                  style: TextStyle(color: WHITE),
-                                ),
-                                content: const Text(
-                                  '¿Estás seguro de que deseas cancelar tu reserva?',
-                                  style: TextStyle(color: SECONDARY_COLOR),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text(
-                                      'No',
-                                      style: TextStyle(color: SECONDARY_COLOR),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      _cancelReservation();
-                                    },
-                                    child: const Text(
-                                      'Sí, cancelar',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final qrSize = constraints.maxWidth - 24;
+                            return Center(
+                              child: QrImageView(
+                                data: qrData,
+                                version: QrVersions.auto,
+                                size: qrSize.clamp(200.0, 320.0),
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: const Color(0xFFE8E8F2),
                               ),
                             );
                           },
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        reservationId.isNotEmpty
+                            ? 'ID: ${reservationId.substring(0, reservationId.length >= 8 ? 8 : reservationId.length)}...'
+                            : 'ID: SIN_RESERVA',
+                        style: const TextStyle(
+                          color: Color(0xFF91ADC9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _cancelReservation,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PRIMARY_COLOR,
+                            foregroundColor: WHITE,
+                            minimumSize: const Size.fromHeight(48),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                            elevation: 0,
                           ),
                           child: const Text(
                             'Cancelar reserva',
                             style: TextStyle(
-                              color: WHITE,
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ),
-                      
-                      const SizedBox(height: 32),
-                    ] else ...[
-                      // Sin reserva activa
-                      const SizedBox(height: 60),
-                      Icon(
-                        Icons.event_busy_outlined,
-                        size: 80,
-                        color: SECONDARY_COLOR.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Realiza una reserva para obtener tu código QR de acceso',
-                        style: TextStyle(
-                          color: SECONDARY_COLOR,
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const Spacer(),
                     ],
-                  ],
+                  ),
+                )
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF22364B),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.qr_code_2_rounded,
+                            color: Color(0xFFB8CDE3),
+                            size: 38,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No tienes reservas activas',
+                          style: TextStyle(
+                            color: WHITE,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Para generar tu codigo QR, primero debes reservar un horario.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: SECONDARY_COLOR,
+                            fontSize: 14,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (_) => const MainNavigationScreen(
+                                    initialIndex: 1,
+                                  ),
+                                ),
+                                (_) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: PRIMARY_COLOR,
+                              foregroundColor: WHITE,
+                              minimumSize: const Size.fromHeight(46),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Ir a Reservas',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _checkReservation,
+                          child: const Text('Actualizar estado'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
+        ),
+      ),
     );
   }
 }

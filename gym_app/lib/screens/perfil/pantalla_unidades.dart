@@ -17,6 +17,30 @@ class _UnitsScreenState extends State<UnitsScreen> {
   late TextEditingController _weightController;
   late TextEditingController _heightController;
 
+  Future<String?> _resolveDbUserId(String authUserId) async {
+    final byAuthId = await Supabase.instance.client
+        .from('users')
+        .select('id')
+        .eq('id_autenticacion', authUserId)
+        .maybeSingle();
+
+    if (byAuthId != null && byAuthId['id'] != null) {
+      return byAuthId['id'].toString();
+    }
+
+    final byId = await Supabase.instance.client
+        .from('users')
+        .select('id')
+        .eq('id', authUserId)
+        .maybeSingle();
+
+    if (byId != null && byId['id'] != null) {
+      return byId['id'].toString();
+    }
+
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -34,14 +58,19 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
   Future<void> _loadUserUnits() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return;
+      final authUserId = Supabase.instance.client.auth.currentUser?.id;
+      if (authUserId == null) return;
+
+      final dbUserId = await _resolveDbUserId(authUserId);
+      if (dbUserId == null) return;
 
       final response = await Supabase.instance.client
           .from('users')
           .select('unidades, peso_kg, altura_cm')
-          .eq('id', userId)
-          .single();
+          .eq('id', dbUserId)
+          .maybeSingle();
+
+      if (response == null) return;
 
       if (response['unidades'] != null) {
         final units = response['unidades'];
@@ -74,9 +103,14 @@ class _UnitsScreenState extends State<UnitsScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) {
+      final authUserId = Supabase.instance.client.auth.currentUser?.id;
+      if (authUserId == null) {
         throw Exception('Usuario no autenticado');
+      }
+
+      final dbUserId = await _resolveDbUserId(authUserId);
+      if (dbUserId == null) {
+        throw Exception('No se pudo encontrar el perfil del usuario');
       }
 
       if (_weightController.text.isEmpty || _heightController.text.isEmpty) {
@@ -116,7 +150,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
             'peso_kg': weight,
             'altura_cm': height,
           })
-          .eq('id', userId);
+          .eq('id', dbUserId);
 
       if (mounted) {
         Navigator.of(context).push(

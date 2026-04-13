@@ -9,10 +9,7 @@ import '../../utils/constants.dart';
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
 
-  const EditProfileScreen({
-    super.key,
-    required this.user,
-  });
+  const EditProfileScreen({super.key, required this.user});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -30,9 +27,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.user.fullName ?? '');
-    _lastNameController = TextEditingController(text: widget.user.lastName ?? '');
-    _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
+    _nameController = TextEditingController(text: widget.user.fullName);
+    _lastNameController = TextEditingController(
+      text: widget.user.lastName ?? '',
+    );
+    _ageController = TextEditingController(
+      text: widget.user.age?.toString() ?? '',
+    );
     _currentAvatarUrl = widget.user.avatarUrl;
   }
 
@@ -67,19 +68,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Leer archivo como bytes usando XFile
       final Uint8List bytes = await pickedFile.readAsBytes();
-      
+
       print('DEBUG: Subiendo foto, userId: $userId, fileName: $fileName');
 
       // Subir a Supabase Storage usando uploadBinary con upsert
       await Supabase.instance.client.storage
           .from('avatars')
-          .uploadBinary(fileName, bytes, fileOptions: const FileOptions(upsert: true));
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
       // Obtener URL pública
       final publicUrl = Supabase.instance.client.storage
           .from('avatars')
           .getPublicUrl(fileName);
-      
+
       print('DEBUG: URL generada: $publicUrl');
 
       if (mounted) {
@@ -92,28 +97,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       print('Error uploading photo: $e');
       if (mounted) {
         setState(() => _isUploadingPhoto = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al subir foto: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al subir foto: $e')));
       }
     }
   }
 
   Future<void> _saveChanges() async {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El nombre es requerido')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('El nombre es requerido')));
       return;
     }
 
     setState(() => _isSaving = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) {
+      final authUserId = Supabase.instance.client.auth.currentUser?.id;
+      if (authUserId == null) {
         throw Exception('Usuario no autenticado');
       }
+
+      final userRow = await Supabase.instance.client
+          .from('users')
+          .select('id')
+          .eq('id_autenticacion', authUserId)
+          .maybeSingle();
+
+      final userId = userRow?['id']?.toString() ?? authUserId;
 
       int? age;
       if (_ageController.text.isNotEmpty) {
@@ -123,30 +136,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Construir mapa de actualización con solo los campos disponibles
       final updateData = {
         'nombre_completo': _nameController.text,
-        if (_lastNameController.text.isNotEmpty) 'apellido': _lastNameController.text,
+        if (_lastNameController.text.isNotEmpty)
+          'apellido': _lastNameController.text,
         if (age != null) 'edad': age,
-        if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty) 'url_avatar': _currentAvatarUrl,
+        if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty)
+          'url_avatar': _currentAvatarUrl,
       };
 
       print('DEBUG: Guardando datos: $updateData');
-      
-      await Supabase.instance.client.from('users').update(updateData).eq('id', userId);
-      
+
+      await Supabase.instance.client
+          .from('users')
+          .update(updateData)
+          .eq('id', userId);
+
       print('DEBUG: Datos guardados exitosamente');
 
       if (mounted) {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ProfileSavedScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const ProfileSavedScreen()),
         );
       }
     } catch (e) {
       print('Error saving profile: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
       }
     } finally {
       if (mounted) {
@@ -188,7 +204,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 24),
-              
+
               // Avatar con botón de cámara
               Stack(
                 children: [
@@ -199,7 +215,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: SizedBox(
                         width: 120,
                         height: 120,
-                        child: _currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
+                        child:
+                            _currentAvatarUrl != null &&
+                                _currentAvatarUrl!.isNotEmpty
                             ? Image.network(
                                 '$_currentAvatarUrl?t=${DateTime.now().millisecondsSinceEpoch}',
                                 fit: BoxFit.cover,
@@ -242,10 +260,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: PRIMARY_COLOR,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: DARKER_BG,
-                            width: 3,
-                          ),
+                          border: Border.all(color: DARKER_BG, width: 3),
                         ),
                         child: _isUploadingPhoto
                             ? const SizedBox(
@@ -253,7 +268,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(WHITE),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    WHITE,
+                                  ),
                                 ),
                               )
                             : const Icon(
@@ -267,7 +284,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Nombre
               Text(
                 widget.user.fullName,
@@ -278,17 +295,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              
+
               // Miembro desde
               Text(
                 'Miembro desde $year',
-                style: const TextStyle(
-                color: SECONDARY_COLOR,
-                fontSize: 14,
-                ),
+                style: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
               ),
               const SizedBox(height: 32),
-              
+
               // Nombre
               _buildInputField(
                 label: 'Nombre',
@@ -296,7 +310,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 hint: 'Ingresa tu nombre',
               ),
               const SizedBox(height: 20),
-              
+
               // Apellido
               _buildInputField(
                 label: 'Apellido',
@@ -304,7 +318,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 hint: 'Ingresa tu apellido',
               ),
               const SizedBox(height: 20),
-              
+
               // Años
               _buildInputField(
                 label: 'Años',
@@ -313,7 +327,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 40),
-              
+
               // Botón Guardar cambios
               SizedBox(
                 width: double.infinity,
@@ -385,7 +399,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

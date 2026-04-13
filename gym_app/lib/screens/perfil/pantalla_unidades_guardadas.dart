@@ -29,7 +29,7 @@ class UnitsSavedScreen extends StatelessWidget {
                 children: [
                   // Título sin checkmark
                   const Text(
-                    'Medidad guardado\ncorrectamente',
+                    'Medidas guardadas\ncorrectamente',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: WHITE,

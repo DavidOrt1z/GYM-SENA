@@ -3,6 +3,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  Future<void> _ensureUserProfile({
+    required User user,
+    required String email,
+    required String fullName,
+  }) async {
+    try {
+      await _supabase.from('users').upsert({
+        'id_autenticacion': user.id,
+        'correo_electronico': email,
+        'nombre_completo': fullName,
+        'rol': 'member',
+        'estado': 'active',
+      }, onConflict: 'correo_electronico');
+    } catch (dbError) {
+      print('Error creando perfil en BD: $dbError');
+    }
+  }
+
   // Obtener usuario actual
   User? get currentUser => _supabase.auth.currentUser;
 
@@ -22,22 +40,12 @@ class AuthService {
         data: {'full_name': fullName},
       );
 
-      // Crear registro en tabla users (si falla, no bloquear el registro)
       if (response.user != null) {
-        try {
-          await _supabase.from('users').insert({
-            'id': response.user!.id,
-            'correo_electronico': email,
-            'nombre_completo': fullName,
-            'rol': 'member',
-            'estado': 'active',
-            'fecha_creacion': DateTime.now().toIso8601String(),
-          });
-        } catch (dbError) {
-          print('Error creando perfil en BD: $dbError');
-          // Si falla el insert en la tabla, el usuario ya está en Auth
-          // El perfil se creará cuando entre a ProfileScreen
-        }
+        await _ensureUserProfile(
+          user: response.user!,
+          email: email,
+          fullName: fullName,
+        );
       }
 
       return response;
@@ -53,10 +61,26 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _supabase.auth.signInWithPassword(
+      final response = await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
+
+      if (response.user != null) {
+        final metadataName = response.user!.userMetadata?['full_name'];
+        final fullName =
+            (metadataName is String && metadataName.trim().isNotEmpty)
+            ? metadataName.trim()
+            : email.split('@').first;
+
+        await _ensureUserProfile(
+          user: response.user!,
+          email: email,
+          fullName: fullName,
+        );
+      }
+
+      return response;
     } catch (e) {
       rethrow;
     }
@@ -77,12 +101,13 @@ class AuthService {
       // Usar signInWithOtp con emailRedirectTo null para forzar código OTP
       // En Supabase Dashboard:
       // 1. Authentication → Providers → Email
-      // 2. Desactiva "Confirm email" 
+      // 2. Desactiva "Confirm email"
       // 3. En Email OTP Length, configura a 6
       await _supabase.auth.signInWithOtp(
         email: email,
         shouldCreateUser: false,
-        emailRedirectTo: null, // Esto fuerza el envío de código OTP en lugar de link
+        emailRedirectTo:
+            null, // Esto fuerza el envío de código OTP en lugar de link
       );
     } catch (e) {
       print('Error enviando OTP: $e');

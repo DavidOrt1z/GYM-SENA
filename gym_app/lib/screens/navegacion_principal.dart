@@ -8,14 +8,21 @@ import 'package:gym_app/screens/perfil/pantalla_perfil.dart';
 import 'package:gym_app/utils/constants.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialIndex;
+  final String? initialMessage;
+
+  const MainNavigationScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.initialMessage,
+  });
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   // ✅ Fondo solicitado para la barra
   static const Color _navBg = Color(0xFF192633);
@@ -26,6 +33,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ProgressScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+
+    if (widget.initialMessage != null &&
+        widget.initialMessage!.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.initialMessage!),
+            backgroundColor: PRIMARY_COLOR,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      });
+    }
+  }
 
   BottomNavigationBarItem _item({
     required String label,

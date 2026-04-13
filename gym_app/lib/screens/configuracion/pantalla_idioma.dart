@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../utils/constants.dart';
@@ -5,6 +7,24 @@ import '../../providers/proveedor_idioma.dart';
 
 class LanguageScreen extends StatelessWidget {
   const LanguageScreen({super.key});
+
+  Future<void> _cambiarIdiomaSeguro(
+    BuildContext context,
+    ProveedorIdioma proveedorIdioma,
+    String codigoIdioma,
+  ) async {
+    try {
+      await proveedorIdioma.cambiarIdioma(codigoIdioma);
+    } catch (error) {
+      debugPrint('Error al cambiar idioma: $error');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo cambiar el idioma. Intenta de nuevo.'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +71,9 @@ class LanguageScreen extends StatelessWidget {
                 language: 'Español',
                 selected: lenguajeActual == 'es',
                 onTap: () {
-                  proveedorIdioma.cambiarIdioma('es');
+                  unawaited(
+                    _cambiarIdiomaSeguro(context, proveedorIdioma, 'es'),
+                  );
                 },
               ),
               // English
@@ -59,7 +81,9 @@ class LanguageScreen extends StatelessWidget {
                 language: 'English',
                 selected: lenguajeActual == 'en',
                 onTap: () {
-                  proveedorIdioma.cambiarIdioma('en');
+                  unawaited(
+                    _cambiarIdiomaSeguro(context, proveedorIdioma, 'en'),
+                  );
                 },
               ),
               const Spacer(),

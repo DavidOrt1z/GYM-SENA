@@ -41,15 +41,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.login(_emailController.text, _passwordController.text);
-      
+      final success = await authProvider.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
       if (success && mounted) {
         // Login exitoso, navegar al home
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/home', (route) => false);
       } else if (mounted) {
         // Si falla, mostrar el error del provider
         setState(() {
-          _errorMessage = authProvider.errorMessage ?? 'Error al iniciar sesión';
+          _errorMessage =
+              authProvider.errorMessage ?? 'Error al iniciar sesión';
         });
       }
     } catch (e) {
@@ -75,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          AppLocalizations.of(context, 'iniciar_sesion') ?? 'Iniciar Sesión',
+          AppLocalizations.of(context, 'iniciar_sesion'),
           style: const TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -93,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               // Título principal
               Text(
-                AppLocalizations.of(context, 'bienvenida') ?? 'Bienvenida',
+                AppLocalizations.of(context, 'bienvenido'),
                 style: const TextStyle(
                   color: WHITE,
                   fontSize: 28,
@@ -101,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Mensaje de error
               if (_errorMessage != null)
                 Container(
@@ -125,46 +131,66 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               if (_errorMessage != null) const SizedBox(height: 20),
-              
+
               // Email TextField
               TextField(
                 controller: _emailController,
                 style: const TextStyle(color: WHITE, fontSize: 16),
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context, 'email') ?? 'Email',
-                  labelStyle: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
+                  labelText: AppLocalizations.of(context, 'email'),
+                  labelStyle: const TextStyle(
+                    color: SECONDARY_COLOR,
+                    fontSize: 14,
+                  ),
                   floatingLabelBehavior: FloatingLabelBehavior.auto,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                    borderSide: const BorderSide(
+                      color: SECONDARY_COLOR,
+                      width: 1,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                    borderSide: const BorderSide(
+                      color: SECONDARY_COLOR,
+                      width: 1,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                    borderSide: const BorderSide(
+                      color: PRIMARY_COLOR,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
                   fillColor: DARK_BG,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Password TextField
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: WHITE, fontSize: 16),
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context, 'contrasena') ?? 'Contraseña',
-                  labelStyle: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
+                  labelText: AppLocalizations.of(context, 'contrasena'),
+                  labelStyle: const TextStyle(
+                    color: SECONDARY_COLOR,
+                    fontSize: 14,
+                  ),
                   floatingLabelBehavior: FloatingLabelBehavior.auto,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: PRIMARY_COLOR,
                       size: 20,
                     ),
@@ -176,23 +202,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                    borderSide: const BorderSide(
+                      color: SECONDARY_COLOR,
+                      width: 1,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                    borderSide: const BorderSide(
+                      color: SECONDARY_COLOR,
+                      width: 1,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                    borderSide: const BorderSide(
+                      color: PRIMARY_COLOR,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
                   fillColor: DARK_BG,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Forgot Password Link
               Align(
                 alignment: Alignment.centerLeft,
@@ -206,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   child: Text(
-                    AppLocalizations.of(context, 'olvidaste_contrasena') ?? '¿Olvidaste tu contraseña?',
+                    AppLocalizations.of(context, 'olvidaste_contrasena'),
                     style: const TextStyle(
                       color: PRIMARY_COLOR,
                       fontSize: 13,
@@ -216,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              
+
               // Login Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
@@ -239,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       )
                     : Text(
-                        AppLocalizations.of(context, 'ingresar') ?? 'Ingresar',
+                        AppLocalizations.of(context, 'ingresar'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

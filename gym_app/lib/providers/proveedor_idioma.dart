@@ -7,7 +7,8 @@ class ProveedorIdioma extends ChangeNotifier {
   static const String _claveIdioma = 'idioma_app';
   
   String _idiomaActual = AppLocalizations.es;
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs;
+  bool _inicializado = false;
 
   String get idiomaActual => _idiomaActual;
   
@@ -15,15 +16,18 @@ class ProveedorIdioma extends ChangeNotifier {
 
   /// Inicializar proveedor
   Future<void> inicializar() async {
+    if (_inicializado) return;
+
     _prefs = await SharedPreferences.getInstance();
+    _inicializado = true;
     
     // Cargar idioma guardado o usar el del sistema
-    final idioma = _prefs.getString(_claveIdioma);
+    final idioma = _prefs?.getString(_claveIdioma);
     if (idioma != null) {
       _idiomaActual = idioma;
     } else {
       // Obtener idioma del sistema
-      final idiomaLocale = Locale(_idiomaActual).languageCode;
+      final idiomaLocale = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
       if (AppLocalizations.idiomas.contains(idiomaLocale)) {
         _idiomaActual = idiomaLocale;
       }
@@ -35,9 +39,13 @@ class ProveedorIdioma extends ChangeNotifier {
   /// Cambiar idioma
   Future<void> cambiarIdioma(String idioma) async {
     if (!AppLocalizations.idiomas.contains(idioma)) return;
+
+    if (!_inicializado) {
+      await inicializar();
+    }
     
     _idiomaActual = idioma;
-    await _prefs.setString(_claveIdioma, idioma);
+    await _prefs?.setString(_claveIdioma, idioma);
     
     notifyListeners();
   }

@@ -1,10 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/reservation_model.dart';
 import 'package:gym_app/models/slot_model.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/services/database_service.dart';
+import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
 import 'package:gym_app/utils/constants.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ReservationsScreen extends StatefulWidget {
   const ReservationsScreen({super.key});
@@ -13,34 +16,112 @@ class ReservationsScreen extends StatefulWidget {
   State<ReservationsScreen> createState() => _ReservationsScreenState();
 }
 
-class _ReservationsScreenState extends State<ReservationsScreen> {
+class _ReservationsScreenState extends State<ReservationsScreen>
+    with WidgetsBindingObserver {
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
-  
+
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   List<SlotModel> _allSlots = [];
   List<ReservationModel> _userReservations = [];
   bool _isLoading = false;
+  bool _isFetching = false;
+  Timer? _refreshTimer;
+  RealtimeChannel? _realtimeChannel;
+  OverlayEntry? _successOverlayEntry;
+  Timer? _successOverlayTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
+    _startAutoRefresh();
+    _subscribeToRealtimeUpdates();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final userId = _authService.currentUser?.id ?? '';
-    
-    final slots = await _databaseService.getAvailableSlots();
-    final reservations = await _databaseService.getUserReservations(userId);
-    
-    setState(() {
-      _allSlots = slots;
-      _userReservations = reservations;
-      _isLoading = false;
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
+    _successOverlayTimer?.cancel();
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
+    final channel = _realtimeChannel;
+    if (channel != null) {
+      Supabase.instance.client.removeChannel(channel);
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadData(showLoader: false);
+    }
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _loadData(showLoader: false);
     });
+  }
+
+  void _subscribeToRealtimeUpdates() {
+    final supabase = Supabase.instance.client;
+
+    final existingChannel = _realtimeChannel;
+    if (existingChannel != null) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    _realtimeChannel = supabase
+        .channel('reservas-capacidad-live')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'reservas',
+          callback: (_) => _loadData(showLoader: false),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'franjas_horarias',
+          callback: (_) => _loadData(showLoader: false),
+        )
+        .subscribe();
+  }
+
+  Future<void> _loadData({bool showLoader = true}) async {
+    if (_isFetching) return;
+    _isFetching = true;
+
+    if (showLoader && mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    final userId = _authService.currentUser?.id ?? '';
+
+    try {
+      final slots = await _databaseService.getAvailableSlots();
+      final reservations = await _databaseService.getUserReservations(userId);
+
+      if (!mounted) return;
+      setState(() {
+        _allSlots = slots;
+        _userReservations = reservations;
+        if (showLoader) {
+          _isLoading = false;
+        }
+      });
+    } finally {
+      _isFetching = false;
+      if (showLoader && mounted && _isLoading) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   List<SlotModel> _getSlotsByDay(DateTime date) {
@@ -56,14 +137,47 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    final months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
     return '${months[date.month - 1]} ${date.day}';
   }
 
-  String _getDayName(DateTime date) {
-    final days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return days[date.weekday - 1];
+  String _formatMonthYear(DateTime date) {
+    final months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String get _formattedSelectedTime {
+    final hour = _selectedTime.hourOfPeriod == 0
+        ? 12
+        : _selectedTime.hourOfPeriod;
+    final minute = _selectedTime.minute.toString().padLeft(2, '0');
+    return '${hour.toString().padLeft(2, '0')} : $minute';
   }
 
   bool _isWeekday(DateTime date) {
@@ -77,295 +191,471 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
 
     return Scaffold(
       backgroundColor: DARKER_BG,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: PRIMARY_COLOR))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  const Text('Reservas',
-                      style: TextStyle(
-                          color: WHITE,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 24),
-                  
-                  // CALENDAR PICKER
-                  Container(
-                    decoration: BoxDecoration(
-                      color: WHITE,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        // Month Navigation
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${_selectedDate.year > DateTime.now().year ? '' : ''}${['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][_selectedDate.month - 1]} ${_selectedDate.year}',
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.chevron_left, color: Colors.black),
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, _selectedDate.day);
-                                    });
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.chevron_right, color: Colors.black),
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, _selectedDate.day);
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        // Day headers
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: const [
-                            Text('DOM', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('LUN', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('MAR', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('MIÉ', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('JUE', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('VIE', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                            Text('SÁB', style: TextStyle(color: Color(0xFFCCCCCC), fontSize: 12, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Calendar grid
-                        _buildCalendarGrid(),
-                        const SizedBox(height: 16),
-                        
-                        // Time Picker
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Time', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600)),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () async {
-                                    final time = await showTimePicker(
-                                      context: context,
-                                      initialTime: _selectedTime,
-                                    );
-                                    if (time != null) {
-                                      setState(() => _selectedTime = time);
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF5F5F5),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                                      style: const TextStyle(color: Colors.black, fontSize: 14),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: const Color(0xFFCCCCCC)),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text('AM', style: TextStyle(color: Colors.black, fontSize: 12)),
-                                ),
-                                const SizedBox(width: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: const Color(0xFFCCCCCC)),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text('PM', style: TextStyle(color: Colors.black, fontSize: 12)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Date header
-                  Text(
-                    _formatDate(_selectedDate),
-                    style: const TextStyle(
-                        color: WHITE,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Slots List
-                  if (!_isWeekday(_selectedDate))
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: DARK_BG,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0B1420), Color(0xFF091826), Color(0xFF08131F)],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: PRIMARY_COLOR),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Center(
                         child: Text(
-                          'El gimnasio solo atiende de Lunes a Viernes',
-                          style: TextStyle(color: SECONDARY_COLOR, fontSize: 14),
+                          'Reservas',
+                          style: TextStyle(
+                            color: WHITE,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    )
-                  else if (slotsForDay.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: DARK_BG,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'No hay horarios disponibles para este día',
-                          style: TextStyle(color: SECONDARY_COLOR, fontSize: 14),
-                        ),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: slotsForDay.length,
-                      itemBuilder: (context, index) {
-                        final slot = slotsForDay[index];
-                        final isReserved = _isSlotReservedByUser(slot);
-                        final isFull = !slot.isAvailable;
+                      const SizedBox(height: 18),
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: DARK_BG,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      // CALENDAR PICKER
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF4F4F4),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                        child: Column(
+                          children: [
+                            // Month Navigation
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      slot.displayTimeWithPeriod,
+                                      _formatMonthYear(_selectedDate),
                                       style: const TextStyle(
-                                        color: WHITE,
+                                        color: Color(0xFF2C3E50),
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: Color(0xFF2C3E50),
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.chevron_left,
+                                        color: Color(0xFF2C3E50),
+                                        size: 34,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedDate = DateTime(
+                                            _selectedDate.year,
+                                            _selectedDate.month - 1,
+                                            _selectedDate.day,
+                                          );
+                                        });
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.chevron_right,
+                                        color: Color(0xFF2C3E50),
+                                        size: 34,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedDate = DateTime(
+                                            _selectedDate.year,
+                                            _selectedDate.month + 1,
+                                            _selectedDate.day,
+                                          );
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Day headers
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: const [
+                                Text(
+                                  'DOM',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'LUN',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'MAR',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'MIE',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'JUE',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'VIE',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'SAB',
+                                  style: TextStyle(
+                                    color: Color(0xFFBDBDBD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Calendar grid
+                            _buildCalendarGrid(),
+                            const SizedBox(height: 12),
+
+                            // Time Picker
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Hora',
+                                  style: TextStyle(
+                                    color: Color(0xFF111111),
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
                                     GestureDetector(
-                                      onTap: isReserved || isFull
-                                          ? null
-                                          : () => _showReservationConfirmation(slot),
+                                      onTap: () async {
+                                        final time = await showTimePicker(
+                                          context: context,
+                                          initialTime: _selectedTime,
+                                        );
+                                        if (time != null) {
+                                          setState(() => _selectedTime = time);
+                                        }
+                                      },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 10),
+                                          horizontal: 14,
+                                          vertical: 7,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: isReserved
-                                              ? SECONDARY_COLOR
-                                              : isFull
-                                                  ? DARK_BG
-                                                  : PRIMARY_COLOR,
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: (isReserved || isFull)
-                                              ? Border.all(color: SECONDARY_COLOR, width: 1)
-                                              : null,
+                                          color: const Color(0xFFE7E7E7),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Text(
-                                          isReserved
-                                              ? 'Reservado'
-                                              : isFull
-                                                  ? 'Agotado'
-                                                  : 'Reservar',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: (isReserved || isFull) && !isReserved
-                                                ? SECONDARY_COLOR
-                                                : WHITE,
+                                          _formattedSelectedTime,
+                                          style: const TextStyle(
+                                            color: Color(0xFF1E1E1E),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE7E7E7),
+                                        borderRadius: BorderRadius.circular(9),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  _selectedTime.period ==
+                                                      DayPeriod.am
+                                                  ? WHITE
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(7),
+                                              border:
+                                                  _selectedTime.period ==
+                                                      DayPeriod.am
+                                                  ? Border.all(
+                                                      color: const Color(
+                                                        0xFFD0D0D0,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
+                                            child: const Text(
+                                              'AM',
+                                              style: TextStyle(
+                                                color: Color(0xFF111111),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  _selectedTime.period ==
+                                                      DayPeriod.pm
+                                                  ? WHITE
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(7),
+                                              border:
+                                                  _selectedTime.period ==
+                                                      DayPeriod.pm
+                                                  ? Border.all(
+                                                      color: const Color(
+                                                        0xFFD0D0D0,
+                                                      ),
+                                                    )
+                                                  : null,
+                                            ),
+                                            child: const Text(
+                                              'PM',
+                                              style: TextStyle(
+                                                color: Color(0xFF111111),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  slot.placesText,
-                                  style: const TextStyle(
-                                    color: SECONDARY_COLOR,
-                                    fontSize: 12,
-                                  ),
                                 ),
                               ],
                             ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Date header
+                      Text(
+                        _formatDate(_selectedDate),
+                        style: const TextStyle(
+                          color: WHITE,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Slots List
+                      if (!_isWeekday(_selectedDate))
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: DARK_BG,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                    ),
+                          child: const Center(
+                            child: Text(
+                              'El gimnasio solo atiende de Lunes a Viernes',
+                              style: TextStyle(
+                                color: SECONDARY_COLOR,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        )
+                      else if (slotsForDay.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: DARK_BG,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'No hay horarios disponibles para este día',
+                              style: TextStyle(
+                                color: SECONDARY_COLOR,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: slotsForDay.length,
+                          itemBuilder: (context, index) {
+                            final slot = slotsForDay[index];
+                            final isReserved = _isSlotReservedByUser(slot);
+                            final isFull = !slot.isAvailable;
 
-                  const SizedBox(height: 24),
+                            final buttonColor = isReserved
+                                ? const Color(0xFF4D647A)
+                                : isFull
+                                ? const Color(0xFF2A3E52)
+                                : PRIMARY_COLOR;
 
-                  // My Reservations
-                  if (_userReservations.isNotEmpty) _buildMyReservations(),
-                ],
-              ),
-            ),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          slot.displayTimeWithPeriod,
+                                          style: const TextStyle(
+                                            color: WHITE,
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          slot.placesText,
+                                          style: const TextStyle(
+                                            color: SECONDARY_COLOR,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  GestureDetector(
+                                    onTap: isReserved || isFull
+                                        ? null
+                                        : () => _showReservationConfirmation(
+                                            slot,
+                                          ),
+                                    child: Container(
+                                      width: 102,
+                                      alignment: Alignment.center,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: buttonColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        isReserved
+                                            ? 'Reservado'
+                                            : isFull
+                                            ? 'Agotado'
+                                            : 'Reservar',
+                                        style: const TextStyle(
+                                          color: WHITE,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // My Reservations
+                      if (_userReservations.isNotEmpty) _buildMyReservations(),
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
   Widget _buildCalendarGrid() {
-    final firstDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
-    final lastDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
+    final firstDayOfMonth = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      1,
+    );
+    final lastDayOfMonth = DateTime(
+      _selectedDate.year,
+      _selectedDate.month + 1,
+      0,
+    );
     final daysInMonth = lastDayOfMonth.day;
-    final startingDayOfWeek = firstDayOfMonth.weekday;
+    final startingDayOfWeek = firstDayOfMonth.weekday % 7;
 
     final days = <Widget>[];
 
     // Empty cells before first day
-    for (int i = 0; i < startingDayOfWeek % 7; i++) {
-      days.add(const SizedBox());
+    for (int i = 0; i < startingDayOfWeek; i++) {
+      days.add(const SizedBox.shrink());
     }
 
     // Days of month
     for (int i = 1; i <= daysInMonth; i++) {
       final date = DateTime(_selectedDate.year, _selectedDate.month, i);
       final isSelected = _selectedDate.day == i;
-      final isToday = date.day == DateTime.now().day &&
-          date.month == DateTime.now().month &&
-          date.year == DateTime.now().year;
-      
       // Solo permitir lunes a viernes (weekday: 1=Monday, 5=Friday, 6=Saturday, 7=Sunday)
       final isWeekday = date.weekday >= 1 && date.weekday <= 5;
 
@@ -374,17 +664,23 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
           onTap: isWeekday ? () => setState(() => _selectedDate = date) : null,
           child: Opacity(
             opacity: isWeekday ? 1.0 : 0.3,
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.black : (isToday ? Colors.black : Colors.transparent),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
+            child: Center(
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF2A4055)
+                      : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
                 child: Text(
                   '$i',
                   style: TextStyle(
-                    color: isSelected ? WHITE : Colors.black,
-                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? WHITE : const Color(0xFF2A3B4D),
+                    fontSize: 19,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -394,18 +690,23 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       );
     }
 
+    while (days.length % 7 != 0) {
+      days.add(const SizedBox.shrink());
+    }
+
     return GridView.count(
       crossAxisCount: 7,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.2,
+      childAspectRatio: 1.18,
       children: days,
     );
   }
 
   Widget _buildMyReservations() {
-    final activeReservations =
-        _userReservations.where((r) => r.isActive).toList();
+    final activeReservations = _userReservations
+        .where((r) => r.isActive)
+        .toList();
 
     if (activeReservations.isEmpty) {
       return const SizedBox.shrink();
@@ -415,9 +716,14 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(color: SECONDARY_COLOR, height: 32),
-        const Text('Mis Reservas',
-            style: TextStyle(
-                color: WHITE, fontSize: 14, fontWeight: FontWeight.w600)),
+        const Text(
+          'Mis Reservas',
+          style: TextStyle(
+            color: WHITE,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
@@ -428,7 +734,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
             final slot = _allSlots.firstWhere(
               (s) => s.id == reservation.slotId,
               orElse: () => SlotModel(
-                id: 0,
+                id: '0',
                 gymId: 0,
                 dayOfWeek: 0,
                 startTime: '00:00',
@@ -446,9 +752,9 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: DARK_BG,
+                  color: const Color(0xFF2A3947),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: PRIMARY_COLOR, width: 1),
+                  border: Border.all(color: const Color(0xFF3D5366), width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,29 +765,41 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(slot.displayTimeWithPeriod,
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: PRIMARY_COLOR)),
+                            Text(
+                              slot.displayTimeWithPeriod,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: PRIMARY_COLOR,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(reservation.displayReservationDate,
-                                style: const TextStyle(
-                                    fontSize: 12, color: SECONDARY_COLOR)),
+                            Text(
+                              reservation.displayReservationDate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: SECONDARY_COLOR,
+                              ),
+                            ),
                           ],
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: PRIMARY_COLOR.withOpacity(0.2),
+                            color: PRIMARY_COLOR.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(reservation.statusText,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: PRIMARY_COLOR,
-                                  fontWeight: FontWeight.w600)),
+                          child: Text(
+                            reservation.statusText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: PRIMARY_COLOR,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -489,21 +807,53 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        GestureDetector(
-                          onTap: () => _showQRCode(reservation),
-                          child: Text('Ver QR',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: PRIMARY_COLOR,
-                                  fontWeight: FontWeight.w600)),
+                        TextButton(
+                          onPressed: () => _showQRCode(reservation),
+                          style: TextButton.styleFrom(
+                            backgroundColor: PRIMARY_COLOR,
+                            foregroundColor: WHITE,
+                            minimumSize: const Size(64, 34),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Ver QR',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: WHITE,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                        GestureDetector(
-                          onTap: () => _showCancelConfirmation(reservation),
-                          child: Text('Cancelar',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.red.shade400,
-                                  fontWeight: FontWeight.w600)),
+                        TextButton(
+                          onPressed: () => _showCancelConfirmation(reservation),
+                          style: TextButton.styleFrom(
+                            backgroundColor: const Color(0xFFD32F2F),
+                            foregroundColor: WHITE,
+                            minimumSize: const Size(80, 34),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Cancelar',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: WHITE,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -518,45 +868,9 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   }
 
   void _showQRCode(ReservationModel reservation) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: DARK_BG,
-        title: const Text('QR de Reserva',
-            style: TextStyle(color: WHITE)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: WHITE,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: QrImageView(
-                data: 'RES_${reservation.id}_${reservation.userId}',
-                version: QrVersions.auto,
-                size: 200.0,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'ID Reserva: ${reservation.id}',
-              style: const TextStyle(
-                color: SECONDARY_COLOR,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cerrar',
-                style: TextStyle(color: PRIMARY_COLOR)),
-          ),
-        ],
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => QrCodeScreen(reservation: reservation)),
     );
   }
 
@@ -565,35 +879,44 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: DARK_BG,
-        title: const Text('Confirmar Reserva',
-            style: TextStyle(color: WHITE)),
+        title: const Text('Confirmar Reserva', style: TextStyle(color: WHITE)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Horario: ${slot.displayTimeWithPeriod}',
-                style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12)),
+            Text(
+              'Horario: ${slot.displayTimeWithPeriod}',
+              style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
+            ),
             const SizedBox(height: 8),
-            Text('Disponibles: ${slot.availableSpots}/${slot.capacity}',
-                style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12)),
+            Text(
+              'Disponibles: ${slot.availableSpots}/${slot.capacity}',
+              style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
+            ),
             const SizedBox(height: 12),
-            const Text('¿Deseas confirmar esta reserva?',
-                style: TextStyle(color: WHITE)),
+            const Text(
+              '¿Deseas confirmar esta reserva?',
+              style: TextStyle(color: WHITE),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child:
-                const Text('Cancelar', style: TextStyle(color: SECONDARY_COLOR)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: SECONDARY_COLOR),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await _reserveSlot(slot);
             },
-            child: const Text('Confirmar',
-                style: TextStyle(color: PRIMARY_COLOR)),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(color: PRIMARY_COLOR),
+            ),
           ),
         ],
       ),
@@ -605,10 +928,11 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: DARK_BG,
-        title: const Text('Cancelar Reserva',
-            style: TextStyle(color: WHITE)),
-        content: const Text('¿Estás seguro de que deseas cancelar esta reserva?',
-            style: TextStyle(color: SECONDARY_COLOR)),
+        title: const Text('Cancelar Reserva', style: TextStyle(color: WHITE)),
+        content: const Text(
+          '¿Estás seguro de que deseas cancelar esta reserva?',
+          style: TextStyle(color: SECONDARY_COLOR),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -626,21 +950,130 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     );
   }
 
+  void _showCenteredSuccessToast(String message) {
+    if (!mounted) return;
+
+    _successOverlayTimer?.cancel();
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: IgnorePointer(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.92, end: 1),
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Opacity(
+                      opacity: value.clamp(0.0, 1.0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 340),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1B7FDB), Color(0xFF0F5FB8)],
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4D1273D4),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: const Color(0xFF91C8FF).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: WHITE,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: WHITE,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    overlay.insert(entry);
+    _successOverlayEntry = entry;
+
+    _successOverlayTimer = Timer(const Duration(milliseconds: 1900), () {
+      _successOverlayEntry?.remove();
+      _successOverlayEntry = null;
+    });
+  }
+
   Future<void> _reserveSlot(SlotModel slot) async {
     try {
       final userId = _authService.currentUser?.id ?? '';
-      final reservation =
-          await _databaseService.createReservation(userId, slot.id);
-      
-      if (reservation != null) {
-        await _databaseService.incrementSlotReservations(slot.id);
-        await _loadData();
-        
+      if (userId.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('¡Reserva confirmada!'),
-              backgroundColor: PRIMARY_COLOR,
+              content: Text('Debes iniciar sesión para reservar'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final reservation = await _databaseService.createReservation(
+        userId,
+        slot.id,
+      );
+
+      if (reservation != null) {
+        await _databaseService.incrementSlotReservations(slot.id);
+        await _loadData();
+
+        _showCenteredSuccessToast('¡Reserva confirmada!');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No se pudo reservar. Revisa tu perfil de usuario y permisos RLS.',
+              ),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -663,16 +1096,27 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
         reservation.id,
         'Cancelado por el usuario',
       );
-      
+
       if (success) {
         await _databaseService.decrementSlotReservations(reservation.slotId);
         await _loadData();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Reserva cancelada'),
               backgroundColor: PRIMARY_COLOR,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No se pudo cancelar la reserva. Verifica permisos en Supabase.',
+              ),
+              backgroundColor: Colors.red,
             ),
           );
         }

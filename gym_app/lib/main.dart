@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,19 +21,28 @@ import 'package:gym_app/screens/configuracion/pantalla_configuracion.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: SUPABASE_URL,
-    anonKey: SUPABASE_ANON_KEY,
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: DARKER_BG,
+      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
   );
+
+  await Supabase.initialize(url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY);
 
   final proveedor = ProveedorIdioma();
   await proveedor.inicializar();
 
-  runApp(const MyApp());
+  runApp(MyApp(proveedorIdioma: proveedor));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final ProveedorIdioma proveedorIdioma;
+
+  const MyApp({super.key, required this.proveedorIdioma});
 
   @override
   Widget build(BuildContext context) {
@@ -40,25 +50,25 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProveedorNotificaciones()),
-        ChangeNotifierProvider(create: (_) => ProveedorIdioma()),
+        ChangeNotifierProvider.value(value: proveedorIdioma),
       ],
       child: MaterialApp(
         title: 'Gym SENA',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           scaffoldBackgroundColor: DARKER_BG,
           fontFamily: 'Manrope',
-          appBarTheme: const AppBarTheme(
-            shadowColor: Colors.transparent,
-          ),
+          appBarTheme: const AppBarTheme(shadowColor: Colors.transparent),
           dividerColor: Colors.transparent,
         ),
         localizationsDelegates: [
           AppLocalizationsDelegate(),
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
           Locale(AppLocalizations.es),
@@ -107,9 +117,7 @@ class _HomeRouterScreenState extends State<HomeRouterScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             backgroundColor: DARKER_BG,
-            body: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -148,9 +156,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
