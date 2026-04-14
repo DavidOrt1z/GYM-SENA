@@ -125,9 +125,36 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   List<SlotModel> _getSlotsByDay(DateTime date) {
+    final exactDateSlots = _allSlots.where((slot) {
+      final slotDate = slot.slotDate;
+      return slotDate != null && _isSameDay(slotDate, date);
+    }).toList();
+
+    if (exactDateSlots.isNotEmpty) return exactDateSlots;
+
     final dayOfWeek = date.weekday - 1; // Monday = 0
     if (dayOfWeek < 0 || dayOfWeek > 4) return []; // Solo lunes a viernes
     return _allSlots.where((slot) => slot.dayOfWeek == dayOfWeek).toList();
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  DateTime _getReservationDate(ReservationModel reservation) {
+    for (final slot in _allSlots) {
+      if (slot.id == reservation.slotId && slot.slotDate != null) {
+        return slot.slotDate!;
+      }
+    }
+    return reservation.reservedAt;
+  }
+
+  bool _hasReservationOnDate(DateTime date) {
+    return _userReservations.any((reservation) {
+      if (reservation.isCancelled) return false;
+      return _isSameDay(_getReservationDate(reservation), date);
+    });
   }
 
   bool _isSlotReservedByUser(SlotModel slot) {
@@ -704,11 +731,14 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   Widget _buildMyReservations() {
-    final activeReservations = _userReservations
-        .where((r) => r.isActive)
+    final today = DateTime.now();
+    final visibleReservations = _userReservations
+        .where(
+          (r) => !r.isCancelled && _isSameDay(_getReservationDate(r), today),
+        )
         .toList();
 
-    if (activeReservations.isEmpty) {
+    if (visibleReservations.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -728,9 +758,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: activeReservations.length,
+          itemCount: visibleReservations.length,
           itemBuilder: (context, index) {
-            final reservation = activeReservations[index];
+            final reservation = visibleReservations[index];
             final slot = _allSlots.firstWhere(
               (s) => s.id == reservation.slotId,
               orElse: () => SlotModel(
@@ -789,14 +819,16 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: PRIMARY_COLOR.withValues(alpha: 0.2),
+                            color: reservation.isCompleted
+                                ? const Color(0xFF2E7D32).withValues(alpha: 0.2)
+                                : PRIMARY_COLOR.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             reservation.statusText,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: PRIMARY_COLOR,
+                              color: WHITE,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -804,59 +836,74 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => _showQRCode(reservation),
-                          style: TextButton.styleFrom(
-                            backgroundColor: PRIMARY_COLOR,
-                            foregroundColor: WHITE,
-                            minimumSize: const Size(64, 34),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
+                    reservation.isActive
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () => _showQRCode(reservation),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: PRIMARY_COLOR,
+                                  foregroundColor: WHITE,
+                                  minimumSize: const Size(64, 34),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Ver QR',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: WHITE,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    _showCancelConfirmation(reservation),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD32F2F),
+                                  foregroundColor: WHITE,
+                                  minimumSize: const Size(80, 34),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: WHITE,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Esta reserva ya fue completada.',
+                              style: TextStyle(
+                                color: SECONDARY_COLOR,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Ver QR',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: WHITE,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => _showCancelConfirmation(reservation),
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFD32F2F),
-                            foregroundColor: WHITE,
-                            minimumSize: const Size(80, 34),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Cancelar',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: WHITE,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -875,6 +922,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   void _showReservationConfirmation(SlotModel slot) {
+    final selectedSlotDate = slot.slotDate ?? _selectedDate;
+    if (_hasReservationOnDate(selectedSlotDate)) {
+      _showCenteredDailyLimitToast();
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1041,8 +1094,188 @@ class _ReservationsScreenState extends State<ReservationsScreen>
     });
   }
 
+  void _showCenteredDailyLimitToast() {
+    if (!mounted) return;
+
+    _successOverlayTimer?.cancel();
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: IgnorePointer(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.92, end: 1),
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Opacity(
+                      opacity: value.clamp(0.0, 1.0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1B7FDB), Color(0xFF0F5FB8)],
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4D1273D4),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: const Color(0xFF91C8FF).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.info_rounded, color: WHITE, size: 22),
+                      SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          'Solo puedes reservar una sola vez al dia',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: WHITE,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    overlay.insert(entry);
+    _successOverlayEntry = entry;
+
+    _successOverlayTimer = Timer(const Duration(milliseconds: 2200), () {
+      _successOverlayEntry?.remove();
+      _successOverlayEntry = null;
+    });
+  }
+
+  void _showCenteredCancelToast() {
+    if (!mounted) return;
+
+    _successOverlayTimer?.cancel();
+    _successOverlayEntry?.remove();
+    _successOverlayEntry = null;
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: IgnorePointer(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.92, end: 1),
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutBack,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Opacity(
+                      opacity: value.clamp(0.0, 1.0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFEF5350), Color(0xFFC62828)],
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x66C62828),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: const Color(0xFFFFCDD2).withValues(alpha: 0.75),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.event_busy_rounded, color: WHITE, size: 22),
+                      SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          'Reserva cancelada correctamente',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: WHITE,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    overlay.insert(entry);
+    _successOverlayEntry = entry;
+
+    _successOverlayTimer = Timer(const Duration(milliseconds: 2200), () {
+      _successOverlayEntry?.remove();
+      _successOverlayEntry = null;
+    });
+  }
+
   Future<void> _reserveSlot(SlotModel slot) async {
     try {
+      final selectedSlotDate = slot.slotDate ?? _selectedDate;
+      if (_hasReservationOnDate(selectedSlotDate)) {
+        _showCenteredDailyLimitToast();
+        return;
+      }
+
       final userId = _authService.currentUser?.id ?? '';
       if (userId.isEmpty) {
         if (mounted) {
@@ -1100,15 +1333,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       if (success) {
         await _databaseService.decrementSlotReservations(reservation.slotId);
         await _loadData();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reserva cancelada'),
-              backgroundColor: PRIMARY_COLOR,
-            ),
-          );
-        }
+        _showCenteredCancelToast();
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

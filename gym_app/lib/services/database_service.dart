@@ -7,6 +7,10 @@ import 'package:gym_app/models/slot_model.dart';
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   List<String> _candidateUserIds(String authUserId, String? dbUserId) {
     final candidates = <String>[];
     if (dbUserId != null && dbUserId.isNotEmpty) {
@@ -80,6 +84,80 @@ class DatabaseService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<DateTime?> _getSlotDate(String slotId) async {
+    try {
+      final row = await _supabase
+          .from('franjas_horarias')
+          .select('fecha')
+          .eq('id', slotId)
+          .maybeSingle();
+
+      final rawDate = row?['fecha']?.toString();
+      if (rawDate == null || rawDate.isEmpty) return null;
+      return DateTime.parse(rawDate);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> _hasReservationOnDate({
+    required String userId,
+    required DateTime targetDate,
+  }) async {
+    try {
+      final reservations = await _supabase
+          .from('reservas')
+          .select('id_franja_horaria, estado')
+          .eq('id_usuario', userId)
+          .neq('estado', 'cancelled');
+
+      final rows = (reservations as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      if (rows.isEmpty) return false;
+
+      final slotIds = rows
+          .map((item) => item['id_franja_horaria']?.toString())
+          .whereType<String>()
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+
+      if (slotIds.isEmpty) return false;
+
+      final slots = await _supabase
+          .from('franjas_horarias')
+          .select('id, fecha')
+          .inFilter('id', slotIds);
+
+      final slotDateById = <String, DateTime>{};
+      for (final item in slots as List) {
+        final row = Map<String, dynamic>.from(item as Map);
+        final id = row['id']?.toString();
+        final rawDate = row['fecha']?.toString();
+        if (id == null || rawDate == null || rawDate.isEmpty) continue;
+
+        try {
+          slotDateById[id] = DateTime.parse(rawDate);
+        } catch (_) {}
+      }
+
+      for (final row in rows) {
+        final slotId = row['id_franja_horaria']?.toString();
+        if (slotId == null || slotId.isEmpty) continue;
+
+        final slotDate = slotDateById[slotId];
+        if (slotDate != null && _isSameDay(slotDate, targetDate)) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -198,10 +276,42 @@ class DatabaseService {
         return null;
       }
 
+      final slotDate = await _getSlotDate(slotId);
+
       PostgrestException? lastError;
 
       for (final candidateId in userIds) {
+        if (slotDate != null) {
+          final hasReservation = await _hasReservationOnDate(
+            userId: candidateId,
+            targetDate: slotDate,
+          );
+
+          if (hasReservation) {
+            print(
+              'Error creating reservation: usuario ya tiene reserva en esa fecha',
+            );
+            return null;
+          }
+        }
+
         try {
+          final duplicatedBySlotResponse = await _supabase
+              .from('reservas')
+              .select('id')
+              .eq('id_usuario', candidateId)
+              .eq('id_franja_horaria', slotId)
+              .neq('estado', 'cancelled')
+              .limit(1);
+
+          if (duplicatedBySlotResponse is List &&
+              duplicatedBySlotResponse.isNotEmpty) {
+            print(
+              'Error creating reservation: usuario ya tiene una reserva activa/completada en este horario',
+            );
+            return null;
+          }
+
           final response = await _supabase
               .from('reservas')
               .insert({

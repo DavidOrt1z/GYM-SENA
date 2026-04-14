@@ -1,18 +1,21 @@
 class SlotModel {
   final String id;
   final int gymId;
-  final int dayOfWeek;      // 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
-  final String startTime;   // Formato: "06:30"
-  final String endTime;     // Formato: "07:30"
-  final int capacity;       // Capacidad máxima de personas
-  final int reservedCount;  // Cuántas personas ya se reservaron
-  final String status;      // "active", "inactive", "maintenance"
+  final DateTime? slotDate;
+  final int
+  dayOfWeek; // 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
+  final String startTime; // Formato: "06:30"
+  final String endTime; // Formato: "07:30"
+  final int capacity; // Capacidad máxima de personas
+  final int reservedCount; // Cuántas personas ya se reservaron
+  final String status; // "active", "inactive", "maintenance"
   final DateTime createdAt;
   final DateTime updatedAt;
 
   SlotModel({
     required this.id,
     required this.gymId,
+    this.slotDate,
     required this.dayOfWeek,
     required this.startTime,
     required this.endTime,
@@ -24,16 +27,16 @@ class SlotModel {
   });
 
   // ✅ PROPIEDADES CALCULADAS
-  
+
   /// Espacios disponibles = capacidad - reservados
   int get availableSpots => capacity - reservedCount;
-  
+
   /// ¿Hay espacios disponibles?
   bool get isAvailable => availableSpots > 0 && status == 'active';
-  
+
   /// ¿Está lleno?
   bool get isFull => reservedCount >= capacity;
-  
+
   /// Nombre del día en español
   String get dayName {
     const days = [
@@ -43,26 +46,26 @@ class SlotModel {
       'Jueves',
       'Viernes',
       'Sábado',
-      'Domingo'
+      'Domingo',
     ];
     return days[dayOfWeek % 7];
   }
-  
+
   /// Porcentaje de ocupación (0-100)
   double get occupancyPercentage {
     if (capacity == 0) return 0;
     return (reservedCount / capacity) * 100;
   }
-  
+
   /// Texto de disponibilidad
   String get availabilityText {
     if (!isAvailable) return 'Agotado';
     return '$availableSpots de $capacity disponibles';
   }
-  
+
   /// Información formateada para mostrar
   String get displayTime => '$startTime - $endTime';
-  
+
   /// Formato de hora con AM/PM (Ej: "6:30 - 7:30 AM")
   String get displayTimeWithPeriod {
     try {
@@ -70,19 +73,23 @@ class SlotModel {
       final startParts = startTime.split(':');
       final startHour = int.parse(startParts[0]);
       final startMinute = startParts[1];
-      
+
       // Parse end time
       final endParts = endTime.split(':');
       final endHour = int.parse(endParts[0]);
       final endMinute = endParts[1];
-      
+
       // Convertir a formato 12 horas
-      final startHour12 = startHour > 12 ? startHour - 12 : (startHour == 0 ? 12 : startHour);
-      final endHour12 = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
-      
+      final startHour12 = startHour > 12
+          ? startHour - 12
+          : (startHour == 0 ? 12 : startHour);
+      final endHour12 = endHour > 12
+          ? endHour - 12
+          : (endHour == 0 ? 12 : endHour);
+
       final startPeriod = startHour >= 12 ? 'PM' : 'AM';
       final endPeriod = endHour >= 12 ? 'PM' : 'AM';
-      
+
       // Si el horario no cambia de período, mostrar solo una vez al final
       if (startPeriod == endPeriod) {
         return '$startHour12:$startMinute - $endHour12:$endMinute $endPeriod';
@@ -93,7 +100,7 @@ class SlotModel {
       return '$startTime - $endTime';
     }
   }
-  
+
   /// Formato de lugares disponibles (Ej: "4/7 lugares disponibles")
   String get placesText {
     final available = availableSpots;
@@ -111,14 +118,22 @@ class SlotModel {
     return SlotModel(
       id: json['id'].toString(),
       gymId: (json['gym_id'] as int?) ?? 1,
+      slotDate: fecha,
       dayOfWeek: fecha.weekday - 1,
       startTime: start,
       endTime: end,
       capacity: (json['capacidad'] as int?) ?? 0,
       reservedCount: (json['cantidad_reservada'] as int?) ?? 0,
       status: (json['estado'] as String?) ?? 'active',
-      createdAt: DateTime.parse((json['fecha_creacion'] ?? DateTime.now().toIso8601String()) as String),
-      updatedAt: DateTime.parse((json['fecha_actualizacion'] ?? json['fecha_creacion'] ?? DateTime.now().toIso8601String()) as String),
+      createdAt: DateTime.parse(
+        (json['fecha_creacion'] ?? DateTime.now().toIso8601String()) as String,
+      ),
+      updatedAt: DateTime.parse(
+        (json['fecha_actualizacion'] ??
+                json['fecha_creacion'] ??
+                DateTime.now().toIso8601String())
+            as String,
+      ),
     );
   }
 
@@ -150,6 +165,7 @@ class SlotModel {
   SlotModel copyWith({
     String? id,
     int? gymId,
+    DateTime? slotDate,
     int? dayOfWeek,
     String? startTime,
     String? endTime,
@@ -162,6 +178,7 @@ class SlotModel {
     return SlotModel(
       id: id ?? this.id,
       gymId: gymId ?? this.gymId,
+      slotDate: slotDate ?? this.slotDate,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
@@ -184,10 +201,7 @@ class SlotModel {
   // 🔄 Decrementar contador de reservados (para cancelar)
   SlotModel decrementReserved() {
     final newCount = (reservedCount - 1).clamp(0, capacity);
-    return copyWith(
-      reservedCount: newCount,
-      updatedAt: DateTime.now(),
-    );
+    return copyWith(reservedCount: newCount, updatedAt: DateTime.now());
   }
 
   // 📊 Información para debug
