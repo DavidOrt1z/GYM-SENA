@@ -218,442 +218,450 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
     return Scaffold(
       backgroundColor: DARKER_BG,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0B1420), Color(0xFF091826), Color(0xFF08131F)],
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: PRIMARY_COLOR),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Center(
-                        child: Text(
-                          'Reservas',
-                          style: TextStyle(
-                            color: WHITE,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: ColoredBox(color: DARKER_BG)),
+          SafeArea(
+            bottom: false,
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: PRIMARY_COLOR),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Center(
+                          child: Text(
+                            'Reservas',
+                            style: TextStyle(
+                              color: WHITE,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
-                      // CALENDAR PICKER
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF4F4F4),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                        child: Column(
-                          children: [
-                            // Month Navigation
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      _formatMonthYear(_selectedDate),
-                                      style: const TextStyle(
-                                        color: Color(0xFF2C3E50),
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
+                        // CALENDAR PICKER
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF4F4F4),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                          child: Column(
+                            children: [
+                              // Month Navigation
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _formatMonthYear(_selectedDate),
+                                        style: const TextStyle(
+                                          color: Color(0xFF2C3E50),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      color: Color(0xFF2C3E50),
-                                      size: 22,
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.chevron_left,
-                                        color: Color(0xFF2C3E50),
-                                        size: 34,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _selectedDate = DateTime(
-                                            _selectedDate.year,
-                                            _selectedDate.month - 1,
-                                            _selectedDate.day,
-                                          );
-                                        });
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
+                                      const Icon(
                                         Icons.chevron_right,
                                         color: Color(0xFF2C3E50),
-                                        size: 34,
+                                        size: 22,
                                       ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _selectedDate = DateTime(
-                                            _selectedDate.year,
-                                            _selectedDate.month + 1,
-                                            _selectedDate.day,
-                                          );
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Day headers
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: const [
-                                Text(
-                                  'DOM',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                    ],
                                   ),
-                                ),
-                                Text(
-                                  'LUN',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'MAR',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'MIE',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'JUE',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'VIE',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'SAB',
-                                  style: TextStyle(
-                                    color: Color(0xFFBDBDBD),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Calendar grid
-                            _buildCalendarGrid(),
-                            const SizedBox(height: 12),
-
-                            // Time Picker
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Hora',
-                                  style: TextStyle(
-                                    color: Color(0xFF111111),
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () async {
-                                        final time = await showTimePicker(
-                                          context: context,
-                                          initialTime: _selectedTime,
-                                        );
-                                        if (time != null) {
-                                          setState(() => _selectedTime = time);
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 7,
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.chevron_left,
+                                          color: Color(0xFF2C3E50),
+                                          size: 34,
                                         ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedDate = DateTime(
+                                              _selectedDate.year,
+                                              _selectedDate.month - 1,
+                                              _selectedDate.day,
+                                            );
+                                          });
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.chevron_right,
+                                          color: Color(0xFF2C3E50),
+                                          size: 34,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedDate = DateTime(
+                                              _selectedDate.year,
+                                              _selectedDate.month + 1,
+                                              _selectedDate.day,
+                                            );
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Day headers
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: const [
+                                  Text(
+                                    'DOM',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'LUN',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'MAR',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'MIE',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'JUE',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'VIE',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'SAB',
+                                    style: TextStyle(
+                                      color: Color(0xFFBDBDBD),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Calendar grid
+                              _buildCalendarGrid(),
+                              const SizedBox(height: 12),
+
+                              // Time Picker
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Hora',
+                                    style: TextStyle(
+                                      color: Color(0xFF111111),
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () async {
+                                          final time = await showTimePicker(
+                                            context: context,
+                                            initialTime: _selectedTime,
+                                          );
+                                          if (time != null) {
+                                            setState(
+                                              () => _selectedTime = time,
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 7,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE7E7E7),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _formattedSelectedTime,
+                                            style: const TextStyle(
+                                              color: Color(0xFF1E1E1E),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.all(2),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFE7E7E7),
                                           borderRadius: BorderRadius.circular(
-                                            8,
+                                            9,
                                           ),
                                         ),
-                                        child: Text(
-                                          _formattedSelectedTime,
-                                          style: const TextStyle(
-                                            color: Color(0xFF1E1E1E),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    _selectedTime.period ==
+                                                        DayPeriod.am
+                                                    ? WHITE
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(7),
+                                                border:
+                                                    _selectedTime.period ==
+                                                        DayPeriod.am
+                                                    ? Border.all(
+                                                        color: const Color(
+                                                          0xFFD0D0D0,
+                                                        ),
+                                                      )
+                                                    : null,
+                                              ),
+                                              child: const Text(
+                                                'AM',
+                                                style: TextStyle(
+                                                  color: Color(0xFF111111),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    _selectedTime.period ==
+                                                        DayPeriod.pm
+                                                    ? WHITE
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(7),
+                                                border:
+                                                    _selectedTime.period ==
+                                                        DayPeriod.pm
+                                                    ? Border.all(
+                                                        color: const Color(
+                                                          0xFFD0D0D0,
+                                                        ),
+                                                      )
+                                                    : null,
+                                              ),
+                                              child: const Text(
+                                                'PM',
+                                                style: TextStyle(
+                                                  color: Color(0xFF111111),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE7E7E7),
-                                        borderRadius: BorderRadius.circular(9),
-                                      ),
-                                      child: Row(
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Date header
+                        Text(
+                          _formatDate(_selectedDate),
+                          style: const TextStyle(
+                            color: WHITE,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Slots List
+                        if (!_isWeekday(_selectedDate))
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: DARK_BG,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'El gimnasio solo atiende de Lunes a Viernes',
+                                style: TextStyle(
+                                  color: SECONDARY_COLOR,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (slotsForDay.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: DARK_BG,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'No hay horarios disponibles para este día',
+                                style: TextStyle(
+                                  color: SECONDARY_COLOR,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: slotsForDay.length,
+                            itemBuilder: (context, index) {
+                              final slot = slotsForDay[index];
+                              final isReserved = _isSlotReservedByUser(slot);
+                              final isFull = !slot.isAvailable;
+
+                              final buttonColor = isReserved
+                                  ? const Color(0xFF4D647A)
+                                  : isFull
+                                  ? const Color(0xFF2A3E52)
+                                  : PRIMARY_COLOR;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  _selectedTime.period ==
-                                                      DayPeriod.am
-                                                  ? WHITE
-                                                  : Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(7),
-                                              border:
-                                                  _selectedTime.period ==
-                                                      DayPeriod.am
-                                                  ? Border.all(
-                                                      color: const Color(
-                                                        0xFFD0D0D0,
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: const Text(
-                                              'AM',
-                                              style: TextStyle(
-                                                color: Color(0xFF111111),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                          Text(
+                                            slot.displayTimeWithPeriod,
+                                            style: const TextStyle(
+                                              color: WHITE,
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  _selectedTime.period ==
-                                                      DayPeriod.pm
-                                                  ? WHITE
-                                                  : Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(7),
-                                              border:
-                                                  _selectedTime.period ==
-                                                      DayPeriod.pm
-                                                  ? Border.all(
-                                                      color: const Color(
-                                                        0xFFD0D0D0,
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: const Text(
-                                              'PM',
-                                              style: TextStyle(
-                                                color: Color(0xFF111111),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            slot.placesText,
+                                            style: const TextStyle(
+                                              color: SECONDARY_COLOR,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Date header
-                      Text(
-                        _formatDate(_selectedDate),
-                        style: const TextStyle(
-                          color: WHITE,
-                          fontSize: 34,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Slots List
-                      if (!_isWeekday(_selectedDate))
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: DARK_BG,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'El gimnasio solo atiende de Lunes a Viernes',
-                              style: TextStyle(
-                                color: SECONDARY_COLOR,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        )
-                      else if (slotsForDay.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: DARK_BG,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'No hay horarios disponibles para este día',
-                              style: TextStyle(
-                                color: SECONDARY_COLOR,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: slotsForDay.length,
-                          itemBuilder: (context, index) {
-                            final slot = slotsForDay[index];
-                            final isReserved = _isSlotReservedByUser(slot);
-                            final isFull = !slot.isAvailable;
-
-                            final buttonColor = isReserved
-                                ? const Color(0xFF4D647A)
-                                : isFull
-                                ? const Color(0xFF2A3E52)
-                                : PRIMARY_COLOR;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          slot.displayTimeWithPeriod,
+                                    const SizedBox(width: 10),
+                                    GestureDetector(
+                                      onTap: isReserved || isFull
+                                          ? null
+                                          : () => _showReservationConfirmation(
+                                              slot,
+                                            ),
+                                      child: Container(
+                                        width: 102,
+                                        alignment: Alignment.center,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: buttonColor,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isReserved
+                                              ? 'Reservado'
+                                              : isFull
+                                              ? 'Agotado'
+                                              : 'Reservar',
                                           style: const TextStyle(
                                             color: WHITE,
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
                                           ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          slot.placesText,
-                                          style: const TextStyle(
-                                            color: SECONDARY_COLOR,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  GestureDetector(
-                                    onTap: isReserved || isFull
-                                        ? null
-                                        : () => _showReservationConfirmation(
-                                            slot,
-                                          ),
-                                    child: Container(
-                                      width: 102,
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: buttonColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        isReserved
-                                            ? 'Reservado'
-                                            : isFull
-                                            ? 'Agotado'
-                                            : 'Reservar',
-                                        style: const TextStyle(
-                                          color: WHITE,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // My Reservations
-                      if (_userReservations.isNotEmpty) _buildMyReservations(),
-                    ],
+                        // My Reservations
+                        if (_userReservations.isNotEmpty)
+                          _buildMyReservations(),
+                      ],
+                    ),
                   ),
-                ),
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1153,11 +1161,14 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                         child: Text(
                           'Solo puedes reservar una sola vez al dia',
                           textAlign: TextAlign.center,
+                          maxLines: 2,
                           style: TextStyle(
                             color: WHITE,
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
+                            height: 1.25,
+                            decoration: TextDecoration.none,
                           ),
                         ),
                       ),

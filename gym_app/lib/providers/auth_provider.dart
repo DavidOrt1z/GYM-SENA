@@ -3,7 +3,7 @@ import 'package:gym_app/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
   bool _isAuthenticated = false;
@@ -11,6 +11,30 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
+
+  String _mapLoginError(String errorMsg) {
+    final normalized = errorMsg.toLowerCase();
+
+    if (normalized.contains('invalid login credentials') ||
+        normalized.contains('invalid_grant') ||
+        normalized.contains('user not found')) {
+      return 'No encontramos una cuenta con ese correo o la contraseña es incorrecta';
+    }
+
+    if (normalized.contains('email not confirmed')) {
+      return 'Por favor confirma tu email';
+    }
+
+    if (normalized.contains('authretryablefetchexception') ||
+        normalized.contains('clientfailed to fetch') ||
+        normalized.contains('socketexception') ||
+        normalized.contains('failed host lookup') ||
+        normalized.contains('network')) {
+      return 'No pudimos conectar con el servidor. Revisa tu internet e intenta de nuevo';
+    }
+
+    return 'No se pudo iniciar sesión. Intenta nuevamente';
+  }
 
   // Login
   Future<bool> login(String email, String password) async {
@@ -29,21 +53,10 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       String errorMsg = e.toString();
-      
+
       print('Error en login: $errorMsg'); // Para debug
-      
-      if (errorMsg.contains('Invalid login credentials')) {
-        _errorMessage = 'Email o contraseña incorrectos';
-      } else if (errorMsg.contains('Email not confirmed')) {
-        _errorMessage = 'Por favor confirma tu email';
-      } else if (errorMsg.contains('User not found')) {
-        _errorMessage = 'Usuario no encontrado';
-      } else if (errorMsg.contains('invalid_grant')) {
-        _errorMessage = 'Email o contraseña incorrectos';
-      } else {
-        _errorMessage = 'Error: ${errorMsg.split('\n').first.replaceAll('Exception: ', '')}';
-      }
-      
+      _errorMessage = _mapLoginError(errorMsg);
+
       _isLoading = false;
       notifyListeners();
       return false;
@@ -69,12 +82,13 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       // Procesar mensajes de error para hacerlos más amigables
       String errorMsg = e.toString();
-      
+
       print('Error completo de registro: $errorMsg'); // Para debug
-      
+
       if (errorMsg.contains('Password should be at least 8 characters')) {
         _errorMessage = 'La contraseña debe tener mínimo 8 caracteres';
-      } else if (errorMsg.contains('already_registered') || errorMsg.contains('User already registered')) {
+      } else if (errorMsg.contains('already_registered') ||
+          errorMsg.contains('User already registered')) {
         _errorMessage = 'Este email ya está registrado';
       } else if (errorMsg.contains('invalid_credentials')) {
         _errorMessage = 'Email o contraseña inválidos';
@@ -84,9 +98,10 @@ class AuthProvider extends ChangeNotifier {
         _errorMessage = 'El email no es válido';
       } else {
         // Mostrar un extracto del error real para debug
-        _errorMessage = 'Error: ${errorMsg.split('\n').first.replaceAll('Exception: ', '')}';
+        _errorMessage =
+            'Error: ${errorMsg.split('\n').first.replaceAll('Exception: ', '')}';
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return false;
