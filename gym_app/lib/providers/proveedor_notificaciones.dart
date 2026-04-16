@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/servicio_notificaciones.dart';
 
 /// Provider para manejar notificaciones con Supabase
 class ProveedorNotificaciones extends ChangeNotifier {
-  final ServicioNotificaciones _servicioNotificaciones = ServicioNotificaciones();
+  static const String _claveNotificaciones = 'notificaciones_habilitadas';
+  final ServicioNotificaciones _servicioNotificaciones =
+      ServicioNotificaciones();
 
   bool _notificacionesHabilitadas = true;
   List<Map<String, dynamic>> _notificaciones = [];
@@ -19,8 +22,13 @@ class ProveedorNotificaciones extends ChangeNotifier {
       _cargando = true;
       notifyListeners();
 
+      final prefs = await SharedPreferences.getInstance();
+      _notificacionesHabilitadas = prefs.getBool(_claveNotificaciones) ?? true;
+
       // Inicializar servicio de notificaciones
-      await _servicioNotificaciones.inicializar();
+      if (_notificacionesHabilitadas) {
+        await _servicioNotificaciones.inicializar();
+      }
 
       // Cargar notificaciones guardadas
       await cargarNotificaciones();
@@ -52,8 +60,18 @@ class ProveedorNotificaciones extends ChangeNotifier {
   }
 
   /// Habilitar/deshabilitar notificaciones
-  void alternarNotificaciones(bool valor) {
+  Future<void> alternarNotificaciones(bool valor) async {
     _notificacionesHabilitadas = valor;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_claveNotificaciones, valor);
+
+    if (valor) {
+      await _servicioNotificaciones.inicializar();
+      await cargarNotificaciones();
+    } else {
+      await _servicioNotificaciones.destruir();
+    }
+
     notifyListeners();
   }
 

@@ -1,11 +1,14 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Servicio de notificaciones usando Supabase Realtime + Local Notifications
 /// Maneja notificaciones para usuarios y admins sin dependencias externas
 class ServicioNotificaciones {
-  static final ServicioNotificaciones _instancia = ServicioNotificaciones._interno();
+  static final ServicioNotificaciones _instancia =
+      ServicioNotificaciones._interno();
 
   factory ServicioNotificaciones() {
     return _instancia;
@@ -18,6 +21,7 @@ class ServicioNotificaciones {
       FlutterLocalNotificationsPlugin();
 
   bool _inicializado = false;
+  bool _timezoneInicializado = false;
   RealtimeChannel? _realtime;
 
   /// Tipos de notificaciones
@@ -34,6 +38,11 @@ class ServicioNotificaciones {
       // Configurar notificaciones locales
       await _configurarNotificacionesLocales();
 
+      if (!_timezoneInicializado) {
+        tz.initializeTimeZones();
+        _timezoneInicializado = true;
+      }
+
       // Crear canales de notificación (Android)
       await crearCanales();
 
@@ -44,6 +53,80 @@ class ServicioNotificaciones {
       print('✅ Servicio de notificaciones inicializado (Supabase Realtime)');
     } catch (e) {
       print('❌ Error inicializando notificaciones: $e');
+    }
+  }
+
+  int _reservationReminderId(String reservationId) {
+    var hash = 0;
+    for (final unit in reservationId.codeUnits) {
+      hash = ((hash * 31) + unit) & 0x7fffffff;
+    }
+    return 100000 + (hash % 900000);
+  }
+
+  Future<void> programarRecordatorioReserva({
+    required String reservationId,
+    required String fecha,
+    required String horaInicio,
+    String? horaFin,
+  }) async {
+    try {
+      if (!_inicializado) {
+        await inicializar();
+      }
+
+      final startIso = '${fecha}T$horaInicio';
+      final startDate = DateTime.tryParse(startIso);
+      if (startDate == null) return;
+
+      final reminderDate = startDate.subtract(const Duration(minutes: 15));
+      if (!reminderDate.isAfter(DateTime.now())) return;
+
+      const androidDetails = AndroidNotificationDetails(
+        'gym_sena_reservas',
+        'Reservas',
+        channelDescription: 'Notificaciones de reservas y recordatorios',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      final reminderTz = tz.TZDateTime.from(reminderDate, tz.local);
+      final rangeText = (horaFin != null && horaFin.isNotEmpty)
+          ? '$horaInicio - $horaFin'
+          : horaInicio;
+
+      await _localNotifications.zonedSchedule(
+        _reservationReminderId(reservationId),
+        'Recordatorio de reserva',
+        'Tu reserva inicia en 15 minutos ($rangeText).',
+        reminderTz,
+        details,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: TIPO_RECORDATORIO,
+      );
+    } catch (e) {
+      print('❌ Error programando recordatorio: $e');
+    }
+  }
+
+  Future<void> cancelarRecordatorioReserva(String reservationId) async {
+    try {
+      await _localNotifications.cancel(_reservationReminderId(reservationId));
+    } catch (e) {
+      print('❌ Error cancelando recordatorio: $e');
     }
   }
 
@@ -69,7 +152,9 @@ class ServicioNotificaciones {
     try {
       final usuarioId = supabase.auth.currentUser?.id;
       if (usuarioId == null) {
-        print('⚠️ Usuario no autenticado, no se pueden escuchar notificaciones');
+        print(
+          '⚠️ Usuario no autenticado, no se pueden escuchar notificaciones',
+        );
         return;
       }
 
@@ -195,7 +280,8 @@ class ServicioNotificaciones {
     for (final canal in canales) {
       await _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(canal);
     }
   }
@@ -238,8 +324,9 @@ class ServicioNotificaciones {
   /// Limpiar notificaciones antiguas
   Future<void> limpiarNotificacionesAntiguas(int diasAntiguos) async {
     try {
-      final fecha =
-          DateTime.now().subtract(Duration(days: diasAntiguos)).toIso8601String();
+      final fecha = DateTime.now()
+          .subtract(Duration(days: diasAntiguos))
+          .toIso8601String();
 
       await supabase
           .from('notificaciones_historial')
@@ -266,4 +353,3 @@ class ServicioNotificaciones {
     _inicializado = false;
   }
 }
-

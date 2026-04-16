@@ -52,37 +52,40 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProveedorNotificaciones()),
         ChangeNotifierProvider.value(value: proveedorIdioma),
       ],
-      child: MaterialApp(
-        title: 'Gym SENA',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          scaffoldBackgroundColor: DARKER_BG,
-          fontFamily: 'Manrope',
-          appBarTheme: const AppBarTheme(shadowColor: Colors.transparent),
-          dividerColor: Colors.transparent,
-        ),
-        localizationsDelegates: [
-          AppLocalizationsDelegate(),
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
+      child: Consumer<ProveedorIdioma>(
+        builder: (context, idiomaProvider, _) => MaterialApp(
+          title: 'Gym SENA',
+          debugShowCheckedModeBanner: false,
+          locale: idiomaProvider.locale,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            scaffoldBackgroundColor: DARKER_BG,
+            fontFamily: 'Manrope',
+            appBarTheme: const AppBarTheme(shadowColor: Colors.transparent),
+            dividerColor: Colors.transparent,
+          ),
+          localizationsDelegates: [
+            AppLocalizationsDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale(AppLocalizations.es),
-          Locale(AppLocalizations.en),
-        ],
-        home: const HomeRouterScreen(),
-        routes: {
-          '/welcome': (context) => const WelcomeScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/forgot-password': (context) => const ForgotPasswordScreen(),
-          '/home': (context) => const MainNavigationScreen(),
-          '/settings': (context) => const SettingsScreen(),
-        },
+          ],
+          supportedLocales: const [
+            Locale(AppLocalizations.es),
+            Locale(AppLocalizations.en),
+          ],
+          home: const HomeRouterScreen(),
+          routes: {
+            '/welcome': (context) => const WelcomeScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/home': (context) => const MainNavigationScreen(),
+            '/settings': (context) => const SettingsScreen(),
+          },
+        ),
       ),
     );
   }

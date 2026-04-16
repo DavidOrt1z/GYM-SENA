@@ -3,9 +3,33 @@ import 'package:gym_app/models/user_model.dart';
 import 'package:gym_app/models/weight_log_model.dart';
 import 'package:gym_app/models/reservation_model.dart';
 import 'package:gym_app/models/slot_model.dart';
+import 'package:gym_app/services/servicio_notificaciones.dart';
 
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ServicioNotificaciones _notificationService = ServicioNotificaciones();
+
+  Future<void> _createNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      await _supabase.from('notificaciones_historial').insert({
+        'usuario_id': userId,
+        'titulo': title,
+        'cuerpo': body,
+        'tipo': type,
+        'datos': data ?? <String, dynamic>{},
+        'entregada': true,
+        'abierta': false,
+      });
+    } catch (_) {
+      // No romper el flujo principal de reserva por un fallo de notificacion.
+    }
+  }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -323,6 +347,46 @@ class DatabaseService {
               .select()
               .single();
 
+          try {
+            final slotInfo = await _supabase
+                .from('franjas_horarias')
+                .select('fecha, hora_inicio, hora_fin')
+                .eq('id', slotId)
+                .maybeSingle();
+
+            final fecha = slotInfo?['fecha']?.toString() ?? '';
+            final horaInicio = slotInfo?['hora_inicio']?.toString() ?? '';
+            final horaFin = slotInfo?['hora_fin']?.toString() ?? '';
+
+            await _createNotification(
+              userId: candidateId,
+              title: 'Reserva confirmada',
+              body: fecha.isNotEmpty && horaInicio.isNotEmpty
+                  ? 'Tu reserva fue confirmada para $fecha, $horaInicio - $horaFin.'
+                  : 'Tu reserva fue confirmada correctamente.',
+              type: 'reserva_confirmada',
+              data: {
+                'reserva_id': response['id']?.toString(),
+                'franja_id': slotId,
+                'fecha': fecha,
+                'hora_inicio': horaInicio,
+                'hora_fin': horaFin,
+              },
+            );
+
+            final reservationId = response['id']?.toString() ?? '';
+            if (reservationId.isNotEmpty &&
+                fecha.isNotEmpty &&
+                horaInicio.isNotEmpty) {
+              await _notificationService.programarRecordatorioReserva(
+                reservationId: reservationId,
+                fecha: fecha,
+                horaInicio: horaInicio,
+                horaFin: horaFin,
+              );
+            }
+          } catch (_) {}
+
           return ReservationModel.fromJson(response);
         } on PostgrestException catch (error) {
           lastError = error;
@@ -354,6 +418,7 @@ class DatabaseService {
 
       // Si RLS bloquea el UPDATE, PostgREST puede responder sin error pero con 0 filas.
       if (response is List && response.isNotEmpty) {
+        await _notificationService.cancelarRecordatorioReserva(reservationId);
         return true;
       }
 
@@ -455,9 +520,51 @@ class DatabaseService {
           .eq('id_usuario', dbUserId)
           .order('fecha', ascending: true);
 
-      return (response as List)
+      final logs = (response as List)
           .map((json) => WeightLogModel.fromJson(json as Map<String, dynamic>))
           .toList();
+
+      if (logs.isNotEmpty) {
+        return logs;
+      }
+
+      // Fallback: si no hay historial en registros_peso,
+      // usar el peso actual guardado en perfil (tabla users).
+      final userRow = await _supabase
+          .from('users')
+          .select(
+            'peso_kg, fecha_actualizacion, updated_at, fecha_creacion, created_at',
+          )
+          .eq('id', dbUserId)
+          .maybeSingle();
+
+      final profileWeight = (userRow?['peso_kg'] as num?)?.toDouble();
+      if (profileWeight == null || profileWeight <= 0) {
+        return [];
+      }
+
+      final rawDate =
+          userRow?['fecha_actualizacion'] ??
+          userRow?['updated_at'] ??
+          userRow?['fecha_creacion'] ??
+          userRow?['created_at'];
+
+      final parsedDate = rawDate != null
+          ? DateTime.tryParse(rawDate.toString()) ?? DateTime.now()
+          : DateTime.now();
+
+      return [
+        WeightLogModel(
+          id: 'perfil-$dbUserId',
+          userId: dbUserId,
+          weight: profileWeight,
+          unit: 'kg',
+          recordedAt: parsedDate,
+          notes: 'Peso base del perfil',
+          createdAt: parsedDate,
+          updatedAt: parsedDate,
+        ),
+      ];
     } catch (e) {
       print('Error fetching weight logs: $e');
       return [];

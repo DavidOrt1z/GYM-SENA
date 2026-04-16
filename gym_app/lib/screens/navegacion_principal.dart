@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
 import 'package:gym_app/screens/inicio/pantalla_inicio.dart';
 import 'package:gym_app/screens/reservas/pantalla_reservas.dart';
 import 'package:gym_app/screens/progreso/pantalla_progreso.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil.dart';
 import 'package:gym_app/utils/constants.dart';
+import 'package:gym_app/providers/proveedor_notificaciones.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -38,6 +40,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ProveedorNotificaciones>().inicializar();
+    });
 
     if (widget.initialMessage != null &&
         widget.initialMessage!.trim().isNotEmpty) {

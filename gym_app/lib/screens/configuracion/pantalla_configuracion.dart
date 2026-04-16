@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../utils/constants.dart';
 import '../../providers/proveedor_idioma.dart';
+import '../../providers/proveedor_notificaciones.dart';
 import 'pantalla_idioma.dart';
 import 'pantalla_configuracion_privacidad.dart';
 import 'pantalla_centro_ayuda.dart';
@@ -16,8 +17,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,16 +74,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // NOTIFICACIONES
             _buildSectionTitle('Notificaciones'),
             const SizedBox(height: 12),
-            _buildToggleSetting(
-              iconPath: 'assets/icons/Notificacion.svg',
-              title: 'Notificaciones de la aplicación',
-              subtitle: 'Recibe notificaciones sobre nuevas funciones, actualizaciones .',
-              value: _notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _notificationsEnabled = value;
-                });
-              },
+            Consumer<ProveedorNotificaciones>(
+              builder: (context, notificacionesProvider, _) => _buildToggleSetting(
+                iconPath: 'assets/icons/Notificacion.svg',
+                title: 'Notificaciones de la aplicación',
+                subtitle:
+                    'Recibe notificaciones sobre nuevas funciones, actualizaciones .',
+                value: notificacionesProvider.notificacionesHabilitadas,
+                onChanged: (value) {
+                  notificacionesProvider.alternarNotificaciones(value);
+                },
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -95,7 +95,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingItem(
               iconPath: 'assets/icons/Privacidad.svg',
               title: 'Configuracion de Ajustes',
-              subtitle: 'Administra la configuración de privacidad de tu cuenta.',
+              subtitle:
+                  'Administra la configuración de privacidad de tu cuenta.',
               onTap: () {
                 Navigator.push(
                   context,
@@ -213,11 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: SECONDARY_COLOR,
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: SECONDARY_COLOR, size: 24),
           ],
         ),
       ),
@@ -243,11 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: SvgPicture.asset(
-                iconPath,
-                width: 16,
-                height: 16,
-              ),
+              child: SvgPicture.asset(iconPath, width: 16, height: 16),
             ),
           ),
           const SizedBox(width: 16),
@@ -266,10 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: SECONDARY_COLOR,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
                 ),
               ],
             ),
