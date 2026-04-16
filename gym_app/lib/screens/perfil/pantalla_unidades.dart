@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/constants.dart';
+import '../../utils/error_messages.dart';
 import 'pantalla_unidades_guardadas.dart';
 
 class UnitsScreen extends StatefulWidget {
@@ -81,7 +82,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
           if (units == 'metric') {
             _selectedWeightUnit = 'kg';
             _selectedHeightUnit = 'm';
-            if (weight != null) _weightController.text = weight.toStringAsFixed(1);
+            if (weight != null)
+              _weightController.text = weight.toStringAsFixed(1);
             if (height != null) {
               // Mostrar altura en cm cuando la unidad es metros
               _heightController.text = height.toStringAsFixed(0);
@@ -89,8 +91,10 @@ class _UnitsScreenState extends State<UnitsScreen> {
           } else {
             _selectedWeightUnit = 'lbs';
             _selectedHeightUnit = 'ft';
-            if (weight != null) _weightController.text = (weight * 2.20462).toStringAsFixed(1);
-            if (height != null) _heightController.text = (height / 30.48).toStringAsFixed(2);
+            if (weight != null)
+              _weightController.text = (weight * 2.20462).toStringAsFixed(1);
+            if (height != null)
+              _heightController.text = (height / 30.48).toStringAsFixed(2);
           }
         });
       }
@@ -125,7 +129,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       if (_selectedWeightUnit == 'lbs') {
         weight = weight / 2.20462; // lbs a kg
       }
-      
+
       // Para altura: si está en metros, convertir a cm
       // Si está en pies, convertir a cm
       if (_selectedHeightUnit == 'ft') {
@@ -154,15 +158,21 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
       if (mounted) {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const UnitsSavedScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const UnitsSavedScreen()),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback:
+                    'No se pudieron guardar las unidades. Intenta nuevamente',
+              ),
+            ),
+          ),
         );
       }
     } finally {
@@ -209,30 +219,44 @@ class _UnitsScreenState extends State<UnitsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _weightController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       style: const TextStyle(color: WHITE),
                       decoration: InputDecoration(
                         hintText: 'Ingresa el peso',
                         hintStyle: const TextStyle(color: SECONDARY_COLOR),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -240,11 +264,16 @@ class _UnitsScreenState extends State<UnitsScreen> {
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        _selectedWeightUnit = _selectedWeightUnit == 'kg' ? 'lbs' : 'kg';
+                        _selectedWeightUnit = _selectedWeightUnit == 'kg'
+                            ? 'lbs'
+                            : 'kg';
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: PRIMARY_COLOR, width: 2),
                         borderRadius: BorderRadius.circular(12),
@@ -261,9 +290,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Sección Altura
               const Text(
                 'Altura',
@@ -274,30 +303,44 @@ class _UnitsScreenState extends State<UnitsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _heightController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       style: const TextStyle(color: WHITE),
                       decoration: InputDecoration(
                         hintText: 'Ej: 1.74 o 174',
                         hintStyle: const TextStyle(color: SECONDARY_COLOR),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                          borderSide: const BorderSide(
+                            color: PRIMARY_COLOR,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -305,11 +348,16 @@ class _UnitsScreenState extends State<UnitsScreen> {
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        _selectedHeightUnit = _selectedHeightUnit == 'm' ? 'ft' : 'm';
+                        _selectedHeightUnit = _selectedHeightUnit == 'm'
+                            ? 'ft'
+                            : 'm';
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: PRIMARY_COLOR, width: 2),
                         borderRadius: BorderRadius.circular(12),
@@ -326,9 +374,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
                   ),
                 ],
               ),
-              
+
               const Spacer(),
-              
+
               // Botón Guardar
               SizedBox(
                 width: double.infinity,
@@ -360,7 +408,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
             ],
           ),

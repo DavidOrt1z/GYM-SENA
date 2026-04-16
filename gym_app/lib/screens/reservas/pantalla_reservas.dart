@@ -7,6 +7,7 @@ import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/services/database_service.dart';
 import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
 import 'package:gym_app/utils/constants.dart';
+import 'package:gym_app/utils/error_messages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ReservationsScreen extends StatefulWidget {
@@ -1326,7 +1327,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al realizar la reserva: $e'),
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo realizar la reserva. Intenta nuevamente',
+              ),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -1361,7 +1367,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cancelar la reserva: $e'),
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo cancelar la reserva. Intenta nuevamente',
+              ),
+            ),
             backgroundColor: Colors.red,
           ),
         );

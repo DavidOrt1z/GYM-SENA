@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/constants.dart';
+import '../../utils/error_messages.dart';
 import 'pantalla_gracias_retroalimentacion.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -58,7 +59,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     onTap: () {
                       _showHelpDetail(
                         title: 'Restablezco mi contraseña',
-                        content: 'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En la pantalla de inicio de sesión, selecciona "Olvide mi contraseña".\n\n2. Ingresa el correo electrónico asociado a tu cuenta del SENA.\n\n3. Revisa tu correo electrónico y sigue el enlace para crear una nueva contraseña.\n\n4. Una vez completado, podrás iniciar sesión nuevamente con tu nueva clave.\n\nNota:\nSi no recibes el correo en unos minutos, revisa tu bandeja de spam o comunícate con soporte',
+                        content:
+                            'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En la pantalla de inicio de sesión, selecciona "Olvide mi contraseña".\n\n2. Ingresa el correo electrónico asociado a tu cuenta del SENA.\n\n3. Revisa tu correo electrónico y sigue el enlace para crear una nueva contraseña.\n\n4. Una vez completado, podrás iniciar sesión nuevamente con tu nueva clave.\n\nNota:\nSi no recibes el correo en unos minutos, revisa tu bandeja de spam o comunícate con soporte',
                       );
                     },
                   ),
@@ -68,17 +70,20 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     onTap: () {
                       _showHelpDetail(
                         title: 'Horario de apertura',
-                        content: 'Días de la semana\n\nMañana\nLunes a Viernes: 6:30 AM hasta las 10:00 AM\n\nTarde\nLunes a Viernes: 3:00 PM hasta las 5:00 PM',
+                        content:
+                            'Días de la semana\n\nMañana\nLunes a Viernes: 6:30 AM hasta las 10:00 AM\n\nTarde\nLunes a Viernes: 3:00 PM hasta las 5:00 PM',
                       );
                     },
                   ),
                   const SizedBox(height: 12),
                   _buildQuestionBox(
-                    title: '¿Cómo puedo actualizar la información de mi perfil?',
+                    title:
+                        '¿Cómo puedo actualizar la información de mi perfil?',
                     onTap: () {
                       _showHelpDetail(
                         title: 'Actualizar la información de mi perfil',
-                        content: 'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En el menú inferior, selecciona "Perfil"\n\n2. Toca el icono o botón de "Editar perfil".\n\n3. Actualiza los campos que desees (nombre, apellido, años, etc.).\n\n4. Pulsa "Guardar cambios" para confirmar.\n\nConsejo:\nMantén tu información actualizada para recibir notificaciones y recordatorios correctamente.',
+                        content:
+                            'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En el menú inferior, selecciona "Perfil"\n\n2. Toca el icono o botón de "Editar perfil".\n\n3. Actualiza los campos que desees (nombre, apellido, años, etc.).\n\n4. Pulsa "Guardar cambios" para confirmar.\n\nConsejo:\nMantén tu información actualizada para recibir notificaciones y recordatorios correctamente.',
                       );
                     },
                   ),
@@ -89,7 +94,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             const SizedBox(height: 32),
 
             // INFORMAR UN PROBLEMA
-            _buildSectionTitle('Informar un problema o proporcionar comentarios'),
+            _buildSectionTitle(
+              'Informar un problema o proporcionar comentarios',
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -112,7 +119,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                        borderSide: const BorderSide(
+                          color: PRIMARY_COLOR,
+                          width: 2,
+                        ),
                       ),
                       filled: true,
                       fillColor: DARK_BG,
@@ -167,10 +177,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     );
   }
 
-  Widget _buildHelpItem({
-    required String title,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildHelpItem({required String title, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -188,11 +195,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Icon(
-              Icons.chevron_right,
-              color: SECONDARY_COLOR,
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: SECONDARY_COLOR, size: 24),
           ],
         ),
       ),
@@ -208,10 +211,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: SECONDARY_COLOR.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: SECONDARY_COLOR.withOpacity(0.3), width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -227,11 +227,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Icon(
-              Icons.chevron_right,
-              color: SECONDARY_COLOR,
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right, color: SECONDARY_COLOR, size: 20),
           ],
         ),
       ),
@@ -250,11 +246,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: PRIMARY_COLOR,
-              size: 24,
-            ),
+            Icon(icon, color: PRIMARY_COLOR, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -281,21 +273,14 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: SECONDARY_COLOR,
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: SECONDARY_COLOR, size: 24),
           ],
         ),
       ),
     );
   }
 
-  void _showHelpDetail({
-    required String title,
-    required String content,
-  }) {
+  void _showHelpDetail({required String title, required String content}) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -303,10 +288,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           backgroundColor: DARK_BG,
           title: Text(
             title,
-            style: const TextStyle(
-              color: WHITE,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(color: WHITE, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Text(
@@ -339,7 +321,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      
+
       if (user == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -361,16 +343,19 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       if (mounted) {
         _feedbackController.clear();
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const FeedbackThanksScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FeedbackThanksScreen()),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al enviar el comentario: $e'),
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo enviar el comentario. Intenta nuevamente',
+              ),
+            ),
             backgroundColor: Colors.red,
           ),
         );

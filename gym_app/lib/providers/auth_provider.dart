@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/auth_service.dart';
+import 'package:gym_app/utils/error_messages.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -33,7 +34,10 @@ class AuthProvider extends ChangeNotifier {
       return 'No pudimos conectar con el servidor. Revisa tu internet e intenta de nuevo';
     }
 
-    return 'No se pudo iniciar sesión. Intenta nuevamente';
+    return AppErrorMessages.map(
+      errorMsg,
+      fallback: 'No se pudo iniciar sesión. Intenta nuevamente',
+    );
   }
 
   // Login
@@ -97,9 +101,10 @@ class AuthProvider extends ChangeNotifier {
       } else if (errorMsg.contains('email')) {
         _errorMessage = 'El email no es válido';
       } else {
-        // Mostrar un extracto del error real para debug
-        _errorMessage =
-            'Error: ${errorMsg.split('\n').first.replaceAll('Exception: ', '')}';
+        _errorMessage = AppErrorMessages.map(
+          errorMsg,
+          fallback: 'No se pudo completar el registro. Intenta nuevamente',
+        );
       }
 
       _isLoading = false;

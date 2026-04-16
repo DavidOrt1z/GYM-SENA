@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_app/providers/auth_provider.dart';
 import 'package:gym_app/utils/constants.dart';
+import 'package:gym_app/utils/error_messages.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import 'pantalla_olvide_contrasena.dart';
 
@@ -60,7 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error: ${e.toString()}';
+        _errorMessage = AppErrorMessages.map(
+          e,
+          fallback: 'No se pudo iniciar sesión. Intenta nuevamente',
+        );
       });
     } finally {
       setState(() {

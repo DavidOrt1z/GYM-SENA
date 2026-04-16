@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/utils/constants.dart';
+import 'package:gym_app/utils/error_messages.dart';
 import 'pantalla_nueva_contrasena.dart';
 
 class VerifyResetCodeScreen extends StatefulWidget {
   final String email;
 
-  const VerifyResetCodeScreen({
-    super.key,
-    required this.email,
-  });
+  const VerifyResetCodeScreen({super.key, required this.email});
 
   @override
   State<VerifyResetCodeScreen> createState() => _VerifyResetCodeScreenState();
 }
 
 class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final AuthService _authService = AuthService();
 
@@ -62,10 +62,8 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ResetNewPasswordScreen(
-              email: widget.email,
-              token: code,
-            ),
+            builder: (context) =>
+                ResetNewPasswordScreen(email: widget.email, token: code),
           ),
         );
       }
@@ -97,7 +95,10 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = AppErrorMessages.map(
+          e,
+          fallback: 'No se pudo reenviar el código. Intenta nuevamente',
+        );
         _isLoading = false;
       });
     }
@@ -132,7 +133,8 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     kToolbarHeight -
                     MediaQuery.of(context).padding.top,
               ),
@@ -187,13 +189,15 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                               fillColor: const Color(0xFF243244),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    const BorderSide(color: SECONDARY_COLOR),
+                                borderSide: const BorderSide(
+                                  color: SECONDARY_COLOR,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    const BorderSide(color: SECONDARY_COLOR),
+                                borderSide: const BorderSide(
+                                  color: SECONDARY_COLOR,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -205,8 +209,9 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                             ),
                             onChanged: (value) {
                               if (value.isNotEmpty && index < 5) {
-                                FocusScope.of(context)
-                                    .requestFocus(_focusNodes[index + 1]);
+                                FocusScope.of(
+                                  context,
+                                ).requestFocus(_focusNodes[index + 1]);
                               }
                             },
                           ),
@@ -248,7 +253,9 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                                 width: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(WHITE),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    WHITE,
+                                  ),
                                 ),
                               )
                             : const Text(

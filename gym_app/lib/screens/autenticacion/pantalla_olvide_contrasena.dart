@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/utils/constants.dart';
+import 'package:gym_app/utils/error_messages.dart';
 import 'pantalla_verificar_codigo.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -33,15 +34,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => VerifyResetCodeScreen(
-              email: _emailController.text.trim(),
-            ),
+            builder: (context) =>
+                VerifyResetCodeScreen(email: _emailController.text.trim()),
           ),
         );
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = AppErrorMessages.map(
+          e,
+          fallback: 'No se pudo enviar el código. Intenta nuevamente',
+        );
         _isLoading = false;
       });
     }
@@ -51,7 +54,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DARKER_BG,
-
 
       resizeToAvoidBottomInset: true,
 
@@ -80,7 +82,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     kToolbarHeight -
                     MediaQuery.of(context).padding.top,
               ),
@@ -92,7 +95,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     children: [
                       const SizedBox(height: 40),
 
-                    
                       const Text(
                         'Ingrese su dirección de correo electrónico',
                         textAlign: TextAlign.center,
@@ -118,14 +120,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                       const SizedBox(height: 30),
 
-                    
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         style: const TextStyle(color: WHITE, fontSize: 16),
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
+                          labelStyle: const TextStyle(
+                            color: SECONDARY_COLOR,
+                            fontSize: 14,
+                          ),
                           floatingLabelBehavior: FloatingLabelBehavior.auto,
                           filled: true,
                           fillColor: const Color(0xFF243244),
@@ -135,15 +139,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                              width: 1,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                              width: 1,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                            borderSide: const BorderSide(
+                              color: PRIMARY_COLOR,
+                              width: 2,
+                            ),
                           ),
                         ),
                         validator: (value) {
@@ -195,7 +208,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   width: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(WHITE),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      WHITE,
+                                    ),
                                   ),
                                 )
                               : const Text(

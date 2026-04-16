@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:gym_app/models/reservation_model.dart';
 import 'package:gym_app/screens/navegacion_principal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gym_app/utils/error_messages.dart';
 import '../../utils/constants.dart';
 
 class QrCodeScreen extends StatefulWidget {
@@ -118,9 +119,16 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al cancelar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo cancelar la reserva. Intenta nuevamente',
+              ),
+            ),
+          ),
+        );
       }
     }
   }

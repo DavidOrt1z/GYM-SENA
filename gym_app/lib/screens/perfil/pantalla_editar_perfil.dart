@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:gym_app/models/user_model.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil_guardado.dart';
 import '../../utils/constants.dart';
+import '../../utils/error_messages.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -97,9 +98,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       print('Error uploading photo: $e');
       if (mounted) {
         setState(() => _isUploadingPhoto = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al subir foto: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo subir la foto. Intenta nuevamente',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -160,9 +168,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       print('Error saving profile: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppErrorMessages.map(
+                e,
+                fallback: 'No se pudo guardar el perfil. Intenta nuevamente',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
