@@ -90,6 +90,7 @@ class WelcomeScreen extends StatelessWidget {
                               fontSize: 14,
                             ),
                           ),
+                          const SizedBox(width: 4),
                           GestureDetector(
                             onTap: () {
                               Navigator.pushNamed(context, '/register');
