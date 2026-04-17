@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 12 de Abril de 2026  
+**Última Actualización:** 17 de Abril de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -18,9 +18,9 @@
 | 3 | App - Pantallas UI | 4-6 días | ✅ **COMPLETADA** | 100% |
 | 4 | App - Integración Backend | 5-7 días | ✅ **COMPLETADA** | 100% | 7 Feb 2026 |
 | 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
-| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 92% | 12 Abr 2026 |
+| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 94% | 17 Abr 2026 |
 
-**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes Admin/Reservas ✅)
+**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes Admin/Reservas/Cupos/Notificaciones ✅)
 
 ### 🎯 ¿Dónde Estoy?
 
@@ -30,7 +30,7 @@
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
 ✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
-🚀 FASE 6 ══════════════════  92%  (En Progreso - Ajustes UI + flujo reservas/admin - 12 Abr 2026)
+🚀 FASE 6 ══════════════════  94%  (En Progreso - Ajustes UI + flujo reservas/admin/notificaciones - 17 Abr 2026)
 ```
 
 ---
@@ -629,6 +629,10 @@ http://localhost:5500
 - [x] Corrección visual del icono de flecha del select de estados (no se oculta en hover).
 - [x] Dashboard admin: traducción de estados de actividad reciente a español (`active` -> `activa`, `cancelled` -> `cancelada`, etc.).
 - [x] `config.js` preparado para despliegue: usa `localhost` solo en desarrollo y `window.location.origin` en producción.
+- [x] Centralización de iconografía: Reemplazo de etiquetas `img` por uso eficiente de `svg` inline en el panel admin para unificar respuestas de estado visual en sidebar.
+- [x] Lógica de cálculos de cupos: Corrección multiplataforma (`horariosModule.js` y `database_service.dart`) para reflejar las reservas `completed` como ocupación de cupo real, resolviendo redundancias vacías.
+- [x] Envío de notificaciones: Fijado el conflicto silencioso con restricciones de FK entre `users(id)` e `id_autenticacion` durante el fallback de backend para avisos globales o "Cierres Temporales".
+- [x] Pulido visual menor: Separadores de lectura de layouts de autenticación en App Flutter.
 
 ## 📁 Archivos Creados en FASE 5
 
@@ -712,7 +716,7 @@ admin-panel/
 
 # 🚀 FASE 6: PULIDO Y EXTRAS
 
-**Duración:** 5-7 días | **Estado:** 🚀 **EN PROGRESO** | **Progreso:** 92% | **Iniciada:** 24 Febrero 2026 | **Actualizado:** 12 Abr 2026 (Ajustes reservas Flutter + estabilidad panel admin + preparación despliegue)
+**Duración:** 5-7 días | **Estado:** 🚀 **EN PROGRESO** | **Progreso:** 94% | **Iniciada:** 24 Febrero 2026 | **Actualizado:** 17 Abr 2026 (Ajustes cupos/reservas Flutter + notificaciones admin)
 
 > ✅ **Notificaciones Push completadas** - Usando Supabase Realtime (sin Firebase)
 
@@ -1044,5 +1048,5 @@ git push origin main
 
 ---
 
-*Última actualización: 12 de Abril de 2026*  
+*Última actualización: 17 de Abril de 2026*  
 *Estado: Fase 5 completada con Node.js - Fase 6 en progreso (pendiente: Producción/APK y publicación estable del panel)*
