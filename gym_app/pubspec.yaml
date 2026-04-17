@@ -57,7 +57,7 @@ dependencies:
   shared_preferences: ^2.2.0
   
   # Notificaciones
-  flutter_local_notifications: ^16.1.0
+  flutter_local_notifications: ^17.1.0
   timezone: ^0.9.4
 
 dev_dependencies:
