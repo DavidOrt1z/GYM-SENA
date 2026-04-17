@@ -86,7 +86,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final grouped = <DateTime, List<Map<String, dynamic>>>{};
 
     for (final item in items) {
-      final date = _parseNotificationDate(item) ??
+      final date =
+          _parseNotificationDate(item) ??
           DateTime.fromMillisecondsSinceEpoch(0);
       final dateKey = DateTime(date.year, date.month, date.day);
 
@@ -120,7 +121,50 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Consumer<ProveedorNotificaciones>(
         builder: (context, provider, _) {
-          final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+          final isEnglish =
+              Localizations.localeOf(context).languageCode == 'en';
+
+          if (!provider.notificacionesHabilitadas) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.notifications_off_outlined,
+                      color: SECONDARY_COLOR,
+                      size: 56,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isEnglish
+                          ? 'Notifications are turned off'
+                          : 'Las notificaciones están desactivadas',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: WHITE,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isEnglish
+                          ? 'Enable them in Settings to receive booking alerts and reminders.'
+                          : 'Actívalas en Configuración para recibir alertas y recordatorios de reservas.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: SECONDARY_COLOR,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
           if (provider.cargando) {
             return const Center(

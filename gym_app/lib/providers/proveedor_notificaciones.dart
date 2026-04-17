@@ -44,6 +44,13 @@ class ProveedorNotificaciones extends ChangeNotifier {
 
   /// Cargar notificaciones del usuario
   Future<void> cargarNotificaciones() async {
+    if (!_notificacionesHabilitadas) {
+      _notificaciones = [];
+      _cargando = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       _cargando = true;
       notifyListeners();
@@ -70,6 +77,7 @@ class ProveedorNotificaciones extends ChangeNotifier {
       await cargarNotificaciones();
     } else {
       await _servicioNotificaciones.destruir();
+      _notificaciones = [];
     }
 
     notifyListeners();
