@@ -29,11 +29,14 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
   bool _obscureConfirmPassword = true;
 
   Future<void> _resetPassword() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     if (!_formKey.currentState!.validate()) return;
 
     if (_newPasswordController.text != _confirmPasswordController.text) {
       setState(() {
-        _errorMessage = 'Las contraseñas no coinciden';
+        _errorMessage = isEnglish
+            ? 'Passwords do not match'
+            : 'Las contraseñas no coinciden';
       });
       return;
     }
@@ -57,7 +60,9 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al actualizar la contraseña';
+        _errorMessage = isEnglish
+            ? 'Error updating password'
+            : 'Error al actualizar la contraseña';
         _isLoading = false;
       });
     }
@@ -65,6 +70,7 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       resizeToAvoidBottomInset: true,
@@ -72,8 +78,8 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
         backgroundColor: DARKER_BG,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Restablecer contraseña',
+        title: Text(
+          isEnglish ? 'Reset password' : 'Restablecer contraseña',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -92,7 +98,8 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     kToolbarHeight -
                     MediaQuery.of(context).padding.top,
               ),
@@ -103,10 +110,12 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 40),
-                      const Text(
-                        'Ingresa tu nueva contraseña',
+                      Text(
+                        isEnglish
+                            ? 'Enter your new password'
+                            : 'Ingresa tu nueva contraseña',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           color: WHITE,
@@ -114,10 +123,12 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const Text(
-                        'Crea una contraseña segura para proteger tu cuenta',
+                      Text(
+                        isEnglish
+                            ? 'Create a secure password to protect your account'
+                            : 'Crea una contraseña segura para proteger tu cuenta',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: SECONDARY_COLOR,
                           height: 1.3,
@@ -130,7 +141,9 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                         obscureText: _obscureNewPassword,
                         style: const TextStyle(color: WHITE, fontSize: 16),
                         decoration: InputDecoration(
-                          labelText: 'Nueva contraseña',
+                          labelText: isEnglish
+                              ? 'New password'
+                              : 'Nueva contraseña',
                           labelStyle: const TextStyle(
                             color: SECONDARY_COLOR,
                             fontSize: 14,
@@ -158,13 +171,15 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: SECONDARY_COLOR),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: SECONDARY_COLOR),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -176,10 +191,14 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa una contraseña';
+                            return isEnglish
+                                ? 'Please enter a password'
+                                : 'Por favor ingresa una contraseña';
                           }
                           if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
+                            return isEnglish
+                                ? 'Password must be at least 6 characters'
+                                : 'La contraseña debe tener al menos 6 caracteres';
                           }
                           return null;
                         },
@@ -191,7 +210,9 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                         obscureText: _obscureConfirmPassword,
                         style: const TextStyle(color: WHITE, fontSize: 16),
                         decoration: InputDecoration(
-                          labelText: 'Confirmar contraseña',
+                          labelText: isEnglish
+                              ? 'Confirm password'
+                              : 'Confirmar contraseña',
                           labelStyle: const TextStyle(
                             color: SECONDARY_COLOR,
                             fontSize: 14,
@@ -220,13 +241,15 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: SECONDARY_COLOR),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: SECONDARY_COLOR),
+                            borderSide: const BorderSide(
+                              color: SECONDARY_COLOR,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -238,7 +261,9 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor confirma tu contraseña';
+                            return isEnglish
+                                ? 'Please confirm your password'
+                                : 'Por favor confirma tu contraseña';
                           }
                           return null;
                         },
@@ -278,12 +303,13 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                                   width: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(WHITE),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      WHITE,
+                                    ),
                                   ),
                                 )
-                              : const Text(
-                                  'Confirmar',
+                              : Text(
+                                  isEnglish ? 'Confirm' : 'Confirmar',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,

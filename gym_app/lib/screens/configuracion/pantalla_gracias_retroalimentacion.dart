@@ -6,6 +6,7 @@ class FeedbackThanksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: Center(
@@ -23,8 +24,10 @@ class FeedbackThanksScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               // Título
-              const Text(
-                '¡Gracias por tu mensaje!',
+              Text(
+                isEnglish
+                    ? 'Thanks for your message!'
+                    : '¡Gracias por tu mensaje!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: WHITE,
@@ -35,7 +38,9 @@ class FeedbackThanksScreen extends StatelessWidget {
               const SizedBox(height: 24),
               // Descripción
               Text(
-                'Tu comentario ha sido enviado correctamente. Nuestro equipo revisará la información y te contactará si es necesario.',
+                isEnglish
+                    ? 'Your comment was sent successfully. Our team will review the information and contact you if needed.'
+                    : 'Tu comentario ha sido enviado correctamente. Nuestro equipo revisará la información y te contactará si es necesario.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: SECONDARY_COLOR,
@@ -64,8 +69,8 @@ class FeedbackThanksScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Continuar',
+            child: Text(
+              isEnglish ? 'Continue' : 'Continuar',
               style: TextStyle(
                 color: WHITE,
                 fontSize: 16,

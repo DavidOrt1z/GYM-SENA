@@ -37,14 +37,15 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
         backgroundColor: DARKER_BG,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Contraseña cambiada',
+        title: Text(
+          isEnglish ? 'Password changed' : 'Contraseña cambiada',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -75,21 +76,19 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
                     color: SUCCESS_COLOR,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.check,
-                    color: WHITE,
-                    size: 60,
-                  ),
+                  child: const Icon(Icons.check, color: WHITE, size: 60),
                 ),
               ),
 
               const SizedBox(height: 40),
 
               // Título principal
-              const Text(
-                'Contraseña cambiada con\néxito',
+              Text(
+                isEnglish
+                    ? 'Password changed\nsuccessfully'
+                    : 'Contraseña cambiada con\néxito',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: WHITE,
@@ -100,10 +99,12 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
               const SizedBox(height: 16),
 
               // Descripción
-              const Text(
-                'Tu contraseña ha sido actualizada. Ahora puedes iniciar sesión con tus nuevas credenciales.',
+              Text(
+                isEnglish
+                    ? 'Your password has been updated. You can now sign in with your new credentials.'
+                    : 'Tu contraseña ha sido actualizada. Ahora puedes iniciar sesión con tus nuevas credenciales.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: SECONDARY_COLOR,
                   height: 1.5,
@@ -117,10 +118,9 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/login',
-                      (route) => false,
-                    );
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/login', (route) => false);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PRIMARY_COLOR,
@@ -129,8 +129,8 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Ir a iniciar sesión',
+                  child: Text(
+                    isEnglish ? 'Go to sign in' : 'Ir a iniciar sesión',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -148,4 +148,3 @@ class _PasswordResetSuccessScreenState extends State<PasswordResetSuccessScreen>
     );
   }
 }
-

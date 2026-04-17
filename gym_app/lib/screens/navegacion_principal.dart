@@ -6,6 +6,7 @@ import 'package:gym_app/screens/inicio/pantalla_inicio.dart';
 import 'package:gym_app/screens/reservas/pantalla_reservas.dart';
 import 'package:gym_app/screens/progreso/pantalla_progreso.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/providers/proveedor_notificaciones.dart';
 
@@ -124,22 +125,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
                 items: [
                   _item(
-                    label: 'Inicio',
+                    label: AppLocalizations.of(context, 'inicio'),
                     iconPath: 'assets/icons/Inicio gris.svg',
                     activeIconPath: 'assets/icons/Inicio Blanco.svg',
                   ),
                   _item(
-                    label: 'Reservas',
+                    label: AppLocalizations.of(context, 'reservas'),
                     iconPath: 'assets/icons/Reservas gris.svg',
                     activeIconPath: 'assets/icons/Reservas Blanco.svg',
                   ),
                   _item(
-                    label: 'Progreso',
+                    label: AppLocalizations.of(context, 'progreso'),
                     iconPath: 'assets/icons/Progreso Gris.svg',
                     activeIconPath: 'assets/icons/Progreso Blanco.svg',
                   ),
                   _item(
-                    label: 'Perfil',
+                    label: AppLocalizations.of(context, 'perfil'),
                     iconPath: 'assets/icons/Perfil Gris.svg',
                     activeIconPath: 'assets/icons/Perfil Blanco.svg',
                   ),

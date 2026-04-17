@@ -8,6 +8,33 @@ import 'package:gym_app/services/servicio_notificaciones.dart';
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ServicioNotificaciones _notificationService = ServicioNotificaciones();
+  String? _notificationUserColumn;
+
+  Future<String> _resolveNotificationUserColumn() async {
+    if (_notificationUserColumn != null) return _notificationUserColumn!;
+
+    const candidates = [
+      'id_usuario_notif',
+      'id_usuario',
+      'usuario_id',
+      'user_id',
+    ];
+    for (final column in candidates) {
+      try {
+        await _supabase
+            .from('notificaciones_historial')
+            .select(column)
+            .limit(1);
+        _notificationUserColumn = column;
+        return column;
+      } catch (_) {
+        // probar siguiente columna
+      }
+    }
+
+    _notificationUserColumn = 'id_usuario_notif';
+    return _notificationUserColumn!;
+  }
 
   Future<void> _createNotification({
     required String userId,
@@ -17,15 +44,39 @@ class DatabaseService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      await _supabase.from('notificaciones_historial').insert({
-        'usuario_id': userId,
-        'titulo': title,
-        'cuerpo': body,
-        'tipo': type,
-        'datos': data ?? <String, dynamic>{},
-        'entregada': true,
-        'abierta': false,
-      });
+      final authUserId = _supabase.auth.currentUser?.id;
+      final userIds = <String>{
+        if (userId.isNotEmpty) userId,
+        if (authUserId != null && authUserId.isNotEmpty) authUserId,
+      }.toList();
+
+      final columns = <String>[
+        if (_notificationUserColumn != null) _notificationUserColumn!,
+        'id_usuario_notif',
+        'id_usuario',
+        'usuario_id',
+        'user_id',
+      ].toSet().toList();
+
+      for (final column in columns) {
+        for (final currentUserId in userIds) {
+          try {
+            await _supabase.from('notificaciones_historial').insert({
+              column: currentUserId,
+              'titulo': title,
+              'cuerpo': body,
+              'tipo': type,
+              'datos': data ?? <String, dynamic>{},
+              'entregada': true,
+              'abierta': false,
+            });
+            _notificationUserColumn = column;
+            return;
+          } catch (_) {
+            // intentar siguiente combinación columna/usuario
+          }
+        }
+      }
     } catch (_) {
       // No romper el flujo principal de reserva por un fallo de notificacion.
     }
@@ -136,7 +187,7 @@ class DatabaseService {
           .from('reservas')
           .select('id_franja_horaria, estado')
           .eq('id_usuario', userId)
-          .neq('estado', 'cancelled');
+          .eq('estado', 'active');
 
       final rows = (reservations as List)
           .map((item) => Map<String, dynamic>.from(item as Map))
@@ -325,13 +376,13 @@ class DatabaseService {
               .select('id')
               .eq('id_usuario', candidateId)
               .eq('id_franja_horaria', slotId)
-              .neq('estado', 'cancelled')
+              .eq('estado', 'active')
               .limit(1);
 
           if (duplicatedBySlotResponse is List &&
               duplicatedBySlotResponse.isNotEmpty) {
             print(
-              'Error creating reservation: usuario ya tiene una reserva activa/completada en este horario',
+              'Error creating reservation: usuario ya tiene una reserva activa en este horario',
             );
             return null;
           }
@@ -445,8 +496,36 @@ class DatabaseService {
           .order('fecha', ascending: true)
           .order('hora_inicio', ascending: true);
 
-      return (response as List)
+      final slots = (response as List)
           .map((json) => SlotModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      if (slots.isEmpty) {
+        return slots;
+      }
+
+      final slotIds = slots.map((slot) => slot.id).toList();
+
+      final activeReservations = await _supabase
+          .from('reservas')
+          .select('id_franja_horaria')
+          .eq('estado', 'active')
+          .inFilter('id_franja_horaria', slotIds);
+
+      final activeCountBySlotId = <String, int>{};
+      for (final item in activeReservations as List) {
+        final row = Map<String, dynamic>.from(item as Map);
+        final slotId = row['id_franja_horaria']?.toString();
+        if (slotId == null || slotId.isEmpty) continue;
+
+        activeCountBySlotId[slotId] = (activeCountBySlotId[slotId] ?? 0) + 1;
+      }
+
+      return slots
+          .map(
+            (slot) =>
+                slot.copyWith(reservedCount: activeCountBySlotId[slot.id] ?? 0),
+          )
           .toList();
     } catch (e) {
       print('Error fetching available slots: $e');
@@ -530,33 +609,19 @@ class DatabaseService {
 
       // Fallback: si no hay historial en registros_peso,
       // usar el peso actual guardado en perfil (tabla users).
-      final userRow = await _supabase
-          .from('users')
-          .select(
-            'peso_kg, fecha_actualizacion, updated_at, fecha_creacion, created_at',
-          )
-          .eq('id', dbUserId)
-          .maybeSingle();
-
-      final profileWeight = (userRow?['peso_kg'] as num?)?.toDouble();
+      final profile = await getUserProfile(userId);
+      final profileWeight = profile?.weightKg;
       if (profileWeight == null || profileWeight <= 0) {
         return [];
       }
 
-      final rawDate =
-          userRow?['fecha_actualizacion'] ??
-          userRow?['updated_at'] ??
-          userRow?['fecha_creacion'] ??
-          userRow?['created_at'];
-
-      final parsedDate = rawDate != null
-          ? DateTime.tryParse(rawDate.toString()) ?? DateTime.now()
-          : DateTime.now();
+      final parsedDate = profile?.createdAt ?? DateTime.now();
+      final profileUserId = profile?.id ?? dbUserId;
 
       return [
         WeightLogModel(
-          id: 'perfil-$dbUserId',
-          userId: dbUserId,
+          id: 'perfil-$profileUserId',
+          userId: profileUserId,
           weight: profileWeight,
           unit: 'kg',
           recordedAt: parsedDate,

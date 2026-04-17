@@ -8,6 +8,7 @@ import 'package:gym_app/services/database_service.dart';
 import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/utils/error_messages.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ReservationsScreen extends StatefulWidget {
@@ -142,19 +143,25 @@ class _ReservationsScreenState extends State<ReservationsScreen>
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  DateTime _getReservationDate(ReservationModel reservation) {
+  DateTime? _getReservationSlotDate(ReservationModel reservation) {
     for (final slot in _allSlots) {
       if (slot.id == reservation.slotId && slot.slotDate != null) {
         return slot.slotDate!;
       }
     }
-    return reservation.reservedAt;
+    return null;
+  }
+
+  DateTime _getReservationDate(ReservationModel reservation) {
+    return _getReservationSlotDate(reservation) ?? reservation.reservedAt;
   }
 
   bool _hasReservationOnDate(DateTime date) {
     return _userReservations.any((reservation) {
-      if (reservation.isCancelled) return false;
-      return _isSameDay(_getReservationDate(reservation), date);
+      if (!reservation.isActive) return false;
+      final reservationSlotDate = _getReservationSlotDate(reservation);
+      if (reservationSlotDate == null) return false;
+      return _isSameDay(reservationSlotDate, date);
     });
   }
 
@@ -164,40 +171,78 @@ class _ReservationsScreenState extends State<ReservationsScreen>
     );
   }
 
-  String _formatDate(DateTime date) {
-    final months = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ];
+  String _formatDate(DateTime date, bool isEnglish) {
+    final months = isEnglish
+        ? [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+          ]
+        : [
+            'Enero',
+            'Febrero',
+            'Marzo',
+            'Abril',
+            'Mayo',
+            'Junio',
+            'Julio',
+            'Agosto',
+            'Septiembre',
+            'Octubre',
+            'Noviembre',
+            'Diciembre',
+          ];
     return '${months[date.month - 1]} ${date.day}';
   }
 
-  String _formatMonthYear(DateTime date) {
-    final months = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ];
+  String _formatMonthYear(DateTime date, bool isEnglish) {
+    final months = isEnglish
+        ? [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+          ]
+        : [
+            'Enero',
+            'Febrero',
+            'Marzo',
+            'Abril',
+            'Mayo',
+            'Junio',
+            'Julio',
+            'Agosto',
+            'Septiembre',
+            'Octubre',
+            'Noviembre',
+            'Diciembre',
+          ];
     return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String _reservationStatusText(ReservationModel reservation, bool isEnglish) {
+    if (!isEnglish) return reservation.statusText;
+    if (reservation.isActive) return 'Active';
+    if (reservation.isCompleted) return 'Completed';
+    if (reservation.isCancelled) return 'Cancelled';
+    return 'Unknown';
   }
 
   String get _formattedSelectedTime {
@@ -215,6 +260,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final slotsForDay = _getSlotsByDay(_selectedDate);
 
     return Scaffold(
@@ -233,10 +279,10 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Center(
+                        Center(
                           child: Text(
-                            'Reservas',
-                            style: TextStyle(
+                            AppLocalizations.of(context, 'reservas'),
+                            style: const TextStyle(
                               color: WHITE,
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -262,7 +308,10 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                   Row(
                                     children: [
                                       Text(
-                                        _formatMonthYear(_selectedDate),
+                                        _formatMonthYear(
+                                          _selectedDate,
+                                          isEnglish,
+                                        ),
                                         style: const TextStyle(
                                           color: Color(0xFF2C3E50),
                                           fontSize: 16,
@@ -320,58 +369,58 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
-                                children: const [
+                                children: [
                                   Text(
-                                    'DOM',
-                                    style: TextStyle(
+                                    isEnglish ? 'SUN' : 'DOM',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'LUN',
-                                    style: TextStyle(
+                                    isEnglish ? 'MON' : 'LUN',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'MAR',
-                                    style: TextStyle(
+                                    isEnglish ? 'TUE' : 'MAR',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'MIE',
-                                    style: TextStyle(
+                                    isEnglish ? 'WED' : 'MIE',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'JUE',
-                                    style: TextStyle(
+                                    isEnglish ? 'THU' : 'JUE',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'VIE',
-                                    style: TextStyle(
+                                    isEnglish ? 'FRI' : 'VIE',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    'SAB',
-                                    style: TextStyle(
+                                    isEnglish ? 'SAT' : 'SAB',
+                                    style: const TextStyle(
                                       color: Color(0xFFBDBDBD),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -390,8 +439,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
-                                    'Hora',
+                                  Text(
+                                    AppLocalizations.of(context, 'hora'),
                                     style: TextStyle(
                                       color: Color(0xFF111111),
                                       fontSize: 32,
@@ -525,7 +574,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
                         // Date header
                         Text(
-                          _formatDate(_selectedDate),
+                          _formatDate(_selectedDate, isEnglish),
                           style: const TextStyle(
                             color: WHITE,
                             fontSize: 34,
@@ -542,9 +591,11 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                               color: DARK_BG,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'El gimnasio solo atiende de Lunes a Viernes',
+                                isEnglish
+                                    ? 'The gym only operates Monday to Friday'
+                                    : 'El gimnasio solo atiende de Lunes a Viernes',
                                 style: TextStyle(
                                   color: SECONDARY_COLOR,
                                   fontSize: 14,
@@ -559,9 +610,11 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                               color: DARK_BG,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'No hay horarios disponibles para este día',
+                                isEnglish
+                                    ? 'No schedules available for this day'
+                                    : 'No hay horarios disponibles para este día',
                                 style: TextStyle(
                                   color: SECONDARY_COLOR,
                                   fontSize: 14,
@@ -604,7 +657,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            slot.placesText,
+                                            isEnglish
+                                                ? '${slot.availableSpots}/${slot.capacity} spots available'
+                                                : slot.placesText,
                                             style: const TextStyle(
                                               color: SECONDARY_COLOR,
                                               fontSize: 13,
@@ -635,10 +690,18 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                         ),
                                         child: Text(
                                           isReserved
-                                              ? 'Reservado'
+                                              ? (isEnglish
+                                                    ? 'Booked'
+                                                    : 'Reservado')
                                               : isFull
-                                              ? 'Agotado'
-                                              : 'Reservar',
+                                              ? AppLocalizations.of(
+                                                  context,
+                                                  'agotado',
+                                                )
+                                              : AppLocalizations.of(
+                                                  context,
+                                                  'reservar',
+                                                ),
                                           style: const TextStyle(
                                             color: WHITE,
                                             fontSize: 15,
@@ -657,7 +720,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
                         // My Reservations
                         if (_userReservations.isNotEmpty)
-                          _buildMyReservations(),
+                          _buildMyReservations(isEnglish),
                       ],
                     ),
                   ),
@@ -739,13 +802,17 @@ class _ReservationsScreenState extends State<ReservationsScreen>
     );
   }
 
-  Widget _buildMyReservations() {
-    final today = DateTime.now();
+  Widget _buildMyReservations(bool isEnglish) {
     final visibleReservations = _userReservations
-        .where(
-          (r) => !r.isCancelled && _isSameDay(_getReservationDate(r), today),
-        )
+        .where((r) => !r.isCancelled)
         .toList();
+
+    visibleReservations.sort((a, b) {
+      if (a.isActive != b.isActive) {
+        return a.isActive ? -1 : 1;
+      }
+      return _getReservationDate(b).compareTo(_getReservationDate(a));
+    });
 
     if (visibleReservations.isEmpty) {
       return const SizedBox.shrink();
@@ -755,9 +822,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(color: SECONDARY_COLOR, height: 32),
-        const Text(
-          'Mis Reservas',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context, 'mis_reservas'),
+          style: const TextStyle(
             color: WHITE,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -834,7 +901,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            reservation.statusText,
+                            _reservationStatusText(reservation, isEnglish),
                             style: const TextStyle(
                               fontSize: 11,
                               color: WHITE,
@@ -865,8 +932,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text(
-                                  'Ver QR',
+                                child: Text(
+                                  AppLocalizations.of(context, 'mostrar_qr'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: WHITE,
@@ -891,8 +958,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text(
-                                  'Cancelar',
+                                child: Text(
+                                  AppLocalizations.of(context, 'cancelar'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: WHITE,
@@ -902,10 +969,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                               ),
                             ],
                           )
-                        : const Align(
+                        : Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Esta reserva ya fue completada.',
+                              isEnglish
+                                  ? 'This booking is already completed.'
+                                  : 'Esta reserva ya fue completada.',
                               style: TextStyle(
                                 color: SECONDARY_COLOR,
                                 fontSize: 12,
@@ -931,6 +1000,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   void _showReservationConfirmation(SlotModel slot) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final selectedSlotDate = slot.slotDate ?? _selectedDate;
     if (_hasReservationOnDate(selectedSlotDate)) {
       _showCenteredDailyLimitToast();
@@ -941,32 +1011,37 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: DARK_BG,
-        title: const Text('Confirmar Reserva', style: TextStyle(color: WHITE)),
+        title: Text(
+          isEnglish ? 'Confirm Booking' : 'Confirmar Reserva',
+          style: const TextStyle(color: WHITE),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Horario: ${slot.displayTimeWithPeriod}',
+              '${isEnglish ? 'Schedule' : 'Horario'}: ${slot.displayTimeWithPeriod}',
               style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
             ),
             const SizedBox(height: 8),
             Text(
-              'Disponibles: ${slot.availableSpots}/${slot.capacity}',
+              '${isEnglish ? 'Available' : 'Disponibles'}: ${slot.availableSpots}/${slot.capacity}',
               style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
             ),
             const SizedBox(height: 12),
-            const Text(
-              '¿Deseas confirmar esta reserva?',
-              style: TextStyle(color: WHITE),
+            Text(
+              isEnglish
+                  ? 'Do you want to confirm this booking?'
+                  : '¿Deseas confirmar esta reserva?',
+              style: const TextStyle(color: WHITE),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text(
-              'Cancelar',
+            child: Text(
+              AppLocalizations.of(context, 'cancelar'),
               style: TextStyle(color: SECONDARY_COLOR),
             ),
           ),
@@ -975,8 +1050,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
               Navigator.pop(dialogContext);
               await _reserveSlot(slot);
             },
-            child: const Text(
-              'Confirmar',
+            child: Text(
+              isEnglish ? 'Confirm' : 'Confirmar',
               style: TextStyle(color: PRIMARY_COLOR),
             ),
           ),
@@ -986,26 +1061,38 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   void _showCancelConfirmation(ReservationModel reservation) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: DARK_BG,
-        title: const Text('Cancelar Reserva', style: TextStyle(color: WHITE)),
-        content: const Text(
-          '¿Estás seguro de que deseas cancelar esta reserva?',
-          style: TextStyle(color: SECONDARY_COLOR),
+        title: Text(
+          isEnglish ? 'Cancel Booking' : 'Cancelar Reserva',
+          style: const TextStyle(color: WHITE),
+        ),
+        content: Text(
+          isEnglish
+              ? 'Are you sure you want to cancel this booking?'
+              : '¿Estás seguro de que deseas cancelar esta reserva?',
+          style: const TextStyle(color: SECONDARY_COLOR),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('No', style: TextStyle(color: SECONDARY_COLOR)),
+            child: Text(
+              isEnglish ? 'No' : 'No',
+              style: const TextStyle(color: SECONDARY_COLOR),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await _cancelReservation(reservation);
             },
-            child: const Text('Sí', style: TextStyle(color: Colors.red)),
+            child: Text(
+              isEnglish ? 'Yes' : 'Sí',
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -1080,6 +1167,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
+                            decoration: TextDecoration.none,
                           ),
                         ),
                       ),
@@ -1105,6 +1193,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
   void _showCenteredDailyLimitToast() {
     if (!mounted) return;
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
 
     _successOverlayTimer?.cancel();
     _successOverlayEntry?.remove();
@@ -1153,17 +1242,19 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                       color: const Color(0xFF91C8FF).withValues(alpha: 0.5),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.info_rounded, color: WHITE, size: 22),
-                      SizedBox(width: 10),
+                      const Icon(Icons.info_rounded, color: WHITE, size: 22),
+                      const SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          'Solo puedes reservar una sola vez al dia',
+                          isEnglish
+                              ? 'You can only book once per day'
+                              : 'Solo puedes reservar una sola vez al dia',
                           textAlign: TextAlign.center,
                           maxLines: 2,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: WHITE,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -1195,6 +1286,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
   void _showCenteredCancelToast() {
     if (!mounted) return;
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
 
     _successOverlayTimer?.cancel();
     _successOverlayEntry?.remove();
@@ -1243,16 +1335,22 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                       color: const Color(0xFFFFCDD2).withValues(alpha: 0.75),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.event_busy_rounded, color: WHITE, size: 22),
-                      SizedBox(width: 10),
+                      const Icon(
+                        Icons.event_busy_rounded,
+                        color: WHITE,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          'Reserva cancelada correctamente',
+                          isEnglish
+                              ? 'Booking cancelled successfully'
+                              : 'Reserva cancelada correctamente',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: WHITE,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -1281,6 +1379,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   Future<void> _reserveSlot(SlotModel slot) async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     try {
       final selectedSlotDate = slot.slotDate ?? _selectedDate;
       if (_hasReservationOnDate(selectedSlotDate)) {
@@ -1292,8 +1391,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       if (userId.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Debes iniciar sesión para reservar'),
+            SnackBar(
+              content: Text(
+                isEnglish
+                    ? 'You must sign in to book'
+                    : 'Debes iniciar sesión para reservar',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -1310,13 +1413,17 @@ class _ReservationsScreenState extends State<ReservationsScreen>
         await _databaseService.incrementSlotReservations(slot.id);
         await _loadData();
 
-        _showCenteredSuccessToast('¡Reserva confirmada!');
+        _showCenteredSuccessToast(
+          isEnglish ? 'Booking confirmed!' : '¡Reserva confirmada!',
+        );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'No se pudo reservar. Revisa tu perfil de usuario y permisos RLS.',
+                isEnglish
+                    ? 'Could not book. Check your user profile and RLS permissions.'
+                    : 'No se pudo reservar. Revisa tu perfil de usuario y permisos RLS.',
               ),
               backgroundColor: Colors.red,
             ),
@@ -1330,7 +1437,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo realizar la reserva. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not complete booking. Please try again.'
+                    : 'No se pudo realizar la reserva. Intenta nuevamente',
               ),
             ),
             backgroundColor: Colors.red,
@@ -1341,10 +1450,11 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   Future<void> _cancelReservation(ReservationModel reservation) async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     try {
       final success = await _databaseService.cancelReservation(
         reservation.id,
-        'Cancelado por el usuario',
+        isEnglish ? 'Cancelled by user' : 'Cancelado por el usuario',
       );
 
       if (success) {
@@ -1354,9 +1464,11 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'No se pudo cancelar la reserva. Verifica permisos en Supabase.',
+                isEnglish
+                    ? 'Could not cancel booking. Check Supabase permissions.'
+                    : 'No se pudo cancelar la reserva. Verifica permisos en Supabase.',
               ),
               backgroundColor: Colors.red,
             ),
@@ -1370,7 +1482,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo cancelar la reserva. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not cancel booking. Please try again.'
+                    : 'No se pudo cancelar la reserva. Intenta nuevamente',
               ),
             ),
             backgroundColor: Colors.red,

@@ -22,6 +22,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -32,8 +33,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Centro de Ayuda',
+        title: Text(
+          isEnglish ? 'Help Center' : 'Centro de Ayuda',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -48,42 +49,58 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             const SizedBox(height: 24),
 
             // PREGUNTAS FRECUENTES
-            _buildSectionTitle('Preguntas Frecuentes'),
+            _buildSectionTitle(
+              isEnglish ? 'Frequently Asked Questions' : 'Preguntas Frecuentes',
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
                   _buildQuestionBox(
-                    title: '¿Cómo restablezco mi contraseña?',
+                    title: isEnglish
+                        ? 'How do I reset my password?'
+                        : '¿Cómo restablezco mi contraseña?',
                     onTap: () {
                       _showHelpDetail(
-                        title: 'Restablezco mi contraseña',
-                        content:
-                            'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En la pantalla de inicio de sesión, selecciona "Olvide mi contraseña".\n\n2. Ingresa el correo electrónico asociado a tu cuenta del SENA.\n\n3. Revisa tu correo electrónico y sigue el enlace para crear una nueva contraseña.\n\n4. Una vez completado, podrás iniciar sesión nuevamente con tu nueva clave.\n\nNota:\nSi no recibes el correo en unos minutos, revisa tu bandeja de spam o comunícate con soporte',
+                        title: isEnglish
+                            ? 'Reset my password'
+                            : 'Restablezco mi contraseña',
+                        content: isEnglish
+                            ? 'If you forgot your password, follow these steps:\n\n1. On the sign in screen, tap "Forgot my password".\n\n2. Enter the email associated with your SENA account.\n\n3. Check your email and follow the link to create a new password.\n\n4. Once done, you can sign in again with your new password.\n\nNote:\nIf you do not receive the email in a few minutes, check your spam folder or contact support.'
+                            : 'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En la pantalla de inicio de sesión, selecciona "Olvide mi contraseña".\n\n2. Ingresa el correo electrónico asociado a tu cuenta del SENA.\n\n3. Revisa tu correo electrónico y sigue el enlace para crear una nueva contraseña.\n\n4. Una vez completado, podrás iniciar sesión nuevamente con tu nueva clave.\n\nNota:\nSi no recibes el correo en unos minutos, revisa tu bandeja de spam o comunícate con soporte',
                       );
                     },
                   ),
                   const SizedBox(height: 12),
                   _buildQuestionBox(
-                    title: '¿Cuáles son los horarios de apertura del gym?',
+                    title: isEnglish
+                        ? 'What are the gym opening hours?'
+                        : '¿Cuáles son los horarios de apertura del gym?',
                     onTap: () {
                       _showHelpDetail(
-                        title: 'Horario de apertura',
-                        content:
-                            'Días de la semana\n\nMañana\nLunes a Viernes: 6:30 AM hasta las 10:00 AM\n\nTarde\nLunes a Viernes: 3:00 PM hasta las 5:00 PM',
+                        title: isEnglish
+                            ? 'Opening hours'
+                            : 'Horario de apertura',
+                        content: isEnglish
+                            ? 'Weekdays\n\nMorning\nMonday to Friday: 6:30 AM to 10:00 AM\n\nAfternoon\nMonday to Friday: 3:00 PM to 5:00 PM'
+                            : 'Días de la semana\n\nMañana\nLunes a Viernes: 6:30 AM hasta las 10:00 AM\n\nTarde\nLunes a Viernes: 3:00 PM hasta las 5:00 PM',
                       );
                     },
                   ),
                   const SizedBox(height: 12),
                   _buildQuestionBox(
-                    title:
-                        '¿Cómo puedo actualizar la información de mi perfil?',
+                    title: isEnglish
+                        ? 'How can I update my profile information?'
+                        : '¿Cómo puedo actualizar la información de mi perfil?',
                     onTap: () {
                       _showHelpDetail(
-                        title: 'Actualizar la información de mi perfil',
-                        content:
-                            'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En el menú inferior, selecciona "Perfil"\n\n2. Toca el icono o botón de "Editar perfil".\n\n3. Actualiza los campos que desees (nombre, apellido, años, etc.).\n\n4. Pulsa "Guardar cambios" para confirmar.\n\nConsejo:\nMantén tu información actualizada para recibir notificaciones y recordatorios correctamente.',
+                        title: isEnglish
+                            ? 'Update my profile information'
+                            : 'Actualizar la información de mi perfil',
+                        content: isEnglish
+                            ? 'To update your profile, follow these steps:\n\n1. In the bottom menu, select "Profile".\n\n2. Tap the "Edit profile" icon or button.\n\n3. Update the fields you want (first name, last name, age, etc.).\n\n4. Tap "Save changes" to confirm.\n\nTip:\nKeep your information updated to receive notifications and reminders correctly.'
+                            : 'Si olvidaste tu contraseña, sigue estos pasos:\n\n1. En el menú inferior, selecciona "Perfil"\n\n2. Toca el icono o botón de "Editar perfil".\n\n3. Actualiza los campos que desees (nombre, apellido, años, etc.).\n\n4. Pulsa "Guardar cambios" para confirmar.\n\nConsejo:\nMantén tu información actualizada para recibir notificaciones y recordatorios correctamente.',
                       );
                     },
                   ),
@@ -95,7 +112,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
             // INFORMAR UN PROBLEMA
             _buildSectionTitle(
-              'Informar un problema o proporcionar comentarios',
+              isEnglish
+                  ? 'Report a problem or provide feedback'
+                  : 'Informar un problema o proporcionar comentarios',
             ),
             const SizedBox(height: 12),
             Padding(
@@ -107,7 +126,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     maxLines: 5,
                     style: const TextStyle(color: WHITE),
                     decoration: InputDecoration(
-                      hintText: 'Cuéntanos lo que piensas...',
+                      hintText: isEnglish
+                          ? 'Tell us what you think...'
+                          : 'Cuéntanos lo que piensas...',
                       hintStyle: const TextStyle(color: SECONDARY_COLOR),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -142,8 +163,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Enviar',
+                      child: Text(
+                        isEnglish ? 'Send' : 'Enviar',
                         style: TextStyle(
                           color: WHITE,
                           fontSize: 16,
@@ -281,6 +302,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   void _showHelpDetail({required String title, required String content}) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -303,8 +325,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cerrar',
+              child: Text(
+                isEnglish ? 'Close' : 'Cerrar',
                 style: TextStyle(color: PRIMARY_COLOR),
               ),
             ),
@@ -315,6 +337,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Future<void> _sendFeedback() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     if (_feedbackController.text.isEmpty) {
       return;
     }
@@ -325,8 +348,12 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       if (user == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Por favor inicia sesión para enviar feedback'),
+            SnackBar(
+              content: Text(
+                isEnglish
+                    ? 'Please sign in to send feedback'
+                    : 'Por favor inicia sesión para enviar feedback',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -353,7 +380,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo enviar el comentario. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not send your comment. Please try again.'
+                    : 'No se pudo enviar el comentario. Intenta nuevamente',
               ),
             ),
             backgroundColor: Colors.red,

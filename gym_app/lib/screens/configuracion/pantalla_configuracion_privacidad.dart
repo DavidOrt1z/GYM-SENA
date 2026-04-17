@@ -16,6 +16,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -26,8 +27,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Configuración de Privacidad',
+        title: Text(
+          isEnglish ? 'Privacy Settings' : 'Configuración de Privacidad',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -42,11 +43,17 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             const SizedBox(height: 24),
 
             // PRIVACIDAD DE LA CUENTA
-            _buildSectionTitle('Privacidad de la cuenta'),
+            _buildSectionTitle(
+              isEnglish ? 'Account privacy' : 'Privacidad de la cuenta',
+            ),
             const SizedBox(height: 12),
             _buildToggleItem(
-              title: 'Visibilidad del perfil',
-              subtitle: 'Controla quién puede ver la información y la actividad de tu perfil dentro del gimnasio.',
+              title: isEnglish
+                  ? 'Profile visibility'
+                  : 'Visibilidad del perfil',
+              subtitle: isEnglish
+                  ? 'Control who can view your profile information and activity within the gym.'
+                  : 'Controla quién puede ver la información y la actividad de tu perfil dentro del gimnasio.',
               value: _profileVisibility,
               onChanged: (value) {
                 setState(() {
@@ -55,8 +62,12 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               },
             ),
             _buildToggleItem(
-              title: 'Contenido personalizado',
-              subtitle: 'Permite que tus datos se utilicen para ofrecerte recomendaciones personalizadas según tu progreso y rutinas.',
+              title: isEnglish
+                  ? 'Personalized content'
+                  : 'Contenido personalizado',
+              subtitle: isEnglish
+                  ? 'Allow your data to be used to provide personalized recommendations based on your progress and routines.'
+                  : 'Permite que tus datos se utilicen para ofrecerte recomendaciones personalizadas según tu progreso y rutinas.',
               value: _personalizedContent,
               onChanged: (value) {
                 setState(() {
@@ -65,8 +76,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               },
             ),
             _buildToggleItem(
-              title: 'Compartir datos',
-              subtitle: 'Activa o desactiva el uso compartido de tus datos de entrenamiento con instructores o coordinadores autorizados.',
+              title: isEnglish ? 'Share data' : 'Compartir datos',
+              subtitle: isEnglish
+                  ? 'Enable or disable sharing your training data with authorized instructors or coordinators.'
+                  : 'Activa o desactiva el uso compartido de tus datos de entrenamiento con instructores o coordinadores autorizados.',
               value: _shareData,
               onChanged: (value) {
                 setState(() {
@@ -78,11 +91,19 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             const SizedBox(height: 32),
 
             // PREFERENCIAS DE COMUNICACIÓN
-            _buildSectionTitle('Preferencias de comunicación'),
+            _buildSectionTitle(
+              isEnglish
+                  ? 'Communication preferences'
+                  : 'Preferencias de comunicación',
+            ),
             const SizedBox(height: 12),
             _buildToggleItem(
-              title: 'Notificaciones de la comunidad',
-              subtitle: 'Obtén alertas sobre eventos, clases grupales o actividades institucionales del SENA.',
+              title: isEnglish
+                  ? 'Community notifications'
+                  : 'Notificaciones de la comunidad',
+              subtitle: isEnglish
+                  ? 'Get alerts about events, group classes, or SENA institutional activities.'
+                  : 'Obtén alertas sobre eventos, clases grupales o actividades institucionales del SENA.',
               value: _communityNotifications,
               onChanged: (value) {
                 setState(() {
@@ -137,10 +158,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: SECONDARY_COLOR,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: SECONDARY_COLOR, fontSize: 12),
                 ),
               ],
             ),
@@ -204,24 +222,27 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   }
 
   void _showDeleteAccountDialog() {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: DARK_BG,
-          title: const Text(
-            '¿Eliminar cuenta?',
+          title: Text(
+            isEnglish ? 'Delete account?' : '¿Eliminar cuenta?',
             style: TextStyle(color: WHITE),
           ),
-          content: const Text(
-            'Esta acción no se puede deshacer. Se eliminarán permanentemente tu cuenta y todos tus datos.',
+          content: Text(
+            isEnglish
+                ? 'This action cannot be undone. Your account and all your data will be permanently deleted.'
+                : 'Esta acción no se puede deshacer. Se eliminarán permanentemente tu cuenta y todos tus datos.',
             style: TextStyle(color: SECONDARY_COLOR),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancelar',
+              child: Text(
+                isEnglish ? 'Cancel' : 'Cancelar',
                 style: TextStyle(color: PRIMARY_COLOR),
               ),
             ),
@@ -229,11 +250,17 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               onPressed: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Función en desarrollo')),
+                  SnackBar(
+                    content: Text(
+                      isEnglish
+                          ? 'Feature in development'
+                          : 'Función en desarrollo',
+                    ),
+                  ),
                 );
               },
-              child: const Text(
-                'Eliminar',
+              child: Text(
+                isEnglish ? 'Delete' : 'Eliminar',
                 style: TextStyle(color: ERROR_COLOR),
               ),
             ),

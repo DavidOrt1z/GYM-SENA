@@ -1,6 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -17,12 +17,14 @@ class ServicioNotificaciones {
   ServicioNotificaciones._interno();
 
   final supabase = Supabase.instance.client;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin? _localNotifications = kIsWeb
+      ? null
+      : FlutterLocalNotificationsPlugin();
 
   bool _inicializado = false;
   bool _timezoneInicializado = false;
   RealtimeChannel? _realtime;
+  String? _notificationUserColumn;
 
   /// Tipos de notificaciones
   static const String TIPO_RESERVA_CONFIRMADA = 'reserva_confirmada';
@@ -35,8 +37,10 @@ class ServicioNotificaciones {
     if (_inicializado) return;
 
     try {
-      // Configurar notificaciones locales
-      await _configurarNotificacionesLocales();
+      // Configurar notificaciones locales (no soportado en web)
+      if (!kIsWeb) {
+        await _configurarNotificacionesLocales();
+      }
 
       if (!_timezoneInicializado) {
         tz.initializeTimeZones();
@@ -71,6 +75,10 @@ class ServicioNotificaciones {
     String? horaFin,
   }) async {
     try {
+      if (kIsWeb) return;
+      final notifications = _localNotifications;
+      if (notifications == null) return;
+
       if (!_inicializado) {
         await inicializar();
       }
@@ -106,7 +114,7 @@ class ServicioNotificaciones {
           ? '$horaInicio - $horaFin'
           : horaInicio;
 
-      await _localNotifications.zonedSchedule(
+      await notifications.zonedSchedule(
         _reservationReminderId(reservationId),
         'Recordatorio de reserva',
         'Tu reserva inicia en 15 minutos ($rangeText).',
@@ -124,7 +132,10 @@ class ServicioNotificaciones {
 
   Future<void> cancelarRecordatorioReserva(String reservationId) async {
     try {
-      await _localNotifications.cancel(_reservationReminderId(reservationId));
+      if (kIsWeb) return;
+      final notifications = _localNotifications;
+      if (notifications == null) return;
+      await notifications.cancel(_reservationReminderId(reservationId));
     } catch (e) {
       print('❌ Error cancelando recordatorio: $e');
     }
@@ -132,6 +143,9 @@ class ServicioNotificaciones {
 
   /// Configurar notificaciones locales
   Future<void> _configurarNotificacionesLocales() async {
+    final notifications = _localNotifications;
+    if (notifications == null) return;
+
     const androidSettings = AndroidInitializationSettings('app_icon');
     const iosSettings = DarwinInitializationSettings(
       requestSoundPermission: true,
@@ -144,7 +158,7 @@ class ServicioNotificaciones {
       iOS: iosSettings,
     );
 
-    await _localNotifications.initialize(settings);
+    await notifications.initialize(settings);
   }
 
   /// Escuchar cambios en tabla notificaciones_historial vía Realtime
@@ -186,8 +200,13 @@ class ServicioNotificaciones {
       if (datos == null) return;
 
       // Verificar que sea para el usuario actual
-      final usuarioId = supabase.auth.currentUser?.id;
-      if (datos['usuario_id'] != usuarioId) return;
+        final userIds = await _resolverIdsUsuarioNotificaciones();
+        if (userIds.isEmpty) return;
+      final payloadUserId =
+          datos['id_usuario_notif']?.toString() ??
+          datos['id_usuario']?.toString() ??
+          datos['usuario_id']?.toString();
+        if (payloadUserId == null || !userIds.contains(payloadUserId)) return;
 
       // Solo mostrar si no ha sido abierta
       if (datos['abierta'] != true) {
@@ -213,6 +232,10 @@ class ServicioNotificaciones {
     Map<String, dynamic>? datos,
   }) async {
     try {
+      if (kIsWeb) return;
+      final notifications = _localNotifications;
+      if (notifications == null) return;
+
       // Configuración de Android
       const androidDetails = AndroidNotificationDetails(
         'gym_sena_canal',
@@ -235,7 +258,7 @@ class ServicioNotificaciones {
         iOS: iosDetails,
       );
 
-      await _localNotifications.show(
+      await notifications.show(
         DateTime.now().millisecond,
         titulo,
         cuerpo,
@@ -251,7 +274,9 @@ class ServicioNotificaciones {
 
   /// Crear canales de notificación (Android)
   Future<void> crearCanales() async {
-    if (!Platform.isAndroid) return;
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    final notifications = _localNotifications;
+    if (notifications == null) return;
 
     final canales = [
       const AndroidNotificationChannel(
@@ -278,7 +303,7 @@ class ServicioNotificaciones {
     ];
 
     for (final canal in canales) {
-      await _localNotifications
+      await notifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >()
@@ -304,21 +329,105 @@ class ServicioNotificaciones {
   /// Obtener notificaciones del usuario actual
   Future<List<Map<String, dynamic>>> obtenerNotificaciones() async {
     try {
-      final usuarioId = supabase.auth.currentUser?.id;
-      if (usuarioId == null) return [];
+      final userIds = await _resolverIdsUsuarioNotificaciones();
+      if (userIds.isEmpty) return [];
 
-      final datos = await supabase
-          .from('notificaciones_historial')
-          .select()
-          .eq('usuario_id', usuarioId)
-          .order('fecha_creacion', ascending: false)
-          .limit(50);
-
-      return (datos as List).cast<Map<String, dynamic>>();
+      return await _obtenerNotificacionesConFallback(userIds);
     } catch (e) {
       print('❌ Error obteniendo notificaciones: $e');
       return [];
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _obtenerNotificacionesConFallback(
+    List<String> userIds,
+  ) async {
+    final columnas = <String>[
+      if (_notificationUserColumn != null) _notificationUserColumn!,
+      'id_usuario_notif',
+      'id_usuario',
+      'usuario_id',
+      'user_id',
+    ].toSet().toList();
+
+    PostgrestException? lastError;
+
+    for (final columna in columnas) {
+      try {
+      final baseQuery = supabase.from('notificaciones_historial').select();
+      final filteredQuery = userIds.length == 1
+        ? baseQuery.eq(columna, userIds.first)
+        : baseQuery.inFilter(columna, userIds);
+
+      final datos = await filteredQuery
+        .order('fecha_creacion', ascending: false)
+        .limit(50);
+
+        _notificationUserColumn = columna;
+        return (datos as List).cast<Map<String, dynamic>>();
+      } on PostgrestException catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (lastError != null) throw lastError;
+    return [];
+  }
+
+  Future<List<String>> _resolverIdsUsuarioNotificaciones() async {
+    final authId = supabase.auth.currentUser?.id;
+    if (authId == null || authId.isEmpty) return [];
+
+    final ids = <String>{authId};
+
+    try {
+      final userByAuth = await supabase
+          .from('users')
+          .select('id')
+          .eq('id_autenticacion', authId)
+          .maybeSingle();
+
+      final dbId = userByAuth?['id']?.toString();
+      if (dbId != null && dbId.isNotEmpty) {
+        ids.add(dbId);
+      }
+    } on PostgrestException catch (error) {
+      // Si la columna no existe en otro esquema, mantenemos auth.uid como fallback.
+      if (error.code != 'PGRST204') {
+        print('⚠️ No se pudo resolver id de users por id_autenticacion: $error');
+      }
+    } catch (_) {}
+
+    return ids.toList();
+  }
+
+  Future<String> _resolverColumnaUsuarioNotificaciones() async {
+    if (_notificationUserColumn != null) return _notificationUserColumn!;
+
+    final usuarioId = supabase.auth.currentUser?.id;
+    if (usuarioId == null) {
+      _notificationUserColumn = 'id_usuario_notif';
+      return _notificationUserColumn!;
+    }
+
+    const candidates = [
+      'id_usuario_notif',
+      'id_usuario',
+      'usuario_id',
+      'user_id',
+    ];
+    for (final column in candidates) {
+      try {
+        await supabase.from('notificaciones_historial').select(column).limit(1);
+        _notificationUserColumn = column;
+        return column;
+      } catch (_) {
+        // prueba siguiente columna
+      }
+    }
+
+    _notificationUserColumn = 'id_usuario_notif';
+    return _notificationUserColumn!;
   }
 
   /// Limpiar notificaciones antiguas

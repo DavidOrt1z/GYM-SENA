@@ -18,9 +18,14 @@ class LanguageScreen extends StatelessWidget {
     } catch (error) {
       debugPrint('Error al cambiar idioma: $error');
       if (!context.mounted) return;
+      final isEnglish = Localizations.localeOf(context).languageCode == 'en';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo cambiar el idioma. Intenta de nuevo.'),
+        SnackBar(
+          content: Text(
+            isEnglish
+                ? 'Could not change language. Please try again.'
+                : 'No se pudo cambiar el idioma. Intenta de nuevo.',
+          ),
         ),
       );
     }
@@ -28,6 +33,7 @@ class LanguageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -38,8 +44,8 @@ class LanguageScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Lenguaje',
+        title: Text(
+          isEnglish ? 'Language' : 'Lenguaje',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -56,8 +62,8 @@ class LanguageScreen extends StatelessWidget {
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: const Text(
-                  'Seleccionar idioma',
+                child: Text(
+                  isEnglish ? 'Select language' : 'Seleccionar idioma',
                   style: TextStyle(
                     color: WHITE,
                     fontSize: 18,
@@ -89,7 +95,10 @@ class LanguageScreen extends StatelessWidget {
               const Spacer(),
               // Save Button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 32,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -103,8 +112,8 @@ class LanguageScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Guardar',
+                    child: Text(
+                      isEnglish ? 'Save' : 'Guardar',
                       style: TextStyle(
                         color: WHITE,
                         fontSize: 16,

@@ -6,6 +6,7 @@ class LogoutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: SafeArea(
@@ -14,41 +15,40 @@ class LogoutScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 80),
-              
+
               // Contenido centrado arriba
               Column(
                 children: [
                   // Título con wave emoji
                   RichText(
                     textAlign: TextAlign.center,
-                    text: const TextSpan(
+                    text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '¡Hasta pronto, aprendiz! ',
-                          style: TextStyle(
+                          text: isEnglish
+                              ? 'See you soon, trainee! '
+                              : '¡Hasta pronto, aprendiz! ',
+                          style: const TextStyle(
                             color: WHITE,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             height: 1.3,
                           ),
                         ),
-                        TextSpan(
-                          text: '👋',
-                          style: TextStyle(
-                            fontSize: 28,
-                          ),
-                        ),
+                        TextSpan(text: '👋', style: TextStyle(fontSize: 28)),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Descripción
-                  const Text(
-                    'Tu sesión se ha cerrado correctamente',
+                  Text(
+                    isEnglish
+                        ? 'You have been signed out successfully'
+                        : 'Tu sesión se ha cerrado correctamente',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: SECONDARY_COLOR,
                       fontSize: 14,
                       height: 1.5,
@@ -56,9 +56,9 @@ class LogoutScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const Spacer(),
-              
+
               // Botón Continuar
               SizedBox(
                 width: double.infinity,
@@ -73,8 +73,8 @@ class LogoutScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continuar',
+                  child: Text(
+                    isEnglish ? 'Continue' : 'Continuar',
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 16,

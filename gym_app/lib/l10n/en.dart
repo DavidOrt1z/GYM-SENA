@@ -50,6 +50,17 @@ final Map<String, String> en = {
   'beneficios': 'Benefits',
   'equipamiento': 'Equipment',
   'ver_mas': 'See More',
+  'explore_services': 'Explore our services',
+  'free_access': 'Free Access',
+  'free_access_subtitle': 'Services at no cost.',
+  'flexible_hours': 'Flexible Hours',
+  'flexible_hours_subtitle': 'Adapted to your needs.',
+  'treadmills': 'Treadmills',
+  'treadmills_subtitle': 'Latest generation',
+  'weight_machines': 'Weight Machines',
+  'weight_machines_subtitle': 'full equipment range',
+  'free_weights': 'Free Weights',
+  'free_weights_subtitle': 'For all fitness\nlevels',
 
   // ========== BOOKINGS ==========
   'mis_reservas': 'My Bookings',
@@ -90,17 +101,25 @@ final Map<String, String> en = {
 
   // ========== SETTINGS ==========
   'configuracion_app': 'Settings',
+  'app_preferences': 'App preferences',
   'tema': 'Theme',
   'tema_claro': 'Light',
   'tema_oscuro': 'Dark',
   'tema_sistema': 'System',
   'idioma': 'Language',
   'notificaciones': 'Notifications',
+  'app_notifications': 'App notifications',
+  'app_notifications_subtitle':
+      'Receive notifications about new features and updates.',
   'habilitar_notificaciones': 'Enable Notifications',
   'unidades': 'Units',
   'metrico': 'Metric (kg, cm)',
   'imperial': 'Imperial (lb, in)',
   'soporte': 'Support',
+  'privacy': 'Privacy',
+  'settings_configuration': 'Settings configuration',
+  'privacy_settings_subtitle': 'Manage your account privacy settings.',
+  'help_center_ellipsis': 'Help Center...',
   'contactanos': 'Contact Us',
   'centro_ayuda': 'Help Centre',
   'version': 'Version',
@@ -114,6 +133,9 @@ final Map<String, String> en = {
   'cambio_horario': '📅 Schedule Change',
   'marcar_leido': 'Mark as read',
   'borrar_notificacion': 'Delete notification',
+  'no_notifications_title': 'You have no notifications',
+  'no_notifications_subtitle':
+      'When bookings are confirmed, completed, or schedules change, they will appear here.',
 
   // ========== MESSAGES ==========
   'exito': 'Success',

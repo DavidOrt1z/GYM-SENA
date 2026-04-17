@@ -9,6 +9,7 @@ import 'package:gym_app/screens/perfil/pantalla_editar_perfil.dart';
 import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
 import 'package:gym_app/screens/perfil/pantalla_unidades.dart';
 import 'package:gym_app/screens/perfil/pantalla_cerrar_sesion.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -129,28 +130,36 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
 
     if (_user == null) {
+      final isEnglish = Localizations.localeOf(context).languageCode == 'en';
       return Scaffold(
         backgroundColor: DARKER_BG,
         appBar: AppBar(
           backgroundColor: DARKER_BG,
-          title: const Text('Perfil', style: TextStyle(color: WHITE)),
+          title: Text(
+            AppLocalizations.of(context, 'perfil'),
+            style: const TextStyle(color: WHITE),
+          ),
         ),
-        body: const Center(
-          child: Text('Error al cargar perfil', style: TextStyle(color: WHITE)),
+        body: Center(
+          child: Text(
+            isEnglish ? 'Error loading profile' : 'Error al cargar perfil',
+            style: const TextStyle(color: WHITE),
+          ),
         ),
       );
     }
 
     // Usa datos del auth si el perfil no cargó correctamente
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final fullName =
         _user?.fullName ??
         Supabase.instance.client.auth.currentUser?.userMetadata?['full_name'] ??
         Supabase.instance.client.auth.currentUser?.email ??
-        'Usuario';
+        (isEnglish ? 'User' : 'Usuario');
     final role = _user?.role ?? 'member';
     final unitLabel = (_user?.units == 'imperial')
-      ? 'Imperial.'
-      : 'Métrico.';
+        ? 'Imperial.'
+        : (isEnglish ? 'Metric.' : 'Métrico.');
 
     return Scaffold(
       backgroundColor: DARKER_BG,
@@ -161,8 +170,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Perfil',
+        title: Text(
+          AppLocalizations.of(context, 'perfil'),
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -238,7 +247,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  role == 'admin' ? 'Administrador' : 'Aprendiz',
+                  role == 'admin'
+                      ? (isEnglish ? 'Administrator' : 'Administrador')
+                      : (isEnglish ? 'Trainee' : 'Aprendiz'),
                   style: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
                 ),
               ],
@@ -263,8 +274,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Editar Perfil',
+                  Text(
+                    AppLocalizations.of(context, 'editar_perfil'),
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 16,
@@ -290,8 +301,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Codigo QR',
+                  Text(
+                    AppLocalizations.of(context, 'codigo_qr'),
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 16,
@@ -307,10 +318,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 32),
 
           // Título: Información Básica
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Información Basica',
+              isEnglish ? 'Basic Information' : 'Información Basica',
               style: TextStyle(
                 color: WHITE,
                 fontSize: 18,
@@ -331,7 +342,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Años',
+                        isEnglish ? 'Age' : 'Años',
                         style: const TextStyle(
                           color: SECONDARY_COLOR,
                           fontSize: 13,
@@ -356,7 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Peso',
+                        AppLocalizations.of(context, 'peso'),
                         style: const TextStyle(
                           color: SECONDARY_COLOR,
                           fontSize: 13,
@@ -388,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Altura',
+                  AppLocalizations.of(context, 'altura'),
                   style: const TextStyle(
                     color: SECONDARY_COLOR,
                     fontSize: 13,
@@ -443,8 +454,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Unidades de Medida',
+                        Text(
+                          isEnglish ? 'Units of Measure' : 'Unidades de Medida',
                           style: TextStyle(
                             color: WHITE,
                             fontSize: 16,
@@ -497,8 +508,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Cerrar sesión',
+                child: Text(
+                  AppLocalizations.of(context, 'cerrar_sesion'),
                   style: TextStyle(
                     color: WHITE,
                     fontSize: 16,

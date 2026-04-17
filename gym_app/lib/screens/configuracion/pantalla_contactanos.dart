@@ -11,6 +11,7 @@ class ContactUsScreen extends StatefulWidget {
 class _ContactUsScreenState extends State<ContactUsScreen> {
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -21,8 +22,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Contáctenos',
+        title: Text(
+          isEnglish ? 'Contact Us' : 'Contáctenos',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -39,8 +40,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               const SizedBox(height: 24),
 
               // TEXTO INTRODUCTORIO
-              const Text(
-                'Estamos aquí para ayudar',
+              Text(
+                isEnglish ? 'We are here to help' : 'Estamos aquí para ayudar',
                 style: TextStyle(
                   color: WHITE,
                   fontSize: 20,
@@ -48,8 +49,10 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Si tiene alguna pregunta o necesita asistencia, por favor contáctenos utilizando la información de contacto que se encuentra a continuación.',
+              Text(
+                isEnglish
+                    ? 'If you have any questions or need assistance, please contact us using the information below.'
+                    : 'Si tiene alguna pregunta o necesita asistencia, por favor contáctenos utilizando la información de contacto que se encuentra a continuación.',
                 style: TextStyle(
                   color: SECONDARY_COLOR,
                   fontSize: 14,
@@ -60,8 +63,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               const SizedBox(height: 32),
 
               // INFORMACIÓN DE CONTACTO
-              const Text(
-                'Información de contacto',
+              Text(
+                isEnglish ? 'Contact information' : 'Información de contacto',
                 style: TextStyle(
                   color: WHITE,
                   fontSize: 16,
@@ -81,15 +84,15 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               // TELÉFONO
               _buildSimpleContactItem(
                 icon: Icons.phone_outlined,
-                label: 'Teléfono',
+                label: isEnglish ? 'Phone' : 'Teléfono',
                 value: '+57 3123456781',
               ),
 
               const SizedBox(height: 40),
 
               // SÍGUENOS
-              const Text(
-                'Síguenos',
+              Text(
+                isEnglish ? 'Follow us' : 'Síguenos',
                 style: TextStyle(
                   color: WHITE,
                   fontSize: 16,
@@ -134,11 +137,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
             color: DARK_BG,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            color: WHITE,
-            size: 24,
-          ),
+          child: Icon(icon, color: WHITE, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(

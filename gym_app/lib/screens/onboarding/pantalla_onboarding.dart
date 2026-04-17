@@ -34,12 +34,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _completeOnboarding() async {
     await _markOnboardingAsCompleted();
     if (mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/welcome', (route) => false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: Stack(
@@ -74,22 +77,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  const Text(
-                    'Bienvenido a GYM SENA',
+                  Text(
+                    isEnglish ? 'Welcome to GYM SENA' : 'Bienvenido a GYM SENA',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: WHITE,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      'Tu aplicación para gestionar entrenamientos y reservas de horarios',
+                      isEnglish
+                          ? 'Your app to manage workouts and bookings'
+                          : 'Tu aplicación para gestionar entrenamientos y reservas de horarios',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: SECONDARY_COLOR,
                         fontSize: 16,
                         height: 1.5,
@@ -100,20 +105,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               _buildOnboardingPage(
                 assetPath: 'assets/icons/onboarding_calendario.svg',
-                title: 'Reserva tus Horarios',
-                description: 'Selecciona los días y horas que te convengan para entrenar',
+                title: isEnglish
+                    ? 'Book Your Time Slots'
+                    : 'Reserva tus Horarios',
+                description: isEnglish
+                    ? 'Choose the days and times that work best for your training'
+                    : 'Selecciona los días y horas que te convengan para entrenar',
                 color: const Color(0xFF2196F3),
               ),
               _buildOnboardingPage(
                 assetPath: 'assets/icons/onboarding_peso.svg',
-                title: 'Monitorea tu Progreso',
-                description: 'Registra tu peso y observa tu avance con gráficas visuales',
+                title: isEnglish
+                    ? 'Track Your Progress'
+                    : 'Monitorea tu Progreso',
+                description: isEnglish
+                    ? 'Log your weight and view your progress with visual charts'
+                    : 'Registra tu peso y observa tu avance con gráficas visuales',
                 color: const Color(0xFF00BCD4),
               ),
               _buildOnboardingPage(
                 assetPath: 'assets/icons/onboarding_idioma.svg',
-                title: '¡Personaliza tu Experiencia!',
-                description: 'Cambia idioma, notificaciones y más en configuración',
+                title: isEnglish
+                    ? 'Customize Your Experience!'
+                    : '¡Personaliza tu Experiencia!',
+                description: isEnglish
+                    ? 'Change language, notifications, and more in settings'
+                    : 'Cambia idioma, notificaciones y más en configuración',
                 color: const Color(0xFF4CAF50),
               ),
             ],
@@ -126,7 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: TextButton(
               onPressed: _completeOnboarding,
               child: Text(
-                'Saltar',
+                isEnglish ? 'Skip' : 'Saltar',
                 style: TextStyle(
                   color: PRIMARY_COLOR,
                   fontSize: 14,
@@ -180,11 +197,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     },
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('Anterior'),
+                    label: Text(isEnglish ? 'Back' : 'Anterior'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: DARK_BG,
                       foregroundColor: WHITE,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: const BorderSide(color: PRIMARY_COLOR, width: 1),
@@ -203,12 +223,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         curve: Curves.easeInOut,
                       );
                     },
-                    label: const Text('Siguiente'),
+                    label: Text(isEnglish ? 'Next' : 'Siguiente'),
                     icon: const Icon(Icons.arrow_forward),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: PRIMARY_COLOR,
                       foregroundColor: WHITE,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -217,12 +240,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 else
                   ElevatedButton.icon(
                     onPressed: _completeOnboarding,
-                    label: const Text('¡Comenzar!'),
+                    label: Text(isEnglish ? 'Start!' : '¡Comenzar!'),
                     icon: const Icon(Icons.check),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: WHITE,
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

@@ -6,6 +6,7 @@ class SuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: SafeArea(
@@ -23,14 +24,14 @@ class SuccessScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 40),
-            
+
             // Título
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '¡Bienvenido a GYM SENA!',
+                isEnglish ? 'Welcome to GYM SENA!' : '¡Bienvenido a GYM SENA!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: WHITE,
@@ -39,14 +40,16 @@ class SuccessScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Subtítulo
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Tu cuenta ha sido creada con éxito. ¡Prepárate para comenzar tu viaje de fitness con nosotros!',
+                isEnglish
+                    ? 'Your account was created successfully. Get ready to start your fitness journey with us!'
+                    : 'Tu cuenta ha sido creada con éxito. ¡Prepárate para comenzar tu viaje de fitness con nosotros!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: SECONDARY_COLOR,
@@ -56,9 +59,9 @@ class SuccessScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Botón
             Padding(
               padding: const EdgeInsets.all(24),
@@ -78,8 +81,8 @@ class SuccessScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Iniciar sesión',
+                  child: Text(
+                    isEnglish ? 'Sign in' : 'Iniciar sesión',
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 15,

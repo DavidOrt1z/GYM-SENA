@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/screens/notificaciones/pantalla_notificaciones.dart';
+import 'package:gym_app/providers/proveedor_notificaciones.dart';
+import 'package:provider/provider.dart';
 import '../../utils/constants.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -28,9 +31,51 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: WHITE),
-                onPressed: () {},
+              Consumer<ProveedorNotificaciones>(
+                builder: (context, provider, _) {
+                  final hasUnread = provider.notificaciones.any(
+                    (item) => item['abierta'] != true,
+                  );
+
+                  return IconButton(
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.notifications_outlined, color: WHITE),
+                        if (hasUnread)
+                          Positioned(
+                            right: -1,
+                            top: -1,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: DARKER_BG,
+                                  width: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+
+                      if (!context.mounted) return;
+                      await context
+                          .read<ProveedorNotificaciones>()
+                          .cargarNotificaciones();
+                    },
+                  );
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.settings_outlined, color: WHITE),
@@ -42,7 +87,7 @@ class HomeScreen extends StatelessWidget {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              _buildMainBanner(),
+              _buildMainBanner(context),
               const SizedBox(height: 28),
               _buildSectionTitle(context, 'instalaciones'),
               const SizedBox(height: 12),
@@ -50,7 +95,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 28),
               _buildSectionTitle(context, 'beneficios'),
               const SizedBox(height: 12),
-              _buildBeneficiosSection(),
+              _buildBeneficiosSection(context),
               const SizedBox(height: 28),
               _buildSectionTitle(context, 'equipamiento'),
               const SizedBox(height: 12),
@@ -63,7 +108,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainBanner() {
+  Widget _buildMainBanner(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       height: 240,
@@ -82,16 +127,16 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
           ),
         ),
-        child: const Align(
+        child: Align(
           alignment: Alignment.bottomLeft,
           child: Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Text(
-              'Explora Nuestros servicios',
-              style: TextStyle(
+              AppLocalizations.of(context, 'explore_services'),
+              style: const TextStyle(
                 color: WHITE,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -133,21 +178,21 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBeneficiosSection() {
+  Widget _buildBeneficiosSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         children: [
           _buildBeneficioItem(
             icon: Icons.card_membership_outlined,
-            title: 'Acceso Gratuito',
-            subtitle: 'Servicios sin costo alguno.',
+            title: AppLocalizations.of(context, 'free_access'),
+            subtitle: AppLocalizations.of(context, 'free_access_subtitle'),
           ),
           const SizedBox(height: 12),
           _buildBeneficioItem(
             icon: Icons.access_time_outlined,
-            title: 'Horarios Flexibles',
-            subtitle: 'Adaptado a tus necesidades.',
+            title: AppLocalizations.of(context, 'flexible_hours'),
+            subtitle: AppLocalizations.of(context, 'flexible_hours_subtitle'),
           ),
         ],
       ),
@@ -208,8 +253,8 @@ class HomeScreen extends StatelessWidget {
                 child: _buildEquipamientoCard(
                   imageUrl:
                       'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=400',
-                  title: 'Cintas de correr',
-                  subtitle: 'De última generación',
+                  title: AppLocalizations.of(context, 'treadmills'),
+                  subtitle: AppLocalizations.of(context, 'treadmills_subtitle'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -217,8 +262,11 @@ class HomeScreen extends StatelessWidget {
                 child: _buildEquipamientoCard(
                   imageUrl:
                       'https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=400',
-                  title: 'Máquinas de peso',
-                  subtitle: 'gama de equipos',
+                  title: AppLocalizations.of(context, 'weight_machines'),
+                  subtitle: AppLocalizations.of(
+                    context,
+                    'weight_machines_subtitle',
+                  ),
                 ),
               ),
             ],
@@ -232,8 +280,8 @@ class HomeScreen extends StatelessWidget {
               child: _buildEquipamientoCard(
                 imageUrl:
                     'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400',
-                title: 'Pesas libres',
-                subtitle: 'Para todos los niveles de\ncondición física',
+                title: AppLocalizations.of(context, 'free_weights'),
+                subtitle: AppLocalizations.of(context, 'free_weights_subtitle'),
               ),
             ),
           ),

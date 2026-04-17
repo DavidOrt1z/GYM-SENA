@@ -26,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -94,7 +95,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
-                      return 'Por favor ingresa tu nombre';
+                      return isEnglish
+                          ? 'Please enter your name'
+                          : 'Por favor ingresa tu nombre';
                     }
                     return null;
                   },
@@ -130,10 +133,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
-                      return 'Por favor ingresa tu correo';
+                      return isEnglish
+                          ? 'Please enter your email'
+                          : 'Por favor ingresa tu correo';
                     }
                     if (!value!.contains('@')) {
-                      return 'Ingresa un correo válido';
+                      return isEnglish
+                          ? 'Enter a valid email'
+                          : 'Ingresa un correo válido';
                     }
                     return null;
                   },
@@ -182,10 +189,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
-                      return 'Por favor ingresa una contraseña';
+                      return isEnglish
+                          ? 'Please enter a password'
+                          : 'Por favor ingresa una contraseña';
                     }
                     if (value!.length < 6) {
-                      return 'Mínimo 6 caracteres';
+                      return isEnglish
+                          ? 'Minimum 6 characters'
+                          : 'Mínimo 6 caracteres';
                     }
                     return null;
                   },
@@ -237,10 +248,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value?.isEmpty ?? true) {
-                      return 'Por favor confirma tu contraseña';
+                      return isEnglish
+                          ? 'Please confirm your password'
+                          : 'Por favor confirma tu contraseña';
                     }
                     if (value != _passwordController.text) {
-                      return 'Las contraseñas no coinciden';
+                      return isEnglish
+                          ? 'Passwords do not match'
+                          : 'Las contraseñas no coinciden';
                     }
                     return null;
                   },

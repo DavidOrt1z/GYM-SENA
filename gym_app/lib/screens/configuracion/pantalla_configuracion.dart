@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 import '../../providers/proveedor_idioma.dart';
 import '../../providers/proveedor_notificaciones.dart';
@@ -29,8 +30,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Configuración',
+        title: Text(
+          AppLocalizations.of(context, 'configuracion'),
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -45,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // PREFERENCIAS DE LA APLICACIÓN
-            _buildSectionTitle('Preferencias de la aplicación'),
+            _buildSectionTitle(AppLocalizations.of(context, 'app_preferences')),
             const SizedBox(height: 12),
             Consumer<ProveedorIdioma>(
               builder: (context, proveedorIdioma, _) {
@@ -55,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 return _buildSettingItem(
                   iconPath: 'assets/icons/Lenguaje.svg',
-                  title: 'Lenguaje',
+                  title: AppLocalizations.of(context, 'idioma'),
                   subtitle: idiomaNombre,
                   onTap: () {
                     Navigator.push(
@@ -72,31 +73,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 32),
 
             // NOTIFICACIONES
-            _buildSectionTitle('Notificaciones'),
+            _buildSectionTitle(AppLocalizations.of(context, 'notificaciones')),
             const SizedBox(height: 12),
             Consumer<ProveedorNotificaciones>(
-              builder: (context, notificacionesProvider, _) => _buildToggleSetting(
-                iconPath: 'assets/icons/Notificacion.svg',
-                title: 'Notificaciones de la aplicación',
-                subtitle:
-                    'Recibe notificaciones sobre nuevas funciones, actualizaciones .',
-                value: notificacionesProvider.notificacionesHabilitadas,
-                onChanged: (value) {
-                  notificacionesProvider.alternarNotificaciones(value);
-                },
-              ),
+              builder: (context, notificacionesProvider, _) =>
+                  _buildToggleSetting(
+                    iconPath: 'assets/icons/Notificacion.svg',
+                    title: AppLocalizations.of(context, 'app_notifications'),
+                    subtitle: AppLocalizations.of(
+                      context,
+                      'app_notifications_subtitle',
+                    ),
+                    value: notificacionesProvider.notificacionesHabilitadas,
+                    onChanged: (value) {
+                      notificacionesProvider.alternarNotificaciones(value);
+                    },
+                  ),
             ),
 
             const SizedBox(height: 32),
 
             // PRIVACIDAD
-            _buildSectionTitle('Privacidad'),
+            _buildSectionTitle(AppLocalizations.of(context, 'privacy')),
             const SizedBox(height: 12),
             _buildSettingItem(
               iconPath: 'assets/icons/Privacidad.svg',
-              title: 'Configuracion de Ajustes',
-              subtitle:
-                  'Administra la configuración de privacidad de tu cuenta.',
+              title: AppLocalizations.of(context, 'settings_configuration'),
+              subtitle: AppLocalizations.of(
+                context,
+                'privacy_settings_subtitle',
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -110,11 +116,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 32),
 
             // SOPORTE
-            _buildSectionTitle('Soporte'),
+            _buildSectionTitle(AppLocalizations.of(context, 'soporte')),
             const SizedBox(height: 12),
             _buildSettingItem(
               iconPath: 'assets/icons/Centro de ayuda.svg',
-              title: 'Centro de Ayuda...',
+              title: AppLocalizations.of(context, 'help_center_ellipsis'),
               iconSize: 18,
               onTap: () {
                 Navigator.push(
@@ -127,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             _buildSettingItem(
               iconPath: 'assets/icons/Contactenos.svg',
-              title: 'Contáctenos',
+              title: AppLocalizations.of(context, 'contactanos'),
               iconSize: 14,
               onTap: () {
                 Navigator.push(

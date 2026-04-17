@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:gym_app/models/user_model.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil_guardado.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 import '../../utils/error_messages.dart';
 
@@ -47,6 +48,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAndUploadPhoto() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -103,7 +105,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo subir la foto. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not upload the photo. Please try again.'
+                    : 'No se pudo subir la foto. Intenta nuevamente',
               ),
             ),
           ),
@@ -113,10 +117,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveChanges() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('El nombre es requerido')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEnglish ? 'Name is required' : 'El nombre es requerido',
+          ),
+        ),
+      );
       return;
     }
 
@@ -125,7 +134,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final authUserId = Supabase.instance.client.auth.currentUser?.id;
       if (authUserId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception(
+          isEnglish ? 'User not authenticated' : 'Usuario no autenticado',
+        );
       }
 
       final userRow = await Supabase.instance.client
@@ -173,7 +184,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo guardar el perfil. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not save profile. Please try again.'
+                    : 'No se pudo guardar el perfil. Intenta nuevamente',
               ),
             ),
           ),
@@ -188,6 +201,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final createdAt = widget.user.createdAt;
     final year = createdAt?.year ?? DateTime.now().year;
 
@@ -203,8 +217,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,
-        title: const Text(
-          'Editar Perfil',
+        title: Text(
+          AppLocalizations.of(context, 'editar_perfil'),
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -313,32 +327,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               // Miembro desde
               Text(
-                'Miembro desde $year',
+                isEnglish ? 'Member since $year' : 'Miembro desde $year',
                 style: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
               ),
               const SizedBox(height: 32),
 
               // Nombre
               _buildInputField(
-                label: 'Nombre',
+                label: isEnglish ? 'First name' : 'Nombre',
                 controller: _nameController,
-                hint: 'Ingresa tu nombre',
+                hint: isEnglish ? 'Enter your first name' : 'Ingresa tu nombre',
               ),
               const SizedBox(height: 20),
 
               // Apellido
               _buildInputField(
-                label: 'Apellido',
+                label: isEnglish ? 'Last name' : 'Apellido',
                 controller: _lastNameController,
-                hint: 'Ingresa tu apellido',
+                hint: isEnglish
+                    ? 'Enter your last name'
+                    : 'Ingresa tu apellido',
               ),
               const SizedBox(height: 20),
 
               // Años
               _buildInputField(
-                label: 'Años',
+                label: isEnglish ? 'Age' : 'Años',
                 controller: _ageController,
-                hint: 'Ingresa tu edad',
+                hint: isEnglish ? 'Enter your age' : 'Ingresa tu edad',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 40),
@@ -365,8 +381,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(WHITE),
                           ),
                         )
-                      : const Text(
-                          'Guardar cambios',
+                      : Text(
+                          isEnglish ? 'Save changes' : 'Guardar cambios',
                           style: TextStyle(
                             color: WHITE,
                             fontSize: 16,

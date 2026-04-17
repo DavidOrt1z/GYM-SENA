@@ -38,11 +38,14 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
   }
 
   Future<void> _verifyCode() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     String code = _controllers.map((c) => c.text).join();
 
     if (code.length != 6) {
       setState(() {
-        _errorMessage = 'Por favor ingresa los 6 dígitos';
+        _errorMessage = isEnglish
+            ? 'Please enter all 6 digits'
+            : 'Por favor ingresa los 6 dígitos';
       });
       return;
     }
@@ -69,13 +72,16 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Código inválido. Intenta de nuevo.';
+        _errorMessage = isEnglish
+            ? 'Invalid code. Please try again.'
+            : 'Código inválido. Intenta de nuevo.';
         _isLoading = false;
       });
     }
   }
 
   void _resendCode() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -97,7 +103,9 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
       setState(() {
         _errorMessage = AppErrorMessages.map(
           e,
-          fallback: 'No se pudo reenviar el código. Intenta nuevamente',
+          fallback: isEnglish
+              ? 'Could not resend the code. Please try again.'
+              : 'No se pudo reenviar el código. Intenta nuevamente',
         );
         _isLoading = false;
       });
@@ -106,6 +114,7 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       resizeToAvoidBottomInset: true,
@@ -113,8 +122,8 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
         backgroundColor: DARKER_BG,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Restablecer contraseña',
+        title: Text(
+          isEnglish ? 'Reset password' : 'Restablecer contraseña',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -143,10 +152,12 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    const Text(
-                      'Introduce el código de 6 dígitos que enviamos a tu correo electrónico',
+                    Text(
+                      isEnglish
+                          ? 'Enter the 6-digit code we sent to your email'
+                          : 'Introduce el código de 6 dígitos que enviamos a tu correo electrónico',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: WHITE,
@@ -154,10 +165,12 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const Text(
-                      'Te enviaremos un codigo al correo para restablecer tu contraseña',
+                    Text(
+                      isEnglish
+                          ? 'We will send a code to your email to reset your password'
+                          : 'Te enviaremos un codigo al correo para restablecer tu contraseña',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: SECONDARY_COLOR,
                         height: 1.3,
@@ -258,8 +271,8 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                                   ),
                                 ),
                               )
-                            : const Text(
-                                'Confirmar',
+                            : Text(
+                                isEnglish ? 'Confirm' : 'Confirmar',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -272,7 +285,9 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                     GestureDetector(
                       onTap: _isLoading ? null : _resendCode,
                       child: Text(
-                        '¿No recibiste el código?',
+                        isEnglish
+                            ? 'Didn\'t receive the code?'
+                            : '¿No recibiste el código?',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -285,7 +300,7 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                     GestureDetector(
                       onTap: _isLoading ? null : _resendCode,
                       child: Text(
-                        'Reenviar código',
+                        isEnglish ? 'Resend code' : 'Reenviar código',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,

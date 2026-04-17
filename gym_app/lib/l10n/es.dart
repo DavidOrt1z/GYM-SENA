@@ -50,6 +50,17 @@ final Map<String, String> es = {
   'beneficios': 'Beneficios',
   'equipamiento': 'Equipamiento',
   'ver_mas': 'Ver más',
+  'explore_services': 'Explora Nuestros servicios',
+  'free_access': 'Acceso Gratuito',
+  'free_access_subtitle': 'Servicios sin costo alguno.',
+  'flexible_hours': 'Horarios Flexibles',
+  'flexible_hours_subtitle': 'Adaptado a tus necesidades.',
+  'treadmills': 'Cintas de correr',
+  'treadmills_subtitle': 'De última generación',
+  'weight_machines': 'Máquinas de peso',
+  'weight_machines_subtitle': 'gama de equipos',
+  'free_weights': 'Pesas libres',
+  'free_weights_subtitle': 'Para todos los niveles de\ncondición física',
 
   // ========== RESERVAS ==========
   'mis_reservas': 'Mis Reservas',
@@ -90,17 +101,26 @@ final Map<String, String> es = {
 
   // ========== CONFIGURACIÓN ==========
   'configuracion_app': 'Configuración',
+  'app_preferences': 'Preferencias de la aplicación',
   'tema': 'Tema',
   'tema_claro': 'Claro',
   'tema_oscuro': 'Oscuro',
   'tema_sistema': 'Sistema',
   'idioma': 'Idioma',
   'notificaciones': 'Notificaciones',
+  'app_notifications': 'Notificaciones de la aplicación',
+  'app_notifications_subtitle':
+      'Recibe notificaciones sobre nuevas funciones, actualizaciones.',
   'habilitar_notificaciones': 'Habilitar Notificaciones',
   'unidades': 'Unidades',
   'metrico': 'Métrico (kg, cm)',
   'imperial': 'Imperial (lb, in)',
   'soporte': 'Soporte',
+  'privacy': 'Privacidad',
+  'settings_configuration': 'Configuracion de Ajustes',
+  'privacy_settings_subtitle':
+      'Administra la configuración de privacidad de tu cuenta.',
+  'help_center_ellipsis': 'Centro de Ayuda...',
   'contactanos': 'Contáctanos',
   'centro_ayuda': 'Centro de Ayuda',
   'version': 'Versión',
@@ -114,6 +134,9 @@ final Map<String, String> es = {
   'cambio_horario': '📅 Cambio de Horario',
   'marcar_leido': 'Marcar como leído',
   'borrar_notificacion': 'Borrar notificación',
+  'no_notifications_title': 'No tienes notificaciones',
+  'no_notifications_subtitle':
+      'Cuando reservemos, confirmemos o cambiemos horarios, aparecerán aquí.',
 
   // ========== MENSAJES ==========
   'exito': 'Éxito',

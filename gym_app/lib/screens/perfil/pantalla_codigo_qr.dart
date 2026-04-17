@@ -4,6 +4,7 @@ import 'package:gym_app/models/reservation_model.dart';
 import 'package:gym_app/screens/navegacion_principal.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gym_app/utils/error_messages.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 
 class QrCodeScreen extends StatefulWidget {
@@ -81,6 +82,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
   Future<void> _cancelReservation() async {
     if (_reservation == null) return;
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
 
     try {
       final updated = await Supabase.instance.client
@@ -95,8 +97,12 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
       if (updated.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo cancelar la reserva'),
+            SnackBar(
+              content: Text(
+                isEnglish
+                    ? 'Could not cancel booking'
+                    : 'No se pudo cancelar la reserva',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -124,7 +130,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback: 'No se pudo cancelar la reserva. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not cancel booking. Please try again.'
+                    : 'No se pudo cancelar la reserva. Intenta nuevamente',
               ),
             ),
           ),
@@ -135,6 +143,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final reservationId = (_reservation?['id']?.toString() ?? '').trim();
     final qrData = reservationId.isNotEmpty ? reservationId : 'SIN_RESERVA';
 
@@ -148,8 +157,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
           icon: const Icon(Icons.arrow_back, color: WHITE),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Acceso de código QR',
+        title: Text(
+          isEnglish ? 'QR Code Access' : 'Acceso de código QR',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -178,10 +187,12 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
-                      const Text(
-                        'Este código es la entrada para acceder al gimnasio.',
+                      Text(
+                        isEnglish
+                            ? 'This code is your access pass to the gym.'
+                            : 'Este código es la entrada para acceder al gimnasio.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFFD9E5F4),
                           fontSize: 31 / 2,
                           fontWeight: FontWeight.w500,
@@ -189,8 +200,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                         ),
                       ),
                       const SizedBox(height: 34),
-                      const Text(
-                        'Codigo QR',
+                      Text(
+                        AppLocalizations.of(context, 'codigo_qr'),
                         style: TextStyle(
                           color: WHITE,
                           fontSize: 34 / 2,
@@ -245,8 +256,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                             ),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            'Cancelar reserva',
+                          child: Text(
+                            isEnglish ? 'Cancel booking' : 'Cancelar reserva',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -277,8 +288,10 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'No tienes reservas activas',
+                        Text(
+                          isEnglish
+                              ? 'You have no active bookings'
+                              : 'No tienes reservas activas',
                           style: TextStyle(
                             color: WHITE,
                             fontSize: 18,
@@ -286,10 +299,12 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Para generar tu codigo QR, primero debes reservar un horario.',
+                        Text(
+                          isEnglish
+                              ? 'To generate your QR code, first book a time slot.'
+                              : 'Para generar tu codigo QR, primero debes reservar un horario.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: SECONDARY_COLOR,
                             fontSize: 14,
                             height: 1.35,
@@ -318,8 +333,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              'Ir a Reservas',
+                            child: Text(
+                              isEnglish ? 'Go to Bookings' : 'Ir a Reservas',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -330,7 +345,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _checkReservation,
-                          child: const Text('Actualizar estado'),
+                          child: Text(
+                            isEnglish ? 'Refresh status' : 'Actualizar estado',
+                          ),
                         ),
                       ],
                     ),

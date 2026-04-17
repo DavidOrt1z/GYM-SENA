@@ -6,6 +6,7 @@ class UnitsSavedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: SafeArea(
@@ -21,31 +22,35 @@ class UnitsSavedScreen extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-              
+
               const SizedBox(height: 80),
-              
+
               // Contenido centrado arriba
               Column(
                 children: [
                   // Título sin checkmark
-                  const Text(
-                    'Medidas guardadas\ncorrectamente',
+                  Text(
+                    isEnglish
+                        ? 'Measurements saved\nsuccessfully'
+                        : 'Medidas guardadas\ncorrectamente',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: WHITE,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       height: 1.3,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Descripción
-                  const Text(
-                    'Los cambios se aplicarán en todas tus\nestadísticas.',
+                  Text(
+                    isEnglish
+                        ? 'Changes will be applied to all your\nstatistics.'
+                        : 'Los cambios se aplicarán en todas tus\nestadísticas.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: SECONDARY_COLOR,
                       fontSize: 14,
                       height: 1.5,
@@ -53,9 +58,9 @@ class UnitsSavedScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const Spacer(),
-              
+
               // Botón Continuar
               SizedBox(
                 width: double.infinity,
@@ -71,8 +76,8 @@ class UnitsSavedScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continuar',
+                  child: Text(
+                    isEnglish ? 'Continue' : 'Continuar',
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 16,

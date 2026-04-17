@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 import '../../utils/error_messages.dart';
 import 'pantalla_unidades_guardadas.dart';
@@ -104,21 +105,32 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   Future<void> _saveUnits() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     setState(() => _isSaving = true);
 
     try {
       final authUserId = Supabase.instance.client.auth.currentUser?.id;
       if (authUserId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception(
+          isEnglish ? 'User not authenticated' : 'Usuario no autenticado',
+        );
       }
 
       final dbUserId = await _resolveDbUserId(authUserId);
       if (dbUserId == null) {
-        throw Exception('No se pudo encontrar el perfil del usuario');
+        throw Exception(
+          isEnglish
+              ? 'Could not find the user profile'
+              : 'No se pudo encontrar el perfil del usuario',
+        );
       }
 
       if (_weightController.text.isEmpty || _heightController.text.isEmpty) {
-        throw Exception('Por favor completa peso y altura');
+        throw Exception(
+          isEnglish
+              ? 'Please complete weight and height'
+              : 'Por favor completa peso y altura',
+        );
       }
 
       // Convertir valores a metric para guardar
@@ -168,8 +180,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
             content: Text(
               AppErrorMessages.map(
                 e,
-                fallback:
-                    'No se pudieron guardar las unidades. Intenta nuevamente',
+                fallback: isEnglish
+                    ? 'Could not save units. Please try again.'
+                    : 'No se pudieron guardar las unidades. Intenta nuevamente',
               ),
             ),
           ),
@@ -184,6 +197,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -193,8 +207,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
           icon: const Icon(Icons.arrow_back, color: WHITE),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Unidades de medida',
+        title: Text(
+          isEnglish ? 'Units of measure' : 'Unidades de medida',
           style: TextStyle(
             color: WHITE,
             fontSize: 18,
@@ -210,8 +224,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Sección Peso
-              const Text(
-                'Peso',
+              Text(
+                AppLocalizations.of(context, 'peso'),
                 style: TextStyle(
                   color: WHITE,
                   fontSize: 16,
@@ -230,7 +244,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
                       ),
                       style: const TextStyle(color: WHITE),
                       decoration: InputDecoration(
-                        hintText: 'Ingresa el peso',
+                        hintText: isEnglish
+                            ? 'Enter your weight'
+                            : 'Ingresa el peso',
                         hintStyle: const TextStyle(color: SECONDARY_COLOR),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -294,8 +310,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
               const SizedBox(height: 32),
 
               // Sección Altura
-              const Text(
-                'Altura',
+              Text(
+                AppLocalizations.of(context, 'altura'),
                 style: TextStyle(
                   color: WHITE,
                   fontSize: 16,
@@ -314,7 +330,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
                       ),
                       style: const TextStyle(color: WHITE),
                       decoration: InputDecoration(
-                        hintText: 'Ej: 1.74 o 174',
+                        hintText: isEnglish
+                            ? 'Ex: 1.74 or 174'
+                            : 'Ej: 1.74 o 174',
                         hintStyle: const TextStyle(color: SECONDARY_COLOR),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -398,8 +416,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Guardar',
+                      : Text(
+                          isEnglish ? 'Save' : 'Guardar',
                           style: TextStyle(
                             color: WHITE,
                             fontSize: 16,

@@ -40,10 +40,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
       }
     } catch (e) {
+      final isEnglish = Localizations.localeOf(context).languageCode == 'en';
       setState(() {
         _errorMessage = AppErrorMessages.map(
           e,
-          fallback: 'No se pudo enviar el código. Intenta nuevamente',
+          fallback: isEnglish
+              ? 'Could not send the code. Please try again.'
+              : 'No se pudo enviar el código. Intenta nuevamente',
         );
         _isLoading = false;
       });
@@ -52,6 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
 
@@ -61,8 +65,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         backgroundColor: DARKER_BG,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Restablecer contraseña',
+        title: Text(
+          isEnglish ? 'Reset password' : 'Restablecer contraseña',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -95,10 +99,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     children: [
                       const SizedBox(height: 40),
 
-                      const Text(
-                        'Ingrese su dirección de correo electrónico',
+                      Text(
+                        isEnglish
+                            ? 'Enter your email address'
+                            : 'Ingrese su dirección de correo electrónico',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           color: WHITE,
@@ -108,10 +114,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                       const SizedBox(height: 18),
 
-                      const Text(
-                        'Te enviaremos un codigo al correo para restablecer tu contraseña',
+                      Text(
+                        isEnglish
+                            ? 'We will send a code to your email to reset your password'
+                            : 'Te enviaremos un codigo al correo para restablecer tu contraseña',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: SECONDARY_COLOR,
                           height: 1.3,
@@ -161,10 +169,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu email';
+                            return isEnglish
+                                ? 'Please enter your email'
+                                : 'Por favor ingresa tu email';
                           }
                           if (!value.contains('@')) {
-                            return 'Por favor ingresa un email válido';
+                            return isEnglish
+                                ? 'Please enter a valid email'
+                                : 'Por favor ingresa un email válido';
                           }
                           return null;
                         },
@@ -213,8 +225,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                                   ),
                                 )
-                              : const Text(
-                                  'Enviar codigo de restablecimiento',
+                              : Text(
+                                  isEnglish
+                                      ? 'Send reset code'
+                                      : 'Enviar codigo de restablecimiento',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,

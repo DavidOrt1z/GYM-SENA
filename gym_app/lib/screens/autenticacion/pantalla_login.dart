@@ -28,9 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        _errorMessage = 'Completa todos los campos';
+        _errorMessage = isEnglish
+            ? 'Please complete all fields'
+            : 'Completa todos los campos';
       });
       return;
     }
@@ -56,14 +59,17 @@ class _LoginScreenState extends State<LoginScreen> {
         // Si falla, mostrar el error del provider
         setState(() {
           _errorMessage =
-              authProvider.errorMessage ?? 'Error al iniciar sesión';
+              authProvider.errorMessage ??
+              (isEnglish ? 'Login error' : 'Error al iniciar sesión');
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = AppErrorMessages.map(
           e,
-          fallback: 'No se pudo iniciar sesión. Intenta nuevamente',
+          fallback: isEnglish
+              ? 'Could not sign in. Please try again.'
+              : 'No se pudo iniciar sesión. Intenta nuevamente',
         );
       });
     } finally {

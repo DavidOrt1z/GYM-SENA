@@ -6,6 +6,7 @@ class ProfileSavedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: SafeArea(
@@ -14,10 +15,12 @@ class ProfileSavedScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 80),
-              
+
               // Título sin checkmark
               Text(
-                'Perfil guardado\ncorrectamente',
+                isEnglish
+                    ? 'Profile saved\nsuccessfully'
+                    : 'Perfil guardado\ncorrectamente',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: WHITE,
@@ -26,10 +29,12 @@ class ProfileSavedScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Descripción
               Text(
-                'Tus datos se han actualizado exitosamente.',
+                isEnglish
+                    ? 'Your information was updated successfully.'
+                    : 'Tus datos se han actualizado exitosamente.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: SECONDARY_COLOR,
@@ -37,9 +42,9 @@ class ProfileSavedScreen extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Botón Continuar
               SizedBox(
                 width: double.infinity,
@@ -57,8 +62,8 @@ class ProfileSavedScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continuar',
+                  child: Text(
+                    isEnglish ? 'Continue' : 'Continuar',
                     style: TextStyle(
                       color: WHITE,
                       fontSize: 16,
