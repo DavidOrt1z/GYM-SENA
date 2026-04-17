@@ -509,7 +509,7 @@ class DatabaseService {
       final activeReservations = await _supabase
           .from('reservas')
           .select('id_franja_horaria')
-          .eq('estado', 'active')
+          .inFilter('estado', ['active', 'completed'])
           .inFilter('id_franja_horaria', slotIds);
 
       final activeCountBySlotId = <String, int>{};
