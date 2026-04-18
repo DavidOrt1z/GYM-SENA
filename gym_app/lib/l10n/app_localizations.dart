@@ -6,9 +6,9 @@ import 'en.dart' as translations_en;
 class AppLocalizations {
   static const String es = 'es';
   static const String en = 'en';
-  
+
   static const List<String> idiomas = [es, en];
-  static const List<String> idiomas_nombres = ['Español', 'English'];
+  static const List<String> idiomasNombres = ['Español', 'English'];
 
   static final Map<String, Map<String, String>> locales = {
     es: translations_es.es,
@@ -75,13 +75,14 @@ class AppLocalizationsProvider extends InheritedWidget {
   });
 
   static AppLocalizations? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<AppLocalizationsProvider>()
+    return context
+        .dependOnInheritedWidgetOfExactType<AppLocalizationsProvider>()
         ?.localizations;
   }
 
   static String nombreIdioma(String codigo) {
     final index = AppLocalizations.idiomas.indexOf(codigo);
-    return index >= 0 ? AppLocalizations.idiomas_nombres[index] : 'Español';
+    return index >= 0 ? AppLocalizations.idiomasNombres[index] : 'Español';
   }
 
   @override

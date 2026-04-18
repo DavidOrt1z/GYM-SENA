@@ -83,8 +83,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
           if (units == 'metric') {
             _selectedWeightUnit = 'kg';
             _selectedHeightUnit = 'm';
-            if (weight != null)
+            if (weight != null) {
               _weightController.text = weight.toStringAsFixed(1);
+            }
             if (height != null) {
               // Mostrar altura en cm cuando la unidad es metros
               _heightController.text = height.toStringAsFixed(0);
@@ -92,15 +93,17 @@ class _UnitsScreenState extends State<UnitsScreen> {
           } else {
             _selectedWeightUnit = 'lbs';
             _selectedHeightUnit = 'ft';
-            if (weight != null)
+            if (weight != null) {
               _weightController.text = (weight * 2.20462).toStringAsFixed(1);
-            if (height != null)
+            }
+            if (height != null) {
               _heightController.text = (height / 30.48).toStringAsFixed(2);
+            }
           }
         });
       }
     } catch (e) {
-      print('Error loading units: $e');
+      debugPrint('Error loading units: $e');
     }
   }
 

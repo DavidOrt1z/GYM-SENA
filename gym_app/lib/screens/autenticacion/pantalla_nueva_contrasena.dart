@@ -275,7 +275,7 @@ class _ResetNewPasswordScreenState extends State<ResetNewPasswordScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.15),
+                              color: Colors.red.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.red),
                             ),

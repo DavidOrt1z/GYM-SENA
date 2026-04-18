@@ -20,7 +20,9 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('La app tiene navegación principal', (WidgetTester tester) async {
+    testWidgets('La app tiene navegación principal', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
 
@@ -28,7 +30,9 @@ void main() {
       expect(find.byType(Scaffold), findsWidgets);
     });
 
-    testWidgets('El onboarding se muestra la primera vez', (WidgetTester tester) async {
+    testWidgets('El onboarding se muestra la primera vez', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
@@ -36,7 +40,9 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('La navegación entre pantallas funciona', (WidgetTester tester) async {
+    testWidgets('La navegación entre pantallas funciona', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
 
@@ -51,7 +57,9 @@ void main() {
       }
     });
 
-    testWidgets('Los temas se aplican correctamente', (WidgetTester tester) async {
+    testWidgets('Los temas se aplican correctamente', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
 
@@ -60,10 +68,12 @@ void main() {
       expect(materialApp, findsOneWidget);
     });
 
-    testWidgets('La app maneja rotación de pantalla', (WidgetTester tester) async {
+    testWidgets('La app maneja rotación de pantalla', (
+      WidgetTester tester,
+    ) async {
       // Establecer tamaño de pantalla vertical
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
-      tester.binding.window.physicalSizeTestValue = const Size(1080, 1920);
+      addTearDown(tester.view.resetPhysicalSize);
+      tester.view.physicalSize = const Size(1080, 1920);
 
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
@@ -71,8 +81,7 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
 
       // Cambiar a horizontal
-      tester.binding.window.physicalSizeTestValue = const Size(1920, 1080);
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      tester.view.physicalSize = const Size(1920, 1080);
 
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
@@ -80,7 +89,9 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('La app responde a toques en botones', (WidgetTester tester) async {
+    testWidgets('La app responde a toques en botones', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
 
@@ -94,7 +105,9 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('Los textos se muestran correctamente', (WidgetTester tester) async {
+    testWidgets('Los textos se muestran correctamente', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp());
       await tester.pumpAndSettle();
 

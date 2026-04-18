@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         if (user != null) {
           if (mounted) {
-            print(
+            debugPrint(
               'DEBUG: Usuario cargado: ${user.fullName}, Avatar: ${user.avatarUrl}',
             );
             setState(() {
@@ -111,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
       }
     } catch (e) {
-      print('Error loading profile: $e');
+      debugPrint('Error loading profile: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;

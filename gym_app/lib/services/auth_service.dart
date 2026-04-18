@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -17,7 +18,7 @@ class AuthService {
         'estado': 'active',
       }, onConflict: 'correo_electronico');
     } catch (dbError) {
-      print('Error creando perfil en BD: $dbError');
+      debugPrint('Error creando perfil en BD: $dbError');
     }
   }
 
@@ -50,7 +51,7 @@ class AuthService {
 
       return response;
     } catch (e) {
-      print('Error en el registro: $e');
+      debugPrint('Error en el registro: $e');
       rethrow;
     }
   }
@@ -110,7 +111,7 @@ class AuthService {
             null, // Esto fuerza el envío de código OTP en lugar de link
       );
     } catch (e) {
-      print('Error enviando OTP: $e');
+      debugPrint('Error enviando OTP: $e');
       rethrow;
     }
   }
@@ -128,7 +129,7 @@ class AuthService {
         type: OtpType.magiclink,
       );
     } catch (e) {
-      print('Error verificando OTP: $e');
+      debugPrint('Error verificando OTP: $e');
       rethrow;
     }
   }
@@ -140,7 +141,7 @@ class AuthService {
         UserAttributes(password: newPassword),
       );
     } catch (e) {
-      print('Error actualizando contraseña: $e');
+      debugPrint('Error actualizando contraseña: $e');
       rethrow;
     }
   }

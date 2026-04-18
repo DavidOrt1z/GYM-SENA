@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 17 de Abril de 2026  
+**Última Actualización:** 18 de Abril de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -18,9 +18,9 @@
 | 3 | App - Pantallas UI | 4-6 días | ✅ **COMPLETADA** | 100% |
 | 4 | App - Integración Backend | 5-7 días | ✅ **COMPLETADA** | 100% | 7 Feb 2026 |
 | 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
-| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 94% | 17 Abr 2026 |
+| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 98% | 18 Abr 2026 |
 
-**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes Admin/Reservas/Cupos/Notificaciones ✅)
+**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes App/Admin + limpieza técnica ✅)
 
 ### 🎯 ¿Dónde Estoy?
 
@@ -30,7 +30,7 @@
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
 ✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
-🚀 FASE 6 ══════════════════  94%  (En Progreso - Ajustes UI + flujo reservas/admin/notificaciones - 17 Abr 2026)
+🚀 FASE 6 ══════════════════  98%  (En Progreso - Ajustes UI + flujo reservas/admin/notificaciones + lint clean - 18 Abr 2026)
 ```
 
 ---
@@ -921,7 +921,38 @@ supabase
 - ✅ **Cobertura:** Autenticación, Multiidioma, Onboarding, UI
 - ✅ **Ejecución:** `flutter test` para todos los tests
 
-### 6.6 Producción
+### 6.6 Ajustes Nuevos (APP + ADMIN) ✅ (ACTUALIZADO - 18 Abr 2026)
+- [x] **Inicio personalizado (App)**
+  - [x] Fecha del día al abrir Inicio
+  - [x] Saludo con **solo primer nombre** del usuario (sin correo)
+  - [x] Ajuste de tamaño de saludo según revisión visual (20)
+- [x] **Registro (App) - texto legal**
+  - [x] Alineación tipográfica de “Política de Privacidad” y “Términos de uso”
+  - [x] Enlaces clickeables con el mismo tamaño/peso visual del texto base
+- [x] **Progreso (App) - eje inferior/gráfica**
+  - [x] Ajuste horizontal para que etiquetas inferiores no queden pegadas al borde
+  - [x] Mejor alineación visual con el contenido superior
+- [x] **QR perfil (App)**
+  - [x] Fondo de pantalla unificado con el estilo global (`DARKER_BG`)
+  - [x] AppBar consistente con el resto de pantallas
+- [x] **Reservas QR (Admin Panel)**
+  - [x] Eliminado input manual de token QR
+  - [x] Eliminado botón “Validar token”
+  - [x] Flujo de escaneo automático más limpio y ordenado
+- [x] **Notificaciones de servicio (Admin Panel)**
+  - [x] Nueva sección `Notificaciones` con:
+    - [x] Formulario “Enviar aviso” (cierre temporal/habilitación, fecha, hora inicio-fin, mensaje)
+    - [x] “Historial de avisos” con búsqueda y refresco
+  - [x] Endpoints backend para crear/listar avisos
+  - [x] Fallback robusto para columnas de usuario en `notificaciones_historial`
+- [x] **Calidad de código (App)**
+  - [x] Reemplazo de `withOpacity` por `withValues(alpha: ...)`
+  - [x] Limpieza de elementos no usados
+  - [x] Reemplazo de `print` por `debugPrint` en código de app
+  - [x] Ajustes de tests/deprecaciones en integración
+  - [x] Estado de analizador: `flutter analyze` → **No issues found**
+
+### 6.7 Producción
 - [ ] Configurar app para release
 - [ ] Generar APK/AAB
 - [ ] Preparar para Play Store
@@ -1043,10 +1074,10 @@ git push origin main
 |------|--------|-----------------|
 | Fase 4 - Integración Backend | ✅ Completada | 0 horas |
 | Fase 5 - Panel Admin + Node.js | ✅ Completada | 0 horas |
-| Fase 6 - Pulido (Producción/APK + despliegue panel) | 🚀 En progreso | 4-6 horas |
-| **TOTAL RESTANTE** | | **4-6 horas** |
+| Fase 6 - Pulido (producción + cierre de publicación) | 🚀 En progreso | 2-4 horas |
+| **TOTAL RESTANTE** | | **2-4 horas** |
 
 ---
 
-*Última actualización: 17 de Abril de 2026*  
-*Estado: Fase 5 completada con Node.js - Fase 6 en progreso (pendiente: Producción/APK y publicación estable del panel)*
+*Última actualización: 18 de Abril de 2026*  
+*Estado: Fase 6 casi completada (ajustes App/Admin + calidad técnica listos; pendiente cierre de publicación estable)*

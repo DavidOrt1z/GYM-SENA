@@ -27,10 +27,10 @@ class ServicioNotificaciones {
   String? _notificationUserColumn;
 
   /// Tipos de notificaciones
-  static const String TIPO_RESERVA_CONFIRMADA = 'reserva_confirmada';
-  static const String TIPO_RECORDATORIO = 'recordatorio_reserva';
-  static const String TIPO_ALERTA_EQUIPAMIENTO = 'alerta_equipamiento';
-  static const String TIPO_CAMBIO_HORARIO = 'cambio_horario';
+  static const String tipoReservaConfirmada = 'reserva_confirmada';
+  static const String tipoRecordatorio = 'recordatorio_reserva';
+  static const String tipoAlertaEquipamiento = 'alerta_equipamiento';
+  static const String tipoCambioHorario = 'cambio_horario';
 
   /// Inicializar el servicio de notificaciones
   Future<void> inicializar() async {
@@ -54,9 +54,11 @@ class ServicioNotificaciones {
       _escucharNotificacionesRealtimeSupabase();
 
       _inicializado = true;
-      print('✅ Servicio de notificaciones inicializado (Supabase Realtime)');
+      debugPrint(
+        '✅ Servicio de notificaciones inicializado (Supabase Realtime)',
+      );
     } catch (e) {
-      print('❌ Error inicializando notificaciones: $e');
+      debugPrint('❌ Error inicializando notificaciones: $e');
     }
   }
 
@@ -123,10 +125,10 @@ class ServicioNotificaciones {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        payload: TIPO_RECORDATORIO,
+        payload: tipoRecordatorio,
       );
     } catch (e) {
-      print('❌ Error programando recordatorio: $e');
+      debugPrint('❌ Error programando recordatorio: $e');
     }
   }
 
@@ -137,7 +139,7 @@ class ServicioNotificaciones {
       if (notifications == null) return;
       await notifications.cancel(_reservationReminderId(reservationId));
     } catch (e) {
-      print('❌ Error cancelando recordatorio: $e');
+      debugPrint('❌ Error cancelando recordatorio: $e');
     }
   }
 
@@ -166,7 +168,7 @@ class ServicioNotificaciones {
     try {
       final usuarioId = supabase.auth.currentUser?.id;
       if (usuarioId == null) {
-        print(
+        debugPrint(
           '⚠️ Usuario no autenticado, no se pueden escuchar notificaciones',
         );
         return;
@@ -187,9 +189,11 @@ class ServicioNotificaciones {
           )
           .subscribe();
 
-      print('✅ Escuchando notificaciones en tiempo real vía Supabase Realtime');
+      debugPrint(
+        '✅ Escuchando notificaciones en tiempo real vía Supabase Realtime',
+      );
     } catch (e) {
-      print('❌ Error configurando realtime: $e');
+      debugPrint('❌ Error configurando realtime: $e');
     }
   }
 
@@ -200,13 +204,13 @@ class ServicioNotificaciones {
       if (datos == null) return;
 
       // Verificar que sea para el usuario actual
-        final userIds = await _resolverIdsUsuarioNotificaciones();
-        if (userIds.isEmpty) return;
+      final userIds = await _resolverIdsUsuarioNotificaciones();
+      if (userIds.isEmpty) return;
       final payloadUserId =
           datos['id_usuario_notif']?.toString() ??
           datos['id_usuario']?.toString() ??
           datos['usuario_id']?.toString();
-        if (payloadUserId == null || !userIds.contains(payloadUserId)) return;
+      if (payloadUserId == null || !userIds.contains(payloadUserId)) return;
 
       // Solo mostrar si no ha sido abierta
       if (datos['abierta'] != true) {
@@ -220,7 +224,7 @@ class ServicioNotificaciones {
         );
       }
     } catch (e) {
-      print('❌ Error procesando notificación: $e');
+      debugPrint('❌ Error procesando notificación: $e');
     }
   }
 
@@ -266,9 +270,9 @@ class ServicioNotificaciones {
         payload: tipo,
       );
 
-      print('✅ Notificación mostrada: $titulo');
+      debugPrint('✅ Notificación mostrada: $titulo');
     } catch (e) {
-      print('❌ Error mostrando notificación: $e');
+      debugPrint('❌ Error mostrando notificación: $e');
     }
   }
 
@@ -322,7 +326,7 @@ class ServicioNotificaciones {
           })
           .eq('id', notificacionId);
     } catch (e) {
-      print('❌ Error marcando notificación: $e');
+      debugPrint('❌ Error marcando notificación: $e');
     }
   }
 
@@ -334,7 +338,7 @@ class ServicioNotificaciones {
 
       return await _obtenerNotificacionesConFallback(userIds);
     } catch (e) {
-      print('❌ Error obteniendo notificaciones: $e');
+      debugPrint('❌ Error obteniendo notificaciones: $e');
       return [];
     }
   }
@@ -342,26 +346,26 @@ class ServicioNotificaciones {
   Future<List<Map<String, dynamic>>> _obtenerNotificacionesConFallback(
     List<String> userIds,
   ) async {
-    final columnas = <String>[
+    final columnas = <String>{
       if (_notificationUserColumn != null) _notificationUserColumn!,
       'id_usuario_notif',
       'id_usuario',
       'usuario_id',
       'user_id',
-    ].toSet().toList();
+    }.toList();
 
     PostgrestException? lastError;
 
     for (final columna in columnas) {
       try {
-      final baseQuery = supabase.from('notificaciones_historial').select();
-      final filteredQuery = userIds.length == 1
-        ? baseQuery.eq(columna, userIds.first)
-        : baseQuery.inFilter(columna, userIds);
+        final baseQuery = supabase.from('notificaciones_historial').select();
+        final filteredQuery = userIds.length == 1
+            ? baseQuery.eq(columna, userIds.first)
+            : baseQuery.inFilter(columna, userIds);
 
-      final datos = await filteredQuery
-        .order('fecha_creacion', ascending: false)
-        .limit(50);
+        final datos = await filteredQuery
+            .order('fecha_creacion', ascending: false)
+            .limit(50);
 
         _notificationUserColumn = columna;
         return (datos as List).cast<Map<String, dynamic>>();
@@ -394,40 +398,13 @@ class ServicioNotificaciones {
     } on PostgrestException catch (error) {
       // Si la columna no existe en otro esquema, mantenemos auth.uid como fallback.
       if (error.code != 'PGRST204') {
-        print('⚠️ No se pudo resolver id de users por id_autenticacion: $error');
+        debugPrint(
+          '⚠️ No se pudo resolver id de users por id_autenticacion: $error',
+        );
       }
     } catch (_) {}
 
     return ids.toList();
-  }
-
-  Future<String> _resolverColumnaUsuarioNotificaciones() async {
-    if (_notificationUserColumn != null) return _notificationUserColumn!;
-
-    final usuarioId = supabase.auth.currentUser?.id;
-    if (usuarioId == null) {
-      _notificationUserColumn = 'id_usuario_notif';
-      return _notificationUserColumn!;
-    }
-
-    const candidates = [
-      'id_usuario_notif',
-      'id_usuario',
-      'usuario_id',
-      'user_id',
-    ];
-    for (final column in candidates) {
-      try {
-        await supabase.from('notificaciones_historial').select(column).limit(1);
-        _notificationUserColumn = column;
-        return column;
-      } catch (_) {
-        // prueba siguiente columna
-      }
-    }
-
-    _notificationUserColumn = 'id_usuario_notif';
-    return _notificationUserColumn!;
   }
 
   /// Limpiar notificaciones antiguas
@@ -442,9 +419,9 @@ class ServicioNotificaciones {
           .delete()
           .lt('fecha_creacion', fecha);
 
-      print('✅ Notificaciones antiguas eliminadas');
+      debugPrint('✅ Notificaciones antiguas eliminadas');
     } catch (e) {
-      print('❌ Error limpiando notificaciones: $e');
+      debugPrint('❌ Error limpiando notificaciones: $e');
     }
   }
 

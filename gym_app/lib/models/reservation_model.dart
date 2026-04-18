@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ReservationModel {
@@ -279,7 +280,7 @@ class ReservationModel {
 
       return false;
     } catch (e) {
-      print('Error validando token QR: $e');
+      debugPrint('Error validando token QR: $e');
       return false;
     }
   }

@@ -58,7 +58,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       String errorMsg = e.toString();
 
-      print('Error en login: $errorMsg'); // Para debug
+      debugPrint('Error en login: $errorMsg');
       _errorMessage = _mapLoginError(errorMsg);
 
       _isLoading = false;
@@ -87,7 +87,7 @@ class AuthProvider extends ChangeNotifier {
       // Procesar mensajes de error para hacerlos más amigables
       String errorMsg = e.toString();
 
-      print('Error completo de registro: $errorMsg'); // Para debug
+      debugPrint('Error completo de registro: $errorMsg');
 
       if (errorMsg.contains('Password should be at least 8 characters')) {
         _errorMessage = 'La contraseña debe tener mínimo 8 caracteres';

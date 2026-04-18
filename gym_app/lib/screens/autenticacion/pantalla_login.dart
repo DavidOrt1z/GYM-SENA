@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: ERROR_COLOR.withOpacity(0.15),
+                    color: ERROR_COLOR.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: ERROR_COLOR),
                   ),
@@ -270,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PRIMARY_COLOR,
-                  disabledBackgroundColor: PRIMARY_COLOR.withOpacity(0.5),
+                  disabledBackgroundColor: PRIMARY_COLOR.withValues(alpha: 0.5),
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

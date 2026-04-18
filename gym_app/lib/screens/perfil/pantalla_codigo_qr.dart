@@ -75,7 +75,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error checking reservation: $e');
+      debugPrint('Error checking reservation: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -148,9 +148,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     final qrData = reservationId.isNotEmpty ? reservationId : 'SIN_RESERVA';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF071423),
+      backgroundColor: DARKER_BG,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: DARKER_BG,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -167,193 +167,188 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         ),
         centerTitle: true,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF081627), Color(0xFF071322), Color(0xFF06111D)],
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: PRIMARY_COLOR),
-                )
-              : _hasActiveReservation
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 10),
-                      Text(
-                        isEnglish
-                            ? 'This code is your access pass to the gym.'
-                            : 'Este código es la entrada para acceder al gimnasio.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFD9E5F4),
-                          fontSize: 31 / 2,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: PRIMARY_COLOR),
+              )
+            : _hasActiveReservation
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      isEnglish
+                          ? 'This code is your access pass to the gym.'
+                          : 'Este código es la entrada para acceder al gimnasio.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFFD9E5F4),
+                        fontSize: 31 / 2,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 34),
+                    Text(
+                      AppLocalizations.of(context, 'codigo_qr'),
+                      style: TextStyle(
+                        color: WHITE,
+                        fontSize: 34 / 2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF263A51),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final qrSize = constraints.maxWidth - 24;
+                          return Center(
+                            child: QrImageView(
+                              data: qrData,
+                              version: QrVersions.auto,
+                              size: qrSize.clamp(200.0, 320.0),
+                              backgroundColor: Colors.transparent,
+                              eyeStyle: const QrEyeStyle(
+                                color: Color(0xFFE8E8F2),
+                              ),
+                              dataModuleStyle: const QrDataModuleStyle(
+                                color: Color(0xFFE8E8F2),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      reservationId.isNotEmpty
+                          ? 'ID: ${reservationId.substring(0, reservationId.length >= 8 ? 8 : reservationId.length)}...'
+                          : 'ID: SIN_RESERVA',
+                      style: const TextStyle(
+                        color: Color(0xFF91ADC9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _cancelReservation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: PRIMARY_COLOR,
+                          foregroundColor: WHITE,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          isEnglish ? 'Cancel booking' : 'Cancelar reserva',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 34),
+                    ),
+                  ],
+                ),
+              )
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22364B),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_2_rounded,
+                          color: Color(0xFFB8CDE3),
+                          size: 38,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
-                        AppLocalizations.of(context, 'codigo_qr'),
+                        isEnglish
+                            ? 'You have no active bookings'
+                            : 'No tienes reservas activas',
                         style: TextStyle(
                           color: WHITE,
-                          fontSize: 34 / 2,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 26),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF263A51),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final qrSize = constraints.maxWidth - 24;
-                            return Center(
-                              child: QrImageView(
-                                data: qrData,
-                                version: QrVersions.auto,
-                                size: qrSize.clamp(200.0, 320.0),
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: const Color(0xFFE8E8F2),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
                       Text(
-                        reservationId.isNotEmpty
-                            ? 'ID: ${reservationId.substring(0, reservationId.length >= 8 ? 8 : reservationId.length)}...'
-                            : 'ID: SIN_RESERVA',
+                        isEnglish
+                            ? 'To generate your QR code, first book a time slot.'
+                            : 'Para generar tu codigo QR, primero debes reservar un horario.',
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFF91ADC9),
+                          color: SECONDARY_COLOR,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          height: 1.35,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 18),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _cancelReservation,
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MainNavigationScreen(initialIndex: 1),
+                              ),
+                              (_) => false,
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: PRIMARY_COLOR,
                             foregroundColor: WHITE,
-                            minimumSize: const Size.fromHeight(48),
+                            minimumSize: const Size.fromHeight(46),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                             elevation: 0,
                           ),
                           child: Text(
-                            isEnglish ? 'Cancel booking' : 'Cancelar reserva',
+                            isEnglish ? 'Go to Bookings' : 'Ir a Reservas',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _checkReservation,
+                        child: Text(
+                          isEnglish ? 'Refresh status' : 'Actualizar estado',
+                        ),
+                      ),
                     ],
                   ),
-                )
-              : Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF22364B),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.qr_code_2_rounded,
-                            color: Color(0xFFB8CDE3),
-                            size: 38,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          isEnglish
-                              ? 'You have no active bookings'
-                              : 'No tienes reservas activas',
-                          style: TextStyle(
-                            color: WHITE,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isEnglish
-                              ? 'To generate your QR code, first book a time slot.'
-                              : 'Para generar tu codigo QR, primero debes reservar un horario.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: SECONDARY_COLOR,
-                            fontSize: 14,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (_) => const MainNavigationScreen(
-                                    initialIndex: 1,
-                                  ),
-                                ),
-                                (_) => false,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: PRIMARY_COLOR,
-                              foregroundColor: WHITE,
-                              minimumSize: const Size.fromHeight(46),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              isEnglish ? 'Go to Bookings' : 'Ir a Reservas',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: _checkReservation,
-                          child: Text(
-                            isEnglish ? 'Refresh status' : 'Actualizar estado',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-        ),
+              ),
       ),
     );
   }

@@ -32,9 +32,9 @@ final Map<String, String> es = {
   'cerrar_sesion': 'Cerrar Sesión',
   'contraseña_actualizada': 'Contraseña Actualizada',
   'registro_exitoso': '¡Registro Exitoso!',
-  'politicas_privacidad': 'Políticas de Privacidad',
-  'terminos_uso': 'Términos de Uso',
-  'acepto_terminos': 'Acepto los términos y condiciones',
+  'politicas_privacidad': 'Política de Privacidad',
+  'terminos_uso': 'Términos de uso.',
+  'acepto_terminos': 'Al continuar, aceptas nuestra ',
 
   // ========== NAVEGACIÓN ==========
   'inicio': 'Inicio',

@@ -1,15 +1,141 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/services/database_service.dart';
 import 'package:gym_app/screens/notificaciones/pantalla_notificaciones.dart';
 import 'package:gym_app/providers/proveedor_notificaciones.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/constants.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseService _databaseService = DatabaseService();
+  String _firstName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstName();
+  }
+
+  Future<void> _loadFirstName() async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    final authUserId = currentUser?.id;
+
+    if (authUserId == null || authUserId.isEmpty) return;
+
+    try {
+      final profile = await _databaseService.getUserProfile(authUserId);
+      final metadata = currentUser?.userMetadata ?? <String, dynamic>{};
+
+      final fullName = (profile?.fullName ?? '').trim().isNotEmpty
+          ? profile!.fullName
+          : (metadata['nombre_completo']?.toString() ??
+                    metadata['full_name']?.toString() ??
+                    metadata['name']?.toString() ??
+                    '')
+                .trim();
+
+      final firstName = _extractFirstName(fullName);
+      if (!mounted) return;
+
+      setState(() {
+        _firstName = firstName;
+      });
+    } catch (_) {
+      // Si falla, dejamos el saludo sin nombre.
+    }
+  }
+
+  String _extractFirstName(String fullName) {
+    final trimmed = fullName.trim();
+    if (trimmed.isEmpty) return '';
+
+    final parts = trimmed.split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.first.trim() : '';
+  }
+
+  String _formattedToday({required bool isEnglish}) {
+    final today = DateTime.now();
+
+    const weekdaysEs = [
+      'lunes',
+      'martes',
+      'miercoles',
+      'jueves',
+      'viernes',
+      'sabado',
+      'domingo',
+    ];
+    const monthsEs = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+
+    const weekdaysEn = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ];
+    const monthsEn = [
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ];
+
+    if (isEnglish) {
+      final weekday = weekdaysEn[today.weekday - 1];
+      final month = monthsEn[today.month - 1];
+      return '$weekday, $month ${today.day}';
+    }
+
+    final weekday = weekdaysEs[today.weekday - 1];
+    final month = monthsEs[today.month - 1];
+    return '$weekday, ${today.day} de $month';
+  }
+
+  String _greetingText({required bool isEnglish}) {
+    if (_firstName.isEmpty) {
+      return isEnglish ? 'HELLO!' : '¡HOLA!';
+    }
+
+    final upperName = _firstName.toUpperCase();
+    return isEnglish ? 'HELLO, $upperName!' : '¡HOLA, $upperName!';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+
     return Scaffold(
       backgroundColor: DARKER_BG,
       body: CustomScrollView(
@@ -87,6 +213,8 @@ class HomeScreen extends StatelessWidget {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
+              _buildWelcomeHeader(context, isEnglish: isEnglish),
+              const SizedBox(height: 16),
               _buildMainBanner(context),
               const SizedBox(height: 28),
               _buildSectionTitle(context, 'instalaciones'),
@@ -102,6 +230,35 @@ class HomeScreen extends StatelessWidget {
               _buildEquipamientoSection(context),
               const SizedBox(height: 40),
             ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeHeader(BuildContext context, {required bool isEnglish}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _formattedToday(isEnglish: isEnglish),
+            style: const TextStyle(
+              color: SECONDARY_COLOR,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _greetingText(isEnglish: isEnglish),
+            style: const TextStyle(
+              color: WHITE,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.05,
+            ),
           ),
         ],
       ),

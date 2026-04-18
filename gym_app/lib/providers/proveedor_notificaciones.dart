@@ -36,7 +36,7 @@ class ProveedorNotificaciones extends ChangeNotifier {
       _cargando = false;
       notifyListeners();
     } catch (e) {
-      print('❌ Error inicializando proveedor: $e');
+      debugPrint('❌ Error inicializando proveedor: $e');
       _cargando = false;
       notifyListeners();
     }
@@ -60,7 +60,7 @@ class ProveedorNotificaciones extends ChangeNotifier {
       _cargando = false;
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando notificaciones: $e');
+      debugPrint('❌ Error cargando notificaciones: $e');
       _cargando = false;
       notifyListeners();
     }
@@ -89,7 +89,7 @@ class ProveedorNotificaciones extends ChangeNotifier {
       await _servicioNotificaciones.marcarComoAbierta(notificacionId);
       await cargarNotificaciones();
     } catch (e) {
-      print('❌ Error marcando notificación: $e');
+      debugPrint('❌ Error marcando notificación: $e');
     }
   }
 
@@ -99,7 +99,7 @@ class ProveedorNotificaciones extends ChangeNotifier {
       await _servicioNotificaciones.limpiarNotificacionesAntiguas(dias);
       await cargarNotificaciones();
     } catch (e) {
-      print('❌ Error limpiando notificaciones: $e');
+      debugPrint('❌ Error limpiando notificaciones: $e');
     }
   }
 

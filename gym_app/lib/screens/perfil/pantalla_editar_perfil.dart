@@ -72,7 +72,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Leer archivo como bytes usando XFile
       final Uint8List bytes = await pickedFile.readAsBytes();
 
-      print('DEBUG: Subiendo foto, userId: $userId, fileName: $fileName');
+      debugPrint('DEBUG: Subiendo foto, userId: $userId, fileName: $fileName');
 
       // Subir a Supabase Storage usando uploadBinary con upsert
       await Supabase.instance.client.storage
@@ -88,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .from('avatars')
           .getPublicUrl(fileName);
 
-      print('DEBUG: URL generada: $publicUrl');
+      debugPrint('DEBUG: URL generada: $publicUrl');
 
       if (mounted) {
         setState(() {
@@ -97,7 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      print('Error uploading photo: $e');
+      debugPrint('Error uploading photo: $e');
       if (mounted) {
         setState(() => _isUploadingPhoto = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,14 +162,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           'url_avatar': _currentAvatarUrl,
       };
 
-      print('DEBUG: Guardando datos: $updateData');
+      debugPrint('DEBUG: Guardando datos: $updateData');
 
       await Supabase.instance.client
           .from('users')
           .update(updateData)
           .eq('id', userId);
 
-      print('DEBUG: Datos guardados exitosamente');
+      debugPrint('DEBUG: Datos guardados exitosamente');
 
       if (mounted) {
         Navigator.of(context).push(
@@ -177,7 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
     } catch (e) {
-      print('Error saving profile: $e');
+      debugPrint('Error saving profile: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -366,7 +366,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: _isSaving ? null : _saveChanges,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PRIMARY_COLOR,
-                    disabledBackgroundColor: PRIMARY_COLOR.withOpacity(0.5),
+                    disabledBackgroundColor: PRIMARY_COLOR.withValues(
+                      alpha: 0.5,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

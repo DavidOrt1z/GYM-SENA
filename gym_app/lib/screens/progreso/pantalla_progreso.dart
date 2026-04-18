@@ -134,7 +134,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.only(left: 18, right: 8),
       child: LineChart(
         LineChartData(
           minX: 0,
@@ -167,12 +167,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     return const SizedBox.shrink();
                   }
 
-                  return Text(
-                    _weightLogs[index].shortDate,
-                    style: const TextStyle(
-                      color: SECONDARY_COLOR,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                  final isFirst = index == 0;
+                  final isLast = index == _weightLogs.length - 1;
+
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: isFirst ? 8 : 0,
+                      right: isLast ? 8 : 0,
+                    ),
+                    child: Text(
+                      _weightLogs[index].shortDate,
+                      style: const TextStyle(
+                        color: SECONDARY_COLOR,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   );
                 },

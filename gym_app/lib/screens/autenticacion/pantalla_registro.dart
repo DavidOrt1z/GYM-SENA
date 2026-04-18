@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_app/providers/auth_provider.dart';
 import 'package:gym_app/utils/constants.dart';
@@ -57,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 24),
                 // Título principal
                 Text(
-                  AppLocalizations.of(context, 'bienvenida'),
+                  AppLocalizations.of(context, 'bienvenido'),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -325,7 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
+                            color: Colors.red.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.red),
                           ),
@@ -371,11 +372,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextSpan(
                           text: AppLocalizations.of(context, 'acepto_terminos'),
                         ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: () {
+                        TextSpan(
+                          text: AppLocalizations.of(
+                            context,
+                            'politicas_privacidad',
+                          ),
+                          style: const TextStyle(
+                            color: PRIMARY_COLOR,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -384,25 +392,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               );
                             },
-                            child: Text(
-                              AppLocalizations.of(
-                                context,
-                                'politicas_privacidad',
-                              ),
-                              style: const TextStyle(
-                                color: PRIMARY_COLOR,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
                         ),
                         const TextSpan(text: ' y '),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: () {
+                        TextSpan(
+                          text: AppLocalizations.of(context, 'terminos_uso'),
+                          style: const TextStyle(
+                            color: PRIMARY_COLOR,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -411,15 +411,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               );
                             },
-                            child: Text(
-                              AppLocalizations.of(context, 'terminos_uso'),
-                              style: const TextStyle(
-                                color: PRIMARY_COLOR,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
                         ),
                       ],
                     ),

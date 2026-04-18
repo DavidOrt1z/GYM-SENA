@@ -33,8 +33,8 @@ final Map<String, String> en = {
   'contraseña_actualizada': 'Password Updated',
   'registro_exitoso': 'Sign Up Successful!',
   'politicas_privacidad': 'Privacy Policy',
-  'terminos_uso': 'Terms of Use',
-  'acepto_terminos': 'I agree to the terms and conditions',
+  'terminos_uso': 'Terms of Use.',
+  'acepto_terminos': 'By continuing, you accept our ',
 
   // ========== NAVIGATION ==========
   'inicio': 'Home',

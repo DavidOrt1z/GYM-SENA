@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gym_app/models/user_model.dart';
 import 'package:gym_app/models/weight_log_model.dart';
@@ -9,32 +10,6 @@ class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ServicioNotificaciones _notificationService = ServicioNotificaciones();
   String? _notificationUserColumn;
-
-  Future<String> _resolveNotificationUserColumn() async {
-    if (_notificationUserColumn != null) return _notificationUserColumn!;
-
-    const candidates = [
-      'id_usuario_notif',
-      'id_usuario',
-      'usuario_id',
-      'user_id',
-    ];
-    for (final column in candidates) {
-      try {
-        await _supabase
-            .from('notificaciones_historial')
-            .select(column)
-            .limit(1);
-        _notificationUserColumn = column;
-        return column;
-      } catch (_) {
-        // probar siguiente columna
-      }
-    }
-
-    _notificationUserColumn = 'id_usuario_notif';
-    return _notificationUserColumn!;
-  }
 
   Future<void> _createNotification({
     required String userId,
@@ -50,13 +25,13 @@ class DatabaseService {
         if (authUserId != null && authUserId.isNotEmpty) authUserId,
       }.toList();
 
-      final columns = <String>[
+      final columns = <String>{
         if (_notificationUserColumn != null) _notificationUserColumn!,
         'id_usuario_notif',
         'id_usuario',
         'usuario_id',
         'user_id',
-      ].toSet().toList();
+      }.toList();
 
       for (final column in columns) {
         for (final currentUserId in userIds) {
@@ -66,7 +41,7 @@ class DatabaseService {
               'titulo': title,
               'cuerpo': body,
               'tipo': type,
-              'datos': data ?? <String, dynamic>{},
+              'datos': data ?? {},
               'entregada': true,
               'abierta': false,
             });
@@ -309,11 +284,11 @@ class DatabaseService {
       }
 
       if (lastError != null) {
-        print('Error fetching user reservations: $lastError');
+        debugPrint('Error fetching user reservations: $lastError');
       }
       return [];
     } catch (e) {
-      print('Error fetching user reservations: $e');
+      debugPrint('Error fetching user reservations: $e');
       return [];
     }
   }
@@ -340,14 +315,18 @@ class DatabaseService {
   ) async {
     try {
       if (userId.isEmpty) {
-        print('Error creating reservation: usuario autenticado no disponible');
+        debugPrint(
+          'Error creating reservation: usuario autenticado no disponible',
+        );
         return null;
       }
 
       final dbUserId = await _resolveDbUserId(userId);
       final userIds = _candidateUserIds(userId, dbUserId);
       if (userIds.isEmpty) {
-        print('Error creating reservation: no se pudo resolver id_usuario');
+        debugPrint(
+          'Error creating reservation: no se pudo resolver id_usuario',
+        );
         return null;
       }
 
@@ -363,7 +342,7 @@ class DatabaseService {
           );
 
           if (hasReservation) {
-            print(
+            debugPrint(
               'Error creating reservation: usuario ya tiene reserva en esa fecha',
             );
             return null;
@@ -379,9 +358,8 @@ class DatabaseService {
               .eq('estado', 'active')
               .limit(1);
 
-          if (duplicatedBySlotResponse is List &&
-              duplicatedBySlotResponse.isNotEmpty) {
-            print(
+          if (duplicatedBySlotResponse.isNotEmpty) {
+            debugPrint(
               'Error creating reservation: usuario ya tiene una reserva activa en este horario',
             );
             return null;
@@ -446,11 +424,11 @@ class DatabaseService {
       }
 
       if (lastError != null) {
-        print('Error creating reservation: $lastError');
+        debugPrint('Error creating reservation: $lastError');
       }
       return null;
     } catch (e) {
-      print('Error creating reservation: $e');
+      debugPrint('Error creating reservation: $e');
       return null;
     }
   }
@@ -468,17 +446,17 @@ class DatabaseService {
           .select('id, estado');
 
       // Si RLS bloquea el UPDATE, PostgREST puede responder sin error pero con 0 filas.
-      if (response is List && response.isNotEmpty) {
+      if (response.isNotEmpty) {
         await _notificationService.cancelarRecordatorioReserva(reservationId);
         return true;
       }
 
-      print(
+      debugPrint(
         'Error cancelling reservation: no se actualizó ninguna fila para $reservationId',
       );
       return false;
     } catch (e) {
-      print('Error cancelling reservation: $e');
+      debugPrint('Error cancelling reservation: $e');
       return false;
     }
   }
@@ -528,7 +506,7 @@ class DatabaseService {
           )
           .toList();
     } catch (e) {
-      print('Error fetching available slots: $e');
+      debugPrint('Error fetching available slots: $e');
       return [];
     }
   }
@@ -561,7 +539,7 @@ class DatabaseService {
       }
       return false;
     } catch (e) {
-      print('Error incrementing slot reservations: $e');
+      debugPrint('Error incrementing slot reservations: $e');
       return false;
     }
   }
@@ -579,7 +557,7 @@ class DatabaseService {
       }
       return false;
     } catch (e) {
-      print('Error decrementing slot reservations: $e');
+      debugPrint('Error decrementing slot reservations: $e');
       return false;
     }
   }
@@ -631,7 +609,7 @@ class DatabaseService {
         ),
       ];
     } catch (e) {
-      print('Error fetching weight logs: $e');
+      debugPrint('Error fetching weight logs: $e');
       return [];
     }
   }
@@ -658,7 +636,7 @@ class DatabaseService {
 
       return WeightLogModel.fromJson(response);
     } catch (e) {
-      print('Error adding weight log: $e');
+      debugPrint('Error adding weight log: $e');
       return null;
     }
   }
@@ -672,7 +650,7 @@ class DatabaseService {
           .eq('id', logId);
       return true;
     } catch (e) {
-      print('Error updating weight log: $e');
+      debugPrint('Error updating weight log: $e');
       return false;
     }
   }
@@ -683,7 +661,7 @@ class DatabaseService {
       await _supabase.from('registros_peso').delete().eq('id', logId);
       return true;
     } catch (e) {
-      print('Error deleting weight log: $e');
+      debugPrint('Error deleting weight log: $e');
       return false;
     }
   }

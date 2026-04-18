@@ -8,7 +8,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with WidgetsBindingObserver {
+class _SplashScreenState extends State<SplashScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -16,10 +17,9 @@ class _SplashScreenState extends State<SplashScreen> with WidgetsBindingObserver
     // Navegar a Welcome después de 8 segundos
     Future.delayed(const Duration(seconds: 8), () {
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/welcome',
-          (Route<dynamic> route) => false,
-        );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/welcome', (Route<dynamic> route) => false);
       }
     });
   }
@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> with WidgetsBindingObserver
                 '© 2025 GYM SENA - Todos los derechos reservados',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: WHITE.withOpacity(0.7),
+                  color: WHITE.withValues(alpha: 0.7),
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                 ),
