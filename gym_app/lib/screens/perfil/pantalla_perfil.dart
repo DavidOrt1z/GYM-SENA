@@ -249,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Text(
                   role == 'admin'
                       ? (isEnglish ? 'Administrator' : 'Administrador')
-                      : (isEnglish ? 'Trainee' : 'Aprendiz'),
+                      : (isEnglish ? 'User' : 'Usuario'),
                   style: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
                 ),
               ],

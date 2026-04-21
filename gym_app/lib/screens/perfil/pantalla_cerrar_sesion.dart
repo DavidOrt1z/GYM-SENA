@@ -26,8 +26,8 @@ class LogoutScreen extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: isEnglish
-                              ? 'See you soon, trainee! '
-                              : '¡Hasta pronto, aprendiz! ',
+                              ? 'See you soon, user! '
+                              : '¡Hasta pronto, usuario! ',
                           style: const TextStyle(
                             color: WHITE,
                             fontSize: 28,

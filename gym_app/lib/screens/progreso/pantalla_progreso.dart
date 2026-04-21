@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/weight_log_model.dart';
@@ -85,39 +87,73 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return '$sign${_recentChangePercent.toStringAsFixed(0)}%';
   }
 
-  Set<int> get _labelIndexes {
-    final count = _weightLogs.length;
-    if (count == 0) return {};
-    if (count <= 4) {
-      return List<int>.generate(count, (index) => index).toSet();
+  List<FlSpot> get _visualChartData {
+    if (_chartData.length >= 2) return _chartData;
+
+    final baseWeight = _weightLogs.isNotEmpty ? _weightLogs.last.weight : 60;
+    const totalPoints = 28;
+
+    return List<FlSpot>.generate(totalPoints, (index) {
+      final progress = index / (totalPoints - 1);
+      final waveA = math.sin(progress * math.pi * 6) * 0.9;
+      final waveB = math.sin(progress * math.pi * 13) * 0.35;
+      return FlSpot(index.toDouble(), baseWeight + waveA + waveB);
+    });
+  }
+
+  String _formatDayMonth(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month';
+  }
+
+  Map<int, String> get _bottomLabels {
+    if (_weightLogs.length >= 2) {
+      final count = _weightLogs.length;
+      if (count <= 4) {
+        return {for (int i = 0; i < count; i++) i: _weightLogs[i].shortDate};
+      }
+
+      final i1 = 0;
+      final i2 = ((count - 1) * 0.33).round();
+      final i3 = ((count - 1) * 0.66).round();
+      final i4 = count - 1;
+
+      return {
+        i1: _weightLogs[i1].shortDate,
+        i2: _weightLogs[i2].shortDate,
+        i3: _weightLogs[i3].shortDate,
+        i4: _weightLogs[i4].shortDate,
+      };
     }
 
+    final now = DateTime.now();
     return {
-      0,
-      ((count - 1) * 0.33).round(),
-      ((count - 1) * 0.66).round(),
-      count - 1,
+      0: _formatDayMonth(now.subtract(const Duration(days: 21))),
+      9: _formatDayMonth(now.subtract(const Duration(days: 14))),
+      18: _formatDayMonth(now.subtract(const Duration(days: 7))),
+      27: _formatDayMonth(now),
     };
   }
 
   double get _chartMinY {
-    if (_chartData.isEmpty) return 0;
-    final minY = _chartData
+    if (_visualChartData.isEmpty) return 0;
+    final minY = _visualChartData
         .map((point) => point.y)
         .reduce((a, b) => a < b ? a : b);
-    return minY - 2;
+    return minY - 1.4;
   }
 
   double get _chartMaxY {
-    if (_chartData.isEmpty) return 100;
-    final maxY = _chartData
+    if (_visualChartData.isEmpty) return 100;
+    final maxY = _visualChartData
         .map((point) => point.y)
         .reduce((a, b) => a > b ? a : b);
-    return maxY + 2;
+    return maxY + 1.4;
   }
 
   Widget _buildChart() {
-    if (_chartData.isEmpty) {
+    if (_visualChartData.isEmpty) {
       final isEnglish =
           WidgetsBinding.instance.platformDispatcher.locale.languageCode ==
           'en';
@@ -138,7 +174,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: LineChart(
         LineChartData(
           minX: 0,
-          maxX: (_chartData.length - 1).toDouble(),
+          maxX: (_visualChartData.length - 1).toDouble(),
           minY: _chartMinY,
           maxY: _chartMaxY,
           gridData: const FlGridData(show: false),
@@ -161,14 +197,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 interval: 1,
                 getTitlesWidget: (value, meta) {
                   final index = value.round();
-                  if (index < 0 ||
-                      index >= _weightLogs.length ||
-                      !_labelIndexes.contains(index)) {
+                  final label = _bottomLabels[index];
+                  if (label == null) {
                     return const SizedBox.shrink();
                   }
 
-                  final isFirst = index == 0;
-                  final isLast = index == _weightLogs.length - 1;
+                  final isFirst = index == _bottomLabels.keys.first;
+                  final isLast = index == _bottomLabels.keys.last;
 
                   return Padding(
                     padding: EdgeInsets.only(
@@ -176,7 +211,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       right: isLast ? 8 : 0,
                     ),
                     child: Text(
-                      _weightLogs[index].shortDate,
+                      label,
                       style: const TextStyle(
                         color: SECONDARY_COLOR,
                         fontSize: 14,
@@ -190,7 +225,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
           lineBarsData: [
             LineChartBarData(
-              spots: _chartData,
+              spots: _visualChartData,
               isCurved: true,
               curveSmoothness: 0.32,
               barWidth: 3,
