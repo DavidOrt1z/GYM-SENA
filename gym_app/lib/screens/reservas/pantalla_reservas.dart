@@ -817,8 +817,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
             opacity: isSelectable ? 1.0 : 0.3,
             child: Center(
               child: Container(
-                width: 34,
-                height: 34,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFF2A4055)
@@ -828,9 +828,12 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                 alignment: Alignment.center,
                 child: Text(
                   '$i',
+                  maxLines: 1,
+                  softWrap: false,
+                  textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     color: isSelected ? WHITE : const Color(0xFF2A3B4D),
-                    fontSize: 19,
+                    fontSize: 16,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
