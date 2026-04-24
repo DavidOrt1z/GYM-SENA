@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
@@ -18,6 +20,29 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String _appVersion = '1.0.0';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersion = info.version;
+      });
+    } on MissingPluginException {
+      if (!mounted) return;
+      setState(() {
+        _appVersion = '1.0.0';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,6 +61,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: WHITE,
             fontSize: 18,
             fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 30),
+          child: Text(
+            'Versión $_appVersion',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: SECONDARY_COLOR,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -144,8 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-
-            const SizedBox(height: 100),
+            const SizedBox(height: 80),
           ],
         ),
       ),

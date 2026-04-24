@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 18 de Abril de 2026  
+**Última Actualización:** 24 de Abril de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -18,7 +18,7 @@
 | 3 | App - Pantallas UI | 4-6 días | ✅ **COMPLETADA** | 100% |
 | 4 | App - Integración Backend | 5-7 días | ✅ **COMPLETADA** | 100% | 7 Feb 2026 |
 | 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
-| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 98% | 18 Abr 2026 |
+| 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 99% | 24 Abr 2026 |
 
 **Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes App/Admin + limpieza técnica ✅)
 
@@ -30,7 +30,7 @@
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
 ✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
-🚀 FASE 6 ══════════════════  98%  (En Progreso - Ajustes UI + flujo reservas/admin/notificaciones + lint clean - 18 Abr 2026)
+🚀 FASE 6 ══════════════════  99%  (En Progreso - Ajustes UI finales + reservas por fecha exacta + release APK actualizado - 24 Abr 2026)
 ```
 
 ---
@@ -952,9 +952,30 @@ supabase
   - [x] Ajustes de tests/deprecaciones en integración
   - [x] Estado de analizador: `flutter analyze` → **No issues found**
 
-### 6.7 Producción
+### 6.7 Ajustes Finales de Abril (APP) ✅ (ACTUALIZADO - 24 Abr 2026)
+- [x] **Reservas por fecha exacta**
+  - [x] Corrección de bug: eliminar fallback por día de semana para evitar mostrar horarios en fechas incorrectas
+  - [x] Solo se listan slots con `slotDate` exacta
+  - [x] Fechas pasadas deshabilitadas y con menor opacidad en el calendario
+- [x] **Selector de hora AM/PM**
+  - [x] Habilitado toque real en botones AM y PM
+  - [x] Conserva minutos y cambia correctamente el periodo horario
+- [x] **Branding Android (launcher + nombre app)**
+  - [x] Nombre de aplicación actualizado a `Gym Sena`
+  - [x] Ícono launcher regenerado en todos los `mipmap-*` con estilo visual acordado
+  - [x] Configuración `flutter_launcher_icons` agregada en `pubspec.yaml`
+- [x] **Configuración - versión visible**
+  - [x] Versión mostrada al pie de pantalla: `Versión 1.0.0`
+  - [x] Obtención automática con `package_info_plus`
+  - [x] Fallback para Web/entornos sin plugin (`MissingPluginException`)
+- [x] **Verificación técnica y build**
+  - [x] `flutter analyze` sin issues
+  - [x] APK release regenerado: `build/app/outputs/flutter-apk/app-release.apk`
+
+### 6.8 Producción
 - [ ] Configurar app para release
-- [ ] Generar APK/AAB
+- [x] Generar APK release (Android)
+- [ ] Generar AAB (Play Store)
 - [ ] Preparar para Play Store
 
 ```
@@ -1079,5 +1100,5 @@ git push origin main
 
 ---
 
-*Última actualización: 18 de Abril de 2026*  
-*Estado: Fase 6 casi completada (ajustes App/Admin + calidad técnica listos; pendiente cierre de publicación estable)*
+*Última actualización: 24 de Abril de 2026*  
+*Estado: Fase 6 casi completada (ajustes visuales/funcionales cerrados, APK release actualizado; pendiente AAB y publicación estable)*

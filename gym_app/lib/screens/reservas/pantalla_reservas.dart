@@ -127,16 +127,31 @@ class _ReservationsScreenState extends State<ReservationsScreen>
   }
 
   List<SlotModel> _getSlotsByDay(DateTime date) {
+    final todayStart = DateTime.now();
+    final normalizedToday = DateTime(
+      todayStart.year,
+      todayStart.month,
+      todayStart.day,
+    );
+    final normalizedSelected = DateTime(date.year, date.month, date.day);
+
+    if (normalizedSelected.isBefore(normalizedToday)) {
+      return [];
+    }
+
     final exactDateSlots = _allSlots.where((slot) {
       final slotDate = slot.slotDate;
       return slotDate != null && _isSameDay(slotDate, date);
     }).toList();
 
-    if (exactDateSlots.isNotEmpty) return exactDateSlots;
+    exactDateSlots.sort((a, b) {
+      if (a.startTime == b.startTime) {
+        return a.endTime.compareTo(b.endTime);
+      }
+      return a.startTime.compareTo(b.startTime);
+    });
 
-    final dayOfWeek = date.weekday - 1; // Monday = 0
-    if (dayOfWeek < 0 || dayOfWeek > 4) return []; // Solo lunes a viernes
-    return _allSlots.where((slot) => slot.dayOfWeek == dayOfWeek).toList();
+    return exactDateSlots;
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -253,9 +268,32 @@ class _ReservationsScreenState extends State<ReservationsScreen>
     return '${hour.toString().padLeft(2, '0')} : $minute';
   }
 
+  void _setSelectedPeriod(DayPeriod targetPeriod) {
+    final currentHour = _selectedTime.hour;
+    final currentMinute = _selectedTime.minute;
+
+    int newHour = currentHour;
+    if (targetPeriod == DayPeriod.am && currentHour >= 12) {
+      newHour = currentHour - 12;
+    } else if (targetPeriod == DayPeriod.pm && currentHour < 12) {
+      newHour = currentHour + 12;
+    }
+
+    setState(() {
+      _selectedTime = TimeOfDay(hour: newHour, minute: currentMinute);
+    });
+  }
+
   bool _isWeekday(DateTime date) {
     // Lunes=1 a Viernes=5
     return date.weekday >= 1 && date.weekday <= 5;
+  }
+
+  bool _isPastDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    return target.isBefore(today);
   }
 
   @override
@@ -493,69 +531,79 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                         ),
                                         child: Row(
                                           children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 14,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    _selectedTime.period ==
-                                                        DayPeriod.am
-                                                    ? WHITE
-                                                    : Colors.transparent,
-                                                borderRadius:
-                                                    BorderRadius.circular(7),
-                                                border:
-                                                    _selectedTime.period ==
-                                                        DayPeriod.am
-                                                    ? Border.all(
-                                                        color: const Color(
-                                                          0xFFD0D0D0,
-                                                        ),
-                                                      )
-                                                    : null,
+                                            GestureDetector(
+                                              onTap: () => _setSelectedPeriod(
+                                                DayPeriod.am,
                                               ),
-                                              child: const Text(
-                                                'AM',
-                                                style: TextStyle(
-                                                  color: Color(0xFF111111),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _selectedTime.period ==
+                                                          DayPeriod.am
+                                                      ? WHITE
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(7),
+                                                  border:
+                                                      _selectedTime.period ==
+                                                          DayPeriod.am
+                                                      ? Border.all(
+                                                          color: const Color(
+                                                            0xFFD0D0D0,
+                                                          ),
+                                                        )
+                                                      : null,
+                                                ),
+                                                child: const Text(
+                                                  'AM',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF111111),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 14,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    _selectedTime.period ==
-                                                        DayPeriod.pm
-                                                    ? WHITE
-                                                    : Colors.transparent,
-                                                borderRadius:
-                                                    BorderRadius.circular(7),
-                                                border:
-                                                    _selectedTime.period ==
-                                                        DayPeriod.pm
-                                                    ? Border.all(
-                                                        color: const Color(
-                                                          0xFFD0D0D0,
-                                                        ),
-                                                      )
-                                                    : null,
+                                            GestureDetector(
+                                              onTap: () => _setSelectedPeriod(
+                                                DayPeriod.pm,
                                               ),
-                                              child: const Text(
-                                                'PM',
-                                                style: TextStyle(
-                                                  color: Color(0xFF111111),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _selectedTime.period ==
+                                                          DayPeriod.pm
+                                                      ? WHITE
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(7),
+                                                  border:
+                                                      _selectedTime.period ==
+                                                          DayPeriod.pm
+                                                      ? Border.all(
+                                                          color: const Color(
+                                                            0xFFD0D0D0,
+                                                          ),
+                                                        )
+                                                      : null,
+                                                ),
+                                                child: const Text(
+                                                  'PM',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF111111),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -757,12 +805,16 @@ class _ReservationsScreenState extends State<ReservationsScreen>
       final isSelected = _selectedDate.day == i;
       // Solo permitir lunes a viernes (weekday: 1=Monday, 5=Friday, 6=Saturday, 7=Sunday)
       final isWeekday = date.weekday >= 1 && date.weekday <= 5;
+      final isPastDate = _isPastDate(date);
+      final isSelectable = isWeekday && !isPastDate;
 
       days.add(
         GestureDetector(
-          onTap: isWeekday ? () => setState(() => _selectedDate = date) : null,
+          onTap: isSelectable
+              ? () => setState(() => _selectedDate = date)
+              : null,
           child: Opacity(
-            opacity: isWeekday ? 1.0 : 0.3,
+            opacity: isSelectable ? 1.0 : 0.3,
             child: Center(
               child: Container(
                 width: 34,
