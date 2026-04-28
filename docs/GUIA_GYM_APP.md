@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 24 de Abril de 2026  
+**Última Actualización:** 26 de Abril de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -971,6 +971,10 @@ supabase
 - [x] **Verificación técnica y build**
   - [x] `flutter analyze` sin issues
   - [x] APK release regenerado: `build/app/outputs/flutter-apk/app-release.apk`
+- [x] **Estabilidad de rol administrador (App + Admin Panel)**
+  - [x] App: creación/actualización de perfil sin sobrescribir `rol` existente en `users`
+  - [x] App: fallback seguro al crear perfil inicial para no degradar cuentas admin a member
+  - [x] Admin Panel: normalización de rol (`administrador` -> `admin`) en login para evitar falsos rechazos de acceso
 
 ### 6.8 Producción
 - [ ] Configurar app para release
@@ -1100,5 +1104,5 @@ git push origin main
 
 ---
 
-*Última actualización: 24 de Abril de 2026*  
+*Última actualización: 26 de Abril de 2026*  
 *Estado: Fase 6 casi completada (ajustes visuales/funcionales cerrados, APK release actualizado; pendiente AAB y publicación estable)*

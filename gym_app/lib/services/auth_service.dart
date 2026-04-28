@@ -10,13 +10,31 @@ class AuthService {
     required String fullName,
   }) async {
     try {
-      await _supabase.from('users').upsert({
+      final existingUser = await _supabase
+          .from('users')
+          .select('id')
+          .eq('correo_electronico', email)
+          .maybeSingle();
+
+      if (existingUser != null) {
+        await _supabase
+            .from('users')
+            .update({
+              'id_autenticacion': user.id,
+              'nombre_completo': fullName,
+              'estado': 'active',
+            })
+            .eq('correo_electronico', email);
+        return;
+      }
+
+      await _supabase.from('users').insert({
         'id_autenticacion': user.id,
         'correo_electronico': email,
         'nombre_completo': fullName,
         'rol': 'member',
         'estado': 'active',
-      }, onConflict: 'correo_electronico');
+      });
     } catch (dbError) {
       debugPrint('Error creando perfil en BD: $dbError');
     }

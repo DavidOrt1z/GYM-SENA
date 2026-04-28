@@ -51,13 +51,26 @@ class _ProfileScreenState extends State<ProfileScreen>
     required String email,
     required String fullName,
   }) async {
-    await Supabase.instance.client.from('users').upsert({
-      'id_autenticacion': userId,
-      'correo_electronico': email,
-      'nombre_completo': fullName,
-      'rol': 'member',
-      'estado': 'active',
-    }, onConflict: 'correo_electronico');
+    final client = Supabase.instance.client;
+
+    try {
+      await client.from('users').insert({
+        'id_autenticacion': userId,
+        'correo_electronico': email,
+        'nombre_completo': fullName,
+        'rol': 'member',
+        'estado': 'active',
+      });
+    } catch (_) {
+      await client
+          .from('users')
+          .update({
+            'id_autenticacion': userId,
+            'nombre_completo': fullName,
+            'estado': 'active',
+          })
+          .eq('correo_electronico', email);
+    }
   }
 
   Future<void> _loadUserProfile() async {
