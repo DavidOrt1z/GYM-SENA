@@ -1,4 +1,4 @@
-# 🏋️ SISTEMA DE GESTIÓN DE GIMNASIO - GYM SENA
+# 🏋️ SISTEMA DE GESTIÓN DE GIMNASIO - JACEK GYM
 
 Sistema completo de gestión para gimnasios que incluye una aplicación móvil Flutter para usuarios y un panel web de administración, con backend en Supabase (PostgreSQL).
 
@@ -45,9 +45,9 @@ Sistema completo de gestión para gimnasios que incluye una aplicación móvil F
 ## 📁 Estructura del Proyecto
 
 ```
-GYM SENA/
+JACEK GYM/
 ├── 📁 docs/                           # Documentación completa
-│   ├── PROYECTO_GYM_SENA.md          # Plan de fases detallado
+│   ├── PROYECTO_jacek_gym.md          # Plan de fases detallado
 │   └── ...
 │
 ├── 📁 supabase/                       # Backend Supabase
@@ -110,8 +110,8 @@ GYM SENA/
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/gym-sena.git
-cd gym-sena
+git clone https://github.com/tu-usuario/JACEK GYM.git
+cd JACEK GYM
 ```
 
 ### 2. Configurar Supabase
@@ -119,7 +119,7 @@ cd gym-sena
 #### Opción A: Supabase Cloud (Recomendado)
 
 1. Crear cuenta en [supabase.com](https://supabase.com)
-2. Crear nuevo proyecto "gym-sena"
+2. Crear nuevo proyecto "JACEK GYM"
 3. Copiar credenciales (URL, anon key, service key)
 4. Aplicar migraciones:
 
@@ -255,7 +255,7 @@ Todas las tablas tienen políticas RLS activas que garantizan:
 - [ ] Reportes y análisis
 - [ ] Testing completo
 
-**Ver plan detallado:** [docs/PROYECTO_GYM_SENA.md](docs/PROYECTO_GYM_SENA.md)
+**Ver plan detallado:** [docs/PROYECTO_jacek_gym.md](docs/PROYECTO_jacek_gym.md)
 
 ---
 
@@ -306,7 +306,7 @@ Desplegar en cualquier hosting estático:
 
 ## 📚 Documentación Adicional
 
-- [Plan de Fases](docs/PROYECTO_GYM_SENA.md) - Plan detallado de desarrollo
+- [Plan de Fases](docs/PROYECTO_jacek_gym.md) - Plan detallado de desarrollo
 - [Guía Supabase](supabase/README.md) - Configuración completa de Supabase
 - [Manual de Usuario](docs/MANUAL_USUARIO.md) - Guía para usuarios finales (futuro)
 - [Manual de Admin](docs/MANUAL_ADMIN.md) - Guía para administradores (futuro)
@@ -344,6 +344,6 @@ Para preguntas o problemas:
 
 ---
 
-**🏋️ GYM SENA - Sistema de Gestión Integral para Gimnasios**
+**🏋️ JACEK GYM - Sistema de Gestión Integral para Gimnasios**
 
 *Última actualización: 18 de Diciembre de 2025*

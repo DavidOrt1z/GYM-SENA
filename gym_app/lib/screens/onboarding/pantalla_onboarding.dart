@@ -78,7 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 40),
                   Text(
-                    isEnglish ? 'Welcome to GYM SENA' : 'Bienvenido a GYM SENA',
+                    isEnglish ? 'Welcome to JACEK GYM' : 'Bienvenido a JACEK GYM',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: WHITE,

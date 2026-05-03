@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Text(
-                '© 2025 GYM SENA - Todos los derechos reservados',
+                '© 2025 JACEK GYM - Todos los derechos reservados',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: WHITE.withValues(alpha: 0.7),

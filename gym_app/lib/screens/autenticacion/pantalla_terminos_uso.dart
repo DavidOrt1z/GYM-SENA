@@ -31,7 +31,7 @@ class TermsOfUseScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '¡Bienvenido a GYM SENA!',
+              '¡Bienvenido a JACEK GYM!',
               style: TextStyle(
                 color: WHITE,
                 fontSize: 18,
@@ -60,7 +60,7 @@ class TermsOfUseScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSection(
               '3. Contenido',
-              'La aplicación puede contener contenido proporcionado por GYM SENA y otros usuarios. Usted es el único responsable de cualquier contenido que publique o comparta a través de términos de que sea objetable de otra manera.',
+              'La aplicación puede contener contenido proporcionado por JACEK GYM y otros usuarios. Usted es el único responsable de cualquier contenido que publique o comparta a través de términos de que sea objetable de otra manera.',
             ),
             const SizedBox(height: 20),
             _buildSection(
@@ -70,27 +70,27 @@ class TermsOfUseScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSection(
               '5. Terminación',
-              'GYM SENA puede terminar o suspender su acceso a la aplicación en cualquier momento, con o sin causa, y sin previo aviso. Usted también puede cancelar su cuenta en cualquier momento.',
+              'JACEK GYM puede terminar o suspender su acceso a la aplicación en cualquier momento, con o sin causa, y sin previo aviso. Usted también puede cancelar su cuenta en cualquier momento.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               '6. Aviso',
-              'La aplicación se proporciona "tal cual" y "según disponibilidad" sin garantías de ningún tipo. GYM SENA renuncia a todas las garantías, expresas e implícitas, incluidas, entre otras, las garantías de comerciabilidad, idoneidad para un propósito particular e infracción.',
+              'La aplicación se proporciona "tal cual" y "según disponibilidad" sin garantías de ningún tipo. JACEK GYM renuncia a todas las garantías, expresas e implícitas, incluidas, entre otras, las garantías de comerciabilidad, idoneidad para un propósito particular e infracción.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               '7. Limitación de Responsabilidad',
-              'En ningún caso GYM SENA será responsable de ningún daño directo, indirecto, especial, consecuente o punitivo derivado de o relacionado con su uso de la aplicación.',
+              'En ningún caso JACEK GYM será responsable de ningún daño directo, indirecto, especial, consecuente o punitivo derivado de o relacionado con su uso de la aplicación.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               '8. Cambios en los Términos',
-              'GYM SENA puede modificar estos términos en cualquier momento. Le notificaremos de cualquier cambio publicado los nuevos términos en la aplicación. Su uso continuado de la aplicación después de los cambios constituye su aceptación de los nuevos términos.',
+              'JACEK GYM puede modificar estos términos en cualquier momento. Le notificaremos de cualquier cambio publicado los nuevos términos en la aplicación. Su uso continuado de la aplicación después de los cambios constituye su aceptación de los nuevos términos.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               '9. Ley Aplicable',
-              'Estos términos se regirán e interpretarán de acuerdo con las leyes de la jurisdicción en la que se encuentra GYM SENA, sin tener en cuenta sus principios de conflicto de leyes.',
+              'Estos términos se regirán e interpretarán de acuerdo con las leyes de la jurisdicción en la que se encuentra JACEK GYM, sin tener en cuenta sus principios de conflicto de leyes.',
             ),
             const SizedBox(height: 32),
             SizedBox(

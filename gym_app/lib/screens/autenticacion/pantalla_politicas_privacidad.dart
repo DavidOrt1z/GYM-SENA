@@ -31,7 +31,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Política de Privacidad de GYM SENA',
+              'Política de Privacidad de JACEK GYM',
               style: TextStyle(
                 color: WHITE,
                 fontSize: 18,
@@ -40,7 +40,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'En GYM SENA, estamos comprometidos con la protección de su privacidad. Esta Política de Privacidad explica cómo recopilamos, utilizamos y compartimos su información personal cuando utiliza nuestra aplicación. Al usar GYM SENA, usted acepta los términos de esta política.',
+              'En JACEK GYM, estamos comprometidos con la protección de su privacidad. Esta Política de Privacidad explica cómo recopilamos, utilizamos y compartimos su información personal cuando utiliza nuestra aplicación. Al usar JACEK GYM, usted acepta los términos de esta política.',
               style: TextStyle(
                 color: SECONDARY_COLOR,
                 fontSize: 14,
@@ -75,12 +75,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSection(
               'Cambios en esta Política',
-              'GYM SENA puede actualizar esta Política de Privacidad de vez en cuando. Le notificaremos de cambios significativos enviándole un aviso o publicando la política actualizada en la aplicación.',
+              'JACEK GYM puede actualizar esta Política de Privacidad de vez en cuando. Le notificaremos de cambios significativos enviándole un aviso o publicando la política actualizada en la aplicación.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               'Contáctenos',
-              'Si tiene preguntas sobre esta Política de Privacidad o nuestras prácticas de privacidad, póngase en contacto con nosotros en support@gymsena.com.',
+              'Si tiene preguntas sobre esta Política de Privacidad o nuestras prácticas de privacidad, póngase en contacto con nosotros en support@jacekgym.com.',
             ),
             const SizedBox(height: 32),
             SizedBox(

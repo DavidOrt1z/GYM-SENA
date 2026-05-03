@@ -11,7 +11,7 @@ Las notificaciones se implementan usando:
 
 ### 1. Habilitar Realtime en Supabase
 
-1. En la consola de Supabase → Proyecto GYM SENA
+1. En la consola de Supabase → Proyecto JACEK GYM
 2. Ir a **Realtime** → **Publication**
 3. Click en tabla `notificaciones_historial`
 4. Marcar: `INSERT`, `UPDATE`, `DELETE`

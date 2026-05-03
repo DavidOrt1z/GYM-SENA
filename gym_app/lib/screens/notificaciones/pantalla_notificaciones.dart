@@ -239,7 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ...section.items.map((item) {
                     final id = item['id']?.toString() ?? '';
                     final opened = item['abierta'] == true;
-                    final title = item['titulo']?.toString() ?? 'GYM SENA';
+                    final title = item['titulo']?.toString() ?? 'JACEK GYM';
                     final body = item['cuerpo']?.toString() ?? '';
                     final date = _parseNotificationDate(item);
 

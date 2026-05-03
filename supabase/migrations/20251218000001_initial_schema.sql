@@ -1,5 +1,5 @@
 -- =====================================================
--- MIGRACIÓN INICIAL - SISTEMA GYM SENA
+-- MIGRACIÓN INICIAL - SISTEMA JACEK GYM
 -- Fecha: 2025-12-18
 -- Descripción: Creación de tablas principales
 -- =====================================================

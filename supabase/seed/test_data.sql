@@ -1,5 +1,5 @@
 -- =====================================================
--- DATOS DE PRUEBA - GYM SENA
+-- DATOS DE PRUEBA - JACEK GYM
 -- Fecha: 2025-12-18
 -- Descripción: Datos iniciales para testing
 -- =====================================================
@@ -11,11 +11,11 @@
 -- DATOS: staff (Personal)
 -- =====================================================
 INSERT INTO public.staff (full_name, role, email, phone, status) VALUES
-    ('Carlos Rodríguez', 'Instructor Principal', 'carlos.rodriguez@gymsena.com', '+57 300 1234567', 'active'),
-    ('María González', 'Entrenadora Personal', 'maria.gonzalez@gymsena.com', '+57 301 2345678', 'active'),
-    ('Juan Pérez', 'Recepcionista', 'juan.perez@gymsena.com', '+57 302 3456789', 'active'),
-    ('Ana Martínez', 'Nutricionista', 'ana.martinez@gymsena.com', '+57 303 4567890', 'active'),
-    ('Pedro Sánchez', 'Instructor de Yoga', 'pedro.sanchez@gymsena.com', '+57 304 5678901', 'active');
+    ('Carlos Rodríguez', 'Instructor Principal', 'carlos.rodriguez@jacekgym.com', '+57 300 1234567', 'active'),
+    ('María González', 'Entrenadora Personal', 'maria.gonzalez@jacekgym.com', '+57 301 2345678', 'active'),
+    ('Juan Pérez', 'Recepcionista', 'juan.perez@jacekgym.com', '+57 302 3456789', 'active'),
+    ('Ana Martínez', 'Nutricionista', 'ana.martinez@jacekgym.com', '+57 303 4567890', 'active'),
+    ('Pedro Sánchez', 'Instructor de Yoga', 'pedro.sanchez@jacekgym.com', '+57 304 5678901', 'active');
 
 -- =====================================================
 -- DATOS: equipment (Equipamiento)

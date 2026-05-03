@@ -93,7 +93,7 @@ class ServicioNotificaciones {
       if (!reminderDate.isAfter(DateTime.now())) return;
 
       const androidDetails = AndroidNotificationDetails(
-        'gym_sena_reservas',
+        'jacek_gym_reservas',
         'Reservas',
         channelDescription: 'Notificaciones de reservas y recordatorios',
         importance: Importance.high,
@@ -215,7 +215,7 @@ class ServicioNotificaciones {
       // Solo mostrar si no ha sido abierta
       if (datos['abierta'] != true) {
         await mostrarNotificacion(
-          titulo: datos['titulo']?.toString() ?? 'GYM SENA',
+          titulo: datos['titulo']?.toString() ?? 'JACEK GYM',
           cuerpo: datos['cuerpo']?.toString() ?? '',
           tipo: datos['tipo']?.toString() ?? '',
           datos: <String, dynamic>{
@@ -242,9 +242,9 @@ class ServicioNotificaciones {
 
       // Configuración de Android
       const androidDetails = AndroidNotificationDetails(
-        'gym_sena_canal',
-        'GYM SENA Notificaciones',
-        channelDescription: 'Notificaciones de GYM SENA',
+        'jacek_gym_canal',
+        'JACEK GYM Notificaciones',
+        channelDescription: 'Notificaciones de JACEK GYM',
         importance: Importance.high,
         priority: Priority.high,
         showWhen: true,
@@ -284,21 +284,21 @@ class ServicioNotificaciones {
 
     final canales = [
       const AndroidNotificationChannel(
-        'gym_sena_canal',
-        'GYM SENA Notificaciones',
-        description: 'Notificaciones principales de GYM SENA',
+        'jacek_gym_canal',
+        'JACEK GYM Notificaciones',
+        description: 'Notificaciones principales de JACEK GYM',
         importance: Importance.high,
         showBadge: true,
       ),
       const AndroidNotificationChannel(
-        'gym_sena_reservas',
+        'jacek_gym_reservas',
         'Reservas',
         description: 'Notificaciones de reservas y recordatorios',
         importance: Importance.high,
         showBadge: true,
       ),
       const AndroidNotificationChannel(
-        'gym_sena_alertas',
+        'jacek_gym_alertas',
         'Alertas',
         description: 'Alertas de equipamiento (solo admin)',
         importance: Importance.high,

@@ -65,7 +65,7 @@ El código ya tiene:
 ## ✅ Paso 4: Instalar Dependencias
 
 ```powershell
-cd "d:\Documentos\GYM SENA\gym_app"
+cd "d:\Documentos\JACEK GYM\gym_app"
 flutter pub get
 ```
 

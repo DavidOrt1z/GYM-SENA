@@ -1,7 +1,7 @@
 /// Traducciones en Español (ES)
 final Map<String, String> es = {
   // ========== AUTENTICACIÓN ==========
-  'app_name': 'GYM SENA',
+  'app_name': 'JACEK GYM',
   'bienvenida': 'Bienvenida',
   'iniciar_sesion': 'Iniciar Sesión',
   'registrarse': 'Registrarse',

@@ -1,4 +1,4 @@
-# 🏋️ GYM SENA - GUÍA DE PROGRESO POR FASES
+# 🏋️ JACEK GYM - GUÍA DE PROGRESO POR FASES
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
@@ -836,7 +836,7 @@ supabase
 
 ### 6.3 Onboarding ✅ (COMPLETADO - 24 Feb 2026)
 - [x] Pantallas de introducción (4 pantallas) ✅
-  - [x] Pantalla 1: Logo GYM SENA
+  - [x] Pantalla 1: Logo JACEK GYM
   - [x] Pantalla 2: Reserva tus Horarios (Calendario)
   - [x] Pantalla 3: Monitorea tu Progreso (Peso/Báscula)
   - [x] Pantalla 4: Personaliza tu Experiencia (Idioma/Mundo)
@@ -961,7 +961,7 @@ supabase
   - [x] Habilitado toque real en botones AM y PM
   - [x] Conserva minutos y cambia correctamente el periodo horario
 - [x] **Branding Android (launcher + nombre app)**
-  - [x] Nombre de aplicación actualizado a `Gym Sena`
+  - [x] Nombre de aplicación actualizado a `JACEK GYM`
   - [x] Ícono launcher regenerado en todos los `mipmap-*` con estilo visual acordado
   - [x] Configuración `flutter_launcher_icons` agregada en `pubspec.yaml`
 - [x] **Configuración - versión visible**
@@ -1050,7 +1050,7 @@ gym_app/
 
 ```powershell
 # ── Flutter App ──────────────────────────────────────────────
-cd "d:\Documentos\GYM SENA\gym_app"
+cd "d:\Documentos\JACEK GYM\gym_app"
 
 # Ejecutar la app
 flutter run
@@ -1067,7 +1067,7 @@ flutter test
 flutter analyze
 
 # ── Admin Panel (Node.js) ─────────────────────────────────────
-cd "d:\Documentos\GYM SENA\admin-panel"
+cd "d:\Documentos\JACEK GYM\admin-panel"
 
 # Instalar dependencias (primera vez)
 npm install
@@ -1080,7 +1080,7 @@ npm start
 npm run dev
 
 # ── Git ──────────────────────────────────────────────────────
-cd "d:\Documentos\GYM SENA"
+cd "d:\Documentos\JACEK GYM"
 
 # Ver estado
 git status

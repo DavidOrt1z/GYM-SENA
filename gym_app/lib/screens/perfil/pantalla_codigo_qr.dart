@@ -234,7 +234,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                           ? 'ID: ${reservationId.substring(0, reservationId.length >= 8 ? 8 : reservationId.length)}...'
                           : 'ID: SIN_RESERVA',
                       style: const TextStyle(
-                        color: Color(0xFF91ADC9),
+                        color: Color(0xFFCFCFCF),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),

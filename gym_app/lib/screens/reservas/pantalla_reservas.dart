@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/reservation_model.dart';
 import 'package:gym_app/models/slot_model.dart';
@@ -66,12 +67,16 @@ class _ReservationsScreenState extends State<ReservationsScreen>
 
   void _startAutoRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 12), (_) {
       _loadData(showLoader: false);
     });
   }
 
   void _subscribeToRealtimeUpdates() {
+    if (kIsWeb) {
+      return;
+    }
+
     final supabase = Supabase.instance.client;
 
     final existingChannel = _realtimeChannel;
@@ -118,6 +123,8 @@ class _ReservationsScreenState extends State<ReservationsScreen>
           _isLoading = false;
         }
       });
+    } catch (e) {
+      debugPrint('Error cargando reservas/horarios: $e');
     } finally {
       _isFetching = false;
       if (showLoader && mounted && _isLoading) {
@@ -351,14 +358,14 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                           isEnglish,
                                         ),
                                         style: const TextStyle(
-                                          color: Color(0xFF2C3E50),
+                                          color: Color(0xFF1A1A1A),
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                       const Icon(
                                         Icons.chevron_right,
-                                        color: Color(0xFF2C3E50),
+                                        color: Color(0xFF1A1A1A),
                                         size: 22,
                                       ),
                                     ],
@@ -368,7 +375,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                       IconButton(
                                         icon: const Icon(
                                           Icons.chevron_left,
-                                          color: Color(0xFF2C3E50),
+                                          color: Color(0xFF1A1A1A),
                                           size: 34,
                                         ),
                                         onPressed: () {
@@ -384,7 +391,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                       IconButton(
                                         icon: const Icon(
                                           Icons.chevron_right,
-                                          color: Color(0xFF2C3E50),
+                                          color: Color(0xFF1A1A1A),
                                           size: 34,
                                         ),
                                         onPressed: () {
@@ -681,9 +688,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                               final isFull = !slot.isAvailable;
 
                               final buttonColor = isReserved
-                                  ? const Color(0xFF4D647A)
+                                  ? const Color(0xFF555555)
                                   : isFull
-                                  ? const Color(0xFF2A3E52)
+                                  ? const Color(0xFF333333)
                                   : PRIMARY_COLOR;
 
                               return Padding(
@@ -820,9 +827,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF2A4055)
-                      : Colors.transparent,
+                  color: isSelected ? PRIMARY_COLOR : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -832,7 +837,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                   softWrap: false,
                   textScaler: TextScaler.noScaling,
                   style: TextStyle(
-                    color: isSelected ? WHITE : const Color(0xFF2A3B4D),
+                    color: isSelected ? WHITE : const Color(0xFF262626),
                     fontSize: 16,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -913,9 +918,9 @@ class _ReservationsScreenState extends State<ReservationsScreen>
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A3947),
+                  color: const Color(0xFF141414),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF3D5366), width: 1),
+                  border: Border.all(color: const Color(0xFF2A2A2A), width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1191,17 +1196,17 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF1B7FDB), Color(0xFF0F5FB8)],
+                      colors: [Color(0xFFBA1505), Color(0xFF8F1004)],
                     ),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x4D1273D4),
+                        color: Color(0x66BA1505),
                         blurRadius: 20,
                         offset: Offset(0, 10),
                       ),
                     ],
                     border: Border.all(
-                      color: const Color(0xFF91C8FF).withValues(alpha: 0.5),
+                      color: const Color(0xFFFF7D73).withValues(alpha: 0.5),
                     ),
                   ),
                   child: Row(
@@ -1284,17 +1289,17 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF1B7FDB), Color(0xFF0F5FB8)],
+                      colors: [Color(0xFFBA1505), Color(0xFF8F1004)],
                     ),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x4D1273D4),
+                        color: Color(0x66BA1505),
                         blurRadius: 20,
                         offset: Offset(0, 10),
                       ),
                     ],
                     border: Border.all(
-                      color: const Color(0xFF91C8FF).withValues(alpha: 0.5),
+                      color: const Color(0xFFFF7D73).withValues(alpha: 0.5),
                     ),
                   ),
                   child: Row(

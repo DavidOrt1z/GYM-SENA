@@ -1,4 +1,4 @@
-# 🚀 Configuración de Supabase - GYM SENA
+# 🚀 Configuración de Supabase - JACEK GYM
 
 ## 📁 Estructura de Archivos
 
@@ -53,7 +53,7 @@ supabase --version
 3. Crea una cuenta o inicia sesión
 4. Clic en "New Project"
 5. Completa los datos:
-   - **Name:** gym-sena
+   - **Name:** JACEK GYM
    - **Database Password:** (Guarda esta contraseña de forma segura)
    - **Region:** South America (São Paulo) - `sa-east-1`
 6. Espera 2-3 minutos mientras se crea el proyecto
@@ -117,7 +117,7 @@ O manualmente desde el SQL Editor en Supabase Dashboard:
 
 ```bash
 # Desde la carpeta raíz del proyecto
-cd "d:\Documentos\GYM SENA"
+cd "d:\Documentos\JACEK GYM"
 
 # Iniciar Supabase localmente
 supabase start
@@ -337,7 +337,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 ```javascript
 // Autenticación
 const { data, error } = await supabase.auth.signInWithPassword({
-  email: 'admin@gymsena.com',
+  email: 'admin@jacekgym.com',
   password: 'admin123'
 })
 

@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<ProveedorIdioma>(
         builder: (context, idiomaProvider, _) => MaterialApp(
-          title: 'Gym SENA',
+          title: 'JACEK GYM',
           debugShowCheckedModeBanner: false,
           locale: idiomaProvider.locale,
           theme: ThemeData(

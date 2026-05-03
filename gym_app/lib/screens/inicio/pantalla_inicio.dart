@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             _formattedToday(isEnglish: isEnglish),
             style: const TextStyle(
-              color: SECONDARY_COLOR,
+              color: PRIMARY_COLOR,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -367,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: DARK_BG,
+            color: PRIMARY_COLOR,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: WHITE, size: 22),

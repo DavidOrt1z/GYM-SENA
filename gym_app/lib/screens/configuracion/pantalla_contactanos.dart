@@ -77,7 +77,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               _buildSimpleContactItem(
                 icon: Icons.mail_outline,
                 label: 'Email',
-                value: 'support@gymsena.com',
+                value: 'support@jacekgym.com',
               ),
               const SizedBox(height: 16),
 

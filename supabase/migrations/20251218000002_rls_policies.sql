@@ -1,5 +1,5 @@
 -- =====================================================
--- ROW LEVEL SECURITY (RLS) - GYM SENA
+-- ROW LEVEL SECURITY (RLS) - JACEK GYM
 -- Fecha: 2025-12-18
 -- Descripción: Políticas de seguridad a nivel de fila
 -- =====================================================

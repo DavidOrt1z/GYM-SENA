@@ -63,13 +63,13 @@ class ReservationModel {
   String get statusColor {
     switch (status) {
       case 'active':
-        return '#1273D4'; // Azul
+        return '#BA1505'; // Rojo principal
       case 'cancelled':
         return '#D32F2F'; // Rojo
       case 'completed':
         return '#388E3C'; // Verde
       default:
-        return '#91ADC9'; // Gris
+        return '#CFCFCF'; // Gris claro
     }
   }
 

@@ -27,8 +27,7 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _selectedIndex;
 
-  // ✅ Fondo solicitado para la barra
-  static const Color _navBg = Color(0xFF192633);
+  static const Color _navBg = Color(0xFF000000);
 
   final List<Widget> _screens = const [
     HomeScreen(),
@@ -65,17 +64,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   BottomNavigationBarItem _item({
     required String label,
-    required String iconPath,
-    required String activeIconPath,
+    required String whiteIconPath,
   }) {
-    Widget svg(String path) => Padding(
+    Widget svg(String path, {Color? tint}) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: SvgPicture.asset(path, width: 20, height: 20),
+      child: SvgPicture.asset(
+        path,
+        width: 20,
+        height: 20,
+        colorFilter: tint == null
+            ? null
+            : ColorFilter.mode(tint, BlendMode.srcIn),
+      ),
     );
 
     return BottomNavigationBarItem(
-      icon: svg(iconPath),
-      activeIcon: svg(activeIconPath),
+      icon: svg(whiteIconPath, tint: WHITE),
+      activeIcon: svg(whiteIconPath, tint: PRIMARY_COLOR),
       label: label,
     );
   }
@@ -93,7 +98,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           highlightColor: Colors.transparent,
         ),
         child: Container(
-          color: _navBg,
+          decoration: const BoxDecoration(
+            color: _navBg,
+            border: Border(top: BorderSide(color: PRIMARY_COLOR, width: 1.4)),
+          ),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -104,8 +112,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 backgroundColor: _navBg,
                 elevation: 0,
 
-                selectedItemColor: WHITE,
-                unselectedItemColor: SECONDARY_COLOR,
+                selectedItemColor: PRIMARY_COLOR,
+                unselectedItemColor: WHITE,
 
                 showSelectedLabels: true,
                 showUnselectedLabels: true,
@@ -126,23 +134,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 items: [
                   _item(
                     label: AppLocalizations.of(context, 'inicio'),
-                    iconPath: 'assets/icons/Inicio gris.svg',
-                    activeIconPath: 'assets/icons/Inicio Blanco.svg',
+                    whiteIconPath: 'assets/icons/Inicio Blanco.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'reservas'),
-                    iconPath: 'assets/icons/Reservas gris.svg',
-                    activeIconPath: 'assets/icons/Reservas Blanco.svg',
+                    whiteIconPath: 'assets/icons/Reservas Blanco.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'progreso'),
-                    iconPath: 'assets/icons/Progreso Gris.svg',
-                    activeIconPath: 'assets/icons/Progreso Blanco.svg',
+                    whiteIconPath: 'assets/icons/Progreso Blanco.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'perfil'),
-                    iconPath: 'assets/icons/Perfil Gris.svg',
-                    activeIconPath: 'assets/icons/Perfil Blanco.svg',
+                    whiteIconPath: 'assets/icons/Perfil Blanco.svg',
                   ),
                 ],
               ),

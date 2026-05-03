@@ -31,7 +31,7 @@ class SuccessScreen extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                isEnglish ? 'Welcome to GYM SENA!' : '¡Bienvenido a GYM SENA!',
+                isEnglish ? 'Welcome to JACEK GYM!' : '¡Bienvenido a JACEK GYM!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: WHITE,
