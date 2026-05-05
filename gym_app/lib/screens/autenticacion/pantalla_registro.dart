@@ -375,81 +375,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
                 const SizedBox(height: 16),
 
-                TextFormField(
-                  controller: _nameController,
-                  readOnly: true,
-                  keyboardType: TextInputType.name,
-                  style: const TextStyle(color: WHITE),
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'nombre'),
-                    hintText: 'Se completa al validar la cédula',
-                    hintStyle: const TextStyle(color: SECONDARY_COLOR),
-                    labelStyle: const TextStyle(color: SECONDARY_COLOR),
-                    floatingLabelBehavior: FloatingLabelBehavior.auto,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: SECONDARY_COLOR),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: SECONDARY_COLOR),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: PRIMARY_COLOR,
-                        width: 2,
+                if (_cedulaAvailable) ...[
+                  TextFormField(
+                    controller: _nameController,
+                    readOnly: true,
+                    keyboardType: TextInputType.name,
+                    style: const TextStyle(color: WHITE),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context, 'nombre'),
+                      labelStyle: const TextStyle(color: SECONDARY_COLOR),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: SECONDARY_COLOR),
                       ),
-                    ),
-                    filled: true,
-                    fillColor: DARK_BG,
-                  ),
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) {
-                      return 'Valida primero la cédula';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _lastNameController,
-                  readOnly: true,
-                  keyboardType: TextInputType.name,
-                  style: const TextStyle(color: WHITE),
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context, 'apellido'),
-                    hintText: 'Se completa al validar la cédula',
-                    hintStyle: const TextStyle(color: SECONDARY_COLOR),
-                    labelStyle: const TextStyle(color: SECONDARY_COLOR),
-                    floatingLabelBehavior: FloatingLabelBehavior.auto,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: SECONDARY_COLOR),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: SECONDARY_COLOR),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: PRIMARY_COLOR,
-                        width: 2,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: SECONDARY_COLOR),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: PRIMARY_COLOR,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: DARK_BG,
                     ),
-                    filled: true,
-                    fillColor: DARK_BG,
+                    validator: (value) {
+                      if (value?.trim().isEmpty ?? true) {
+                        return 'Valida primero la cédula';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) {
-                      return 'Valida primero la cédula';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _lastNameController,
+                    readOnly: true,
+                    keyboardType: TextInputType.name,
+                    style: const TextStyle(color: WHITE),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context, 'apellido'),
+                      labelStyle: const TextStyle(color: SECONDARY_COLOR),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: SECONDARY_COLOR),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: SECONDARY_COLOR),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: PRIMARY_COLOR,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: DARK_BG,
+                    ),
+                    validator: (value) {
+                      if (value?.trim().isEmpty ?? true) {
+                        return 'Valida primero la cédula';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Email
                 TextFormField(
