@@ -179,7 +179,7 @@ async function submitUserForm(e) {
     const name = document.getElementById('userName').value.trim();
     const lastName = document.getElementById('userLastName').value.trim();
     const cedula = document.getElementById('userCedula').value.trim();
-    const rol = 'usuario';
+    const rol = 'member';
     
     if (!name || !lastName || !cedula) {
         showError('Por favor completa todos los campos');
