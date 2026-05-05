@@ -1,15 +1,15 @@
-correo de JACEK GYM
-correo: adjacekgym@gmail.com
-contraseña: Adminjacekgym
+correo de gym sena
+correo: adgymsena@gmail.com
+contraseña: Admingymsena
 
 
-JACEK GYM
+gym-sena
 
 contraseña
-JACEK GYM1234
+gym-sena1234
 
 
-admin@jacekgym.com
+admin@gymsena.com
 CONTRASEÑA
 Admin@123
 
