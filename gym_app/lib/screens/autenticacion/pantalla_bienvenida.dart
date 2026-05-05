@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 
@@ -46,8 +47,8 @@ class WelcomeScreen extends StatelessWidget {
                     left: 24,
                     right: 24,
                   ),
-                  child: Image.asset(
-                    'assets/images/logo.png',
+                  child: SvgPicture.asset(
+                    'assets/icons/logo.svg',
                     height: 120,
                     width: 120,
                   ),

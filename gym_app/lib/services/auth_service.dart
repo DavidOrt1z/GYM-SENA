@@ -8,6 +8,8 @@ class AuthService {
     required User user,
     required String email,
     required String fullName,
+    String? lastName,
+    String? cedula,
   }) async {
     try {
       final existingUser = await _supabase
@@ -17,13 +19,23 @@ class AuthService {
           .maybeSingle();
 
       if (existingUser != null) {
+        final Map<String, dynamic> updateData = {
+          'id_autenticacion': user.id,
+          'nombre_completo': fullName,
+          'estado': 'active',
+        };
+        final cleanLastName = lastName?.trim();
+        if (cleanLastName != null && cleanLastName.isNotEmpty) {
+          updateData['apellido'] = cleanLastName;
+        }
+        final cleanCedula = cedula?.trim();
+        if (cleanCedula != null && cleanCedula.isNotEmpty) {
+          updateData['cedula'] = cleanCedula;
+        }
+
         await _supabase
             .from('users')
-            .update({
-              'id_autenticacion': user.id,
-              'nombre_completo': fullName,
-              'estado': 'active',
-            })
+            .update(updateData)
             .eq('correo_electronico', email);
         return;
       }
@@ -32,6 +44,8 @@ class AuthService {
         'id_autenticacion': user.id,
         'correo_electronico': email,
         'nombre_completo': fullName,
+        'apellido': (lastName ?? '').trim(),
+        'cedula': (cedula ?? '').trim(),
         'rol': 'member',
         'estado': 'active',
       });
@@ -51,12 +65,18 @@ class AuthService {
     required String email,
     required String password,
     required String fullName,
+    required String lastName,
+    required String cedula,
   }) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName},
+        data: {
+          'full_name': fullName,
+          'last_name': lastName,
+          'cedula': cedula,
+        },
       );
 
       if (response.user != null) {
@@ -64,6 +84,8 @@ class AuthService {
           user: response.user!,
           email: email,
           fullName: fullName,
+          lastName: lastName,
+          cedula: cedula,
         );
       }
 
@@ -87,15 +109,30 @@ class AuthService {
 
       if (response.user != null) {
         final metadataName = response.user!.userMetadata?['full_name'];
+        final metadataLastName =
+            response.user!.userMetadata?['last_name'] ??
+            response.user!.userMetadata?['apellido'];
+        final metadataCedula =
+            response.user!.userMetadata?['cedula']?.toString();
         final fullName =
             (metadataName is String && metadataName.trim().isNotEmpty)
             ? metadataName.trim()
             : email.split('@').first;
+        final lastName =
+            (metadataLastName is String && metadataLastName.trim().isNotEmpty)
+            ? metadataLastName.trim()
+            : null;
+        final cedula =
+            (metadataCedula != null && metadataCedula.trim().isNotEmpty)
+            ? metadataCedula.trim()
+            : null;
 
         await _ensureUserProfile(
           user: response.user!,
           email: email,
           fullName: fullName,
+          lastName: lastName,
+          cedula: cedula,
         );
       }
 

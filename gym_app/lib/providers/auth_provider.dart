@@ -68,7 +68,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Registro
-  Future<bool> register(String email, String password, String fullName) async {
+  Future<bool> register(
+    String email,
+    String password,
+    String fullName,
+    String lastName,
+    String cedula,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -78,6 +84,8 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
         fullName: fullName,
+        lastName: lastName,
+        cedula: cedula,
       );
       _isAuthenticated = response.user != null;
       _isLoading = false;

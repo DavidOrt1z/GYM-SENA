@@ -693,6 +693,16 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                   ? const Color(0xFF333333)
                                   : PRIMARY_COLOR;
 
+                              final progressValue = slot.capacity > 0 
+                                  ? (slot.reservedCount / slot.capacity).clamp(0.0, 1.0)
+                                  : 0.0;
+                              
+                              final progressColor = progressValue >= 0.9
+                                  ? const Color(0xFFEF4444) // Rojo: casi lleno
+                                  : progressValue >= 0.7
+                                  ? const Color(0xFFF59E0B) // Naranja: moderadamente lleno
+                                  : PRIMARY_COLOR; // Verde: disponible
+
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: Row(
@@ -710,16 +720,40 @@ class _ReservationsScreenState extends State<ReservationsScreen>
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            isEnglish
-                                                ? '${slot.availableSpots}/${slot.capacity} spots available'
-                                                : slot.placesText,
-                                            style: const TextStyle(
-                                              color: SECONDARY_COLOR,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  child:
+                                                      LinearProgressIndicator(
+                                                    value: progressValue,
+                                                    minHeight: 6,
+                                                    backgroundColor:
+                                                        const Color(
+                                                          0xFF2A2A2A,
+                                                        ),
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                            Color>(
+                                                          progressColor,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '${(progressValue * 100).toStringAsFixed(0)}%',
+                                                style: TextStyle(
+                                                  color: progressColor,
+                                                  fontSize: 12,
+                                                  fontWeight:
+                                                      FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

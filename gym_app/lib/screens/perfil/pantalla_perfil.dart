@@ -164,11 +164,19 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     // Usa datos del auth si el perfil no cargó correctamente
     final isEnglish = Localizations.localeOf(context).languageCode == 'en';
-    final fullName =
+    final firstName =
         _user?.fullName ??
         Supabase.instance.client.auth.currentUser?.userMetadata?['full_name'] ??
         Supabase.instance.client.auth.currentUser?.email ??
         (isEnglish ? 'User' : 'Usuario');
+    final profileLastName =
+        (_user?.lastName ??
+                Supabase.instance.client.auth.currentUser?.userMetadata?['last_name']
+                    ?.toString())
+            ?.trim();
+    final fullName = [firstName.trim(), if (profileLastName != null && profileLastName.isNotEmpty) profileLastName]
+        .join(' ')
+        .trim();
     final role = _user?.role ?? 'member';
     final unitLabel = (_user?.units == 'imperial')
         ? 'Imperial.'

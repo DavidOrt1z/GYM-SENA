@@ -69,7 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     child: Center(
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/logo_launcher.png',
                         width: 150,
                         height: 150,
                         fit: BoxFit.contain,
