@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:video_player/video_player.dart';
 import '../../utils/constants.dart';
@@ -75,7 +76,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(height: 120),
+                Padding(
+                  padding: const EdgeInsets.only(top: 34),
+                  child: Column(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/logo.svg',
+                        height: 82,
+                        width: 82,
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'JACEK GYM',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: WHITE,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.4,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black87,
+                              blurRadius: 12,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
                 // Buttons at bottom
                 Padding(
