@@ -211,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final response = await Supabase.instance.client
           .from('users')
-          .select('id, nombre_completo, apellido')
+          .select('id, nombre, apellido')
           .eq('cedula', cedula)
           .limit(1);
       final rows = List<Map<String, dynamic>>.from(response);
@@ -225,7 +225,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _cedulaAvailable = exists;
         if (exists) {
           final user = rows.first;
-          final dbName = (user['nombre_completo'] ?? '').toString().trim();
+          final dbName = (user['nombre'] ?? '').toString().trim();
           final dbLastName = (user['apellido'] ?? '').toString().trim();
           if (dbLastName.isNotEmpty) {
             _nameController.text = dbName;

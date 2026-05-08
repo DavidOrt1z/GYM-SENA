@@ -57,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       await client.from('users').insert({
         'id_autenticacion': userId,
         'correo_electronico': email,
-        'nombre_completo': fullName,
+        'nombre': fullName,
         'rol': 'member',
         'estado': 'active',
       });
@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           .from('users')
           .update({
             'id_autenticacion': userId,
-            'nombre_completo': fullName,
+            'nombre': fullName,
             'estado': 'active',
           })
           .eq('correo_electronico', email);
@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         if (user != null) {
           if (mounted) {
             debugPrint(
-              'DEBUG: Usuario cargado: ${user.fullName}, Avatar: ${user.avatarUrl}',
+              'DEBUG: Usuario cargado: ${user.nombre}, Avatar: ${user.avatarUrl}',
             );
             setState(() {
               _user = user;
@@ -165,12 +165,12 @@ class _ProfileScreenState extends State<ProfileScreen>
     // Usa datos del auth si el perfil no cargó correctamente
     final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final firstName =
-        _user?.fullName ??
+        _user?.nombre ??
         Supabase.instance.client.auth.currentUser?.userMetadata?['full_name'] ??
         Supabase.instance.client.auth.currentUser?.email ??
         (isEnglish ? 'User' : 'Usuario');
     final profileLastName =
-        (_user?.lastName ??
+        (_user?.apellido ??
                 Supabase.instance.client.auth.currentUser?.userMetadata?['last_name']
                     ?.toString())
             ?.trim();

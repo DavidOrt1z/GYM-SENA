@@ -29,9 +29,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.user.fullName);
+    _nameController = TextEditingController(text: widget.user.nombre);
     _lastNameController = TextEditingController(
-      text: widget.user.lastName ?? '',
+      text: widget.user.apellido ?? '',
     );
     _ageController = TextEditingController(
       text: widget.user.age?.toString() ?? '',
@@ -154,7 +154,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Construir mapa de actualización con solo los campos disponibles
       final updateData = {
-        'nombre_completo': _nameController.text,
+        'nombre': _nameController.text,
         if (_lastNameController.text.isNotEmpty)
           'apellido': _lastNameController.text,
         if (age != null) 'edad': age,
@@ -255,7 +255,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Center(
                                     child: Text(
-                                      widget.user.fullName[0].toUpperCase(),
+                                      widget.user.nombre.isNotEmpty
+                                          ? widget.user.nombre[0].toUpperCase()
+                                          : 'U',
                                       style: const TextStyle(
                                         fontSize: 48,
                                         color: Color(0xFF6B5D4F),
@@ -267,7 +269,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               )
                             : Center(
                                 child: Text(
-                                  widget.user.fullName[0].toUpperCase(),
+                                  widget.user.nombre.isNotEmpty
+                                      ? widget.user.nombre[0].toUpperCase()
+                                      : 'U',
                                   style: const TextStyle(
                                     fontSize: 48,
                                     color: Color(0xFF6B5D4F),
@@ -316,7 +320,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               // Nombre
               Text(
-                widget.user.fullName,
+                widget.user.nombre,
                 style: const TextStyle(
                   color: WHITE,
                   fontSize: 22,

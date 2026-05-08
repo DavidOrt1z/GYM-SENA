@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:gym_app/services/database_service.dart';
@@ -14,13 +16,40 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final DatabaseService _databaseService = DatabaseService();
+  final PageController _facilitiesPageController = PageController();
+  late final AnimationController _homeRevealController;
   String _firstName = '';
+  int _currentFacilityIndex = 0;
+  Timer? _facilitiesTimer;
+
+  static const List<String> _facilityImages = [
+    'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200',
+    'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200',
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200',
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _homeRevealController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+
+    _facilitiesTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_facilitiesPageController.hasClients) return;
+      final nextIndex = (_currentFacilityIndex + 1) % _facilityImages.length;
+      _facilitiesPageController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeInOut,
+      );
+    });
+
     _loadFirstName();
   }
 
@@ -34,8 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final profile = await _databaseService.getUserProfile(authUserId);
       final metadata = currentUser?.userMetadata ?? <String, dynamic>{};
 
-      final fullName = (profile?.fullName ?? '').trim().isNotEmpty
-          ? profile!.fullName
+      final profileFullName =
+          '${profile?.nombre ?? ''} ${profile?.apellido ?? ''}'.trim();
+
+      final fullName = profileFullName.isNotEmpty
+          ? profileFullName
           : (metadata['nombre_completo']?.toString() ??
                     metadata['full_name']?.toString() ??
                     metadata['name']?.toString() ??
@@ -132,6 +164,27 @@ class _HomeScreenState extends State<HomeScreen> {
     return isEnglish ? 'HELLO, $upperName!' : '¡HOLA, $upperName!';
   }
 
+  Widget _buildReveal({required int order, required Widget child}) {
+    final start = (order * 0.12).clamp(0.0, 0.8);
+    final animation = CurvedAnimation(
+      parent: _homeRevealController,
+      curve: Interval(start, 1.0, curve: Curves.easeOutCubic),
+    );
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        return Opacity(
+          opacity: animation.value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - animation.value) * 22),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEnglish = Localizations.localeOf(context).languageCode == 'en';
@@ -214,20 +267,29 @@ class _HomeScreenState extends State<HomeScreen> {
           SliverList(
             delegate: SliverChildListDelegate([
               _buildWelcomeHeader(context, isEnglish: isEnglish),
-              const SizedBox(height: 16),
-              _buildMainBanner(context),
-              const SizedBox(height: 28),
-              _buildSectionTitle(context, 'instalaciones'),
-              const SizedBox(height: 12),
-              _buildInstalacionesSection(),
-              const SizedBox(height: 28),
-              _buildSectionTitle(context, 'beneficios'),
-              const SizedBox(height: 12),
-              _buildBeneficiosSection(context),
-              const SizedBox(height: 28),
-              _buildSectionTitle(context, 'equipamiento'),
-              const SizedBox(height: 12),
-              _buildEquipamientoSection(context),
+              _buildReveal(order: 1, child: const SizedBox(height: 16)),
+              _buildReveal(order: 2, child: _buildMainBanner(context)),
+              _buildReveal(order: 3, child: const SizedBox(height: 28)),
+              _buildReveal(
+                order: 4,
+                child: _buildSectionTitle(context, 'instalaciones'),
+              ),
+              _buildReveal(order: 5, child: const SizedBox(height: 12)),
+              _buildReveal(order: 6, child: _buildInstalacionesSection()),
+              _buildReveal(order: 7, child: const SizedBox(height: 28)),
+              _buildReveal(
+                order: 8,
+                child: _buildSectionTitle(context, 'beneficios'),
+              ),
+              _buildReveal(order: 9, child: const SizedBox(height: 12)),
+              _buildReveal(order: 10, child: _buildBeneficiosSection(context)),
+              _buildReveal(order: 11, child: const SizedBox(height: 28)),
+              _buildReveal(
+                order: 12,
+                child: _buildSectionTitle(context, 'equipamiento'),
+              ),
+              _buildReveal(order: 13, child: const SizedBox(height: 12)),
+              _buildReveal(order: 14, child: _buildEquipamientoSection(context)),
               const SizedBox(height: 40),
             ]),
           ),
@@ -320,19 +382,73 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildInstalacionesSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      height: 160,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        image: const DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800',
+    return Column(
+      children: [
+        SizedBox(
+          height: 178,
+          child: PageView.builder(
+            controller: _facilitiesPageController,
+            itemCount: _facilityImages.length,
+            onPageChanged: (index) {
+              if (!mounted) return;
+              setState(() {
+                _currentFacilityIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: NetworkImage(_facilityImages[index]),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.35),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-          fit: BoxFit.cover,
         ),
-      ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_facilityImages.length, (index) {
+            final isActive = index == _currentFacilityIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: isActive ? 20 : 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: isActive ? PRIMARY_COLOR : const Color(0xFF5C5C5C),
+                borderRadius: BorderRadius.circular(9),
+              ),
+            );
+          }),
+        ),
+      ],
     );
+  }
+
+  @override
+  void dispose() {
+    _facilitiesTimer?.cancel();
+    _facilitiesPageController.dispose();
+    _homeRevealController.dispose();
+    super.dispose();
   }
 
   Widget _buildBeneficiosSection(BuildContext context) {

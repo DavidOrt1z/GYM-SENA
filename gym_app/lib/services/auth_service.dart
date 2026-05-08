@@ -21,7 +21,7 @@ class AuthService {
       if (existingUser != null) {
         final Map<String, dynamic> updateData = {
           'id_autenticacion': user.id,
-          'nombre_completo': fullName,
+          'nombre': fullName,
           'estado': 'active',
         };
         final cleanLastName = lastName?.trim();
@@ -43,7 +43,7 @@ class AuthService {
       await _supabase.from('users').insert({
         'id_autenticacion': user.id,
         'correo_electronico': email,
-        'nombre_completo': fullName,
+        'nombre': fullName,
         'apellido': (lastName ?? '').trim(),
         'cedula': (cedula ?? '').trim(),
         'rol': 'member',
