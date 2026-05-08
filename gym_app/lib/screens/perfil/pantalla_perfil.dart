@@ -9,6 +9,7 @@ import 'package:gym_app/screens/perfil/pantalla_editar_perfil.dart';
 import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
 import 'package:gym_app/screens/perfil/pantalla_unidades.dart';
 import 'package:gym_app/screens/perfil/pantalla_cerrar_sesion.dart';
+import 'package:gym_app/screens/progreso/pantalla_progreso.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import '../../utils/constants.dart';
 
@@ -200,9 +201,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           const SizedBox(height: 20),
 
           // Avatar y nombre
@@ -442,6 +444,77 @@ class _ProfileScreenState extends State<ProfileScreen>
 
           const SizedBox(height: 24),
 
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProgressScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: DARK_BG,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF262626)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: PRIMARY_COLOR.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.show_chart_rounded,
+                        color: PRIMARY_COLOR,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context, 'mi_progreso'),
+                            style: const TextStyle(
+                              color: WHITE,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isEnglish
+                                ? 'Weight history and progress chart.'
+                                : 'Historial de peso y gráfico de progreso.',
+                            style: const TextStyle(
+                              color: SECONDARY_COLOR,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: SECONDARY_COLOR,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
           // Unidades de Medida
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -540,7 +613,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
           ),
+          const SizedBox(height: 24),
         ],
+        ),
       ),
     );
   }

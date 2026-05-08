@@ -40,6 +40,7 @@ final Map<String, String> en = {
   'inicio': 'Home',
   'reservas': 'Bookings',
   'progreso': 'Progress',
+  'rutinas': 'Routines',
   'perfil': 'Profile',
   'configuracion': 'Settings',
   'volver': 'Back',

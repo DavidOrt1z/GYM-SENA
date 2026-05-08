@@ -40,6 +40,7 @@ final Map<String, String> es = {
   'inicio': 'Inicio',
   'reservas': 'Reservas',
   'progreso': 'Progreso',
+  'rutinas': 'Rutinas',
   'perfil': 'Perfil',
   'configuracion': 'Configuración',
   'volver': 'Volver',

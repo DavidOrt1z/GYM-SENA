@@ -12,6 +12,36 @@ class AuthService {
     String? cedula,
   }) async {
     try {
+      final cleanCedula = cedula?.trim();
+
+      if (cleanCedula != null && cleanCedula.isNotEmpty) {
+        final existingByCedula = await _supabase
+            .from('users')
+            .select('id')
+            .eq('cedula', cleanCedula)
+            .maybeSingle();
+
+        if (existingByCedula != null) {
+          final Map<String, dynamic> updateData = {
+            'id_autenticacion': user.id,
+            'correo_electronico': email,
+            'nombre': fullName,
+            'cedula': cleanCedula,
+            'estado': 'active',
+          };
+          final cleanLastName = lastName?.trim();
+          if (cleanLastName != null && cleanLastName.isNotEmpty) {
+            updateData['apellido'] = cleanLastName;
+          }
+
+          await _supabase
+              .from('users')
+              .update(updateData)
+              .eq('id', existingByCedula['id']);
+          return;
+        }
+      }
+
       final existingUser = await _supabase
           .from('users')
           .select('id')
@@ -28,7 +58,6 @@ class AuthService {
         if (cleanLastName != null && cleanLastName.isNotEmpty) {
           updateData['apellido'] = cleanLastName;
         }
-        final cleanCedula = cedula?.trim();
         if (cleanCedula != null && cleanCedula.isNotEmpty) {
           updateData['cedula'] = cleanCedula;
         }
@@ -97,11 +126,31 @@ class AuthService {
   }
 
   // Login
-  Future<AuthResponse> signIn({
-    required String email,
+  Future<AuthResponse> signInWithCedula({
+    required String cedula,
     required String password,
   }) async {
     try {
+      final cleanCedula = cedula.trim();
+      final userRecord = await _supabase
+          .from('users')
+          .select('correo_electronico, nombre, apellido, cedula')
+          .eq('cedula', cleanCedula)
+          .maybeSingle();
+
+      if (userRecord == null) {
+        throw AuthException('cedula_not_found');
+      }
+
+      final email = userRecord['correo_electronico']?.toString().trim() ?? '';
+      if (email.isEmpty) {
+        throw AuthException('cedula_without_email');
+      }
+
+      if (email.toLowerCase().endsWith('@gymapp.local')) {
+        throw AuthException('cedula_not_linked_to_auth');
+      }
+
       final response = await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
@@ -115,17 +164,23 @@ class AuthService {
         final metadataCedula =
             response.user!.userMetadata?['cedula']?.toString();
         final fullName =
-            (metadataName is String && metadataName.trim().isNotEmpty)
-            ? metadataName.trim()
-            : email.split('@').first;
+            (userRecord['nombre']?.toString().trim().isNotEmpty ?? false)
+            ? userRecord['nombre'].toString().trim()
+            : (metadataName is String && metadataName.trim().isNotEmpty)
+                ? metadataName.trim()
+                : email.split('@').first;
         final lastName =
-            (metadataLastName is String && metadataLastName.trim().isNotEmpty)
-            ? metadataLastName.trim()
-            : null;
+            (userRecord['apellido']?.toString().trim().isNotEmpty ?? false)
+            ? userRecord['apellido'].toString().trim()
+            : (metadataLastName is String && metadataLastName.trim().isNotEmpty)
+                ? metadataLastName.trim()
+                : null;
         final cedula =
-            (metadataCedula != null && metadataCedula.trim().isNotEmpty)
-            ? metadataCedula.trim()
-            : null;
+            (userRecord['cedula']?.toString().trim().isNotEmpty ?? false)
+            ? userRecord['cedula'].toString().trim()
+            : (metadataCedula != null && metadataCedula.trim().isNotEmpty)
+                ? metadataCedula.trim()
+                : null;
 
         await _ensureUserProfile(
           user: response.user!,

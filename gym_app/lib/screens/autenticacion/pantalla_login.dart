@@ -14,26 +14,190 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _cedulaController = TextEditingController();
   final _passwordController = TextEditingController();
+  String _documentType = 'dni';
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
+  String get _selectedDocumentLabel {
+    switch (_documentType) {
+      case 'cc':
+        return 'Cédula de Ciudadanía';
+      case 'ti':
+        return 'Tarjeta de Identidad';
+      case 'ce':
+        return 'Cédula de Extranjería';
+      case 'ppt':
+        return 'Permiso por Protección Temporal';
+      default:
+        return 'DNI';
+    }
+  }
+
+  List<MapEntry<String, String>> get _documentTypes => const [
+    MapEntry('dni', 'DNI'),
+    MapEntry('cc', 'Cédula de Ciudadanía'),
+    MapEntry('ti', 'Tarjeta de Identidad'),
+    MapEntry('ce', 'Cédula de Extranjería'),
+    MapEntry('ppt', 'Permiso por Protección Temporal'),
+  ];
+
+  Future<void> _showDocumentTypeSheet() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: DARK_BG,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Tipo de documento',
+                        style: TextStyle(
+                          color: WHITE,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: SECONDARY_COLOR),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ..._documentTypes.map((item) {
+                  final isSelected = item.key == _documentType;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => Navigator.pop(context, item.key),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? PRIMARY_COLOR.withValues(alpha: 0.13)
+                              : const Color(0xFF151515),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected ? PRIMARY_COLOR : const Color(0xFF262626),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.value,
+                                style: TextStyle(
+                                  color: isSelected ? WHITE : SECONDARY_COLOR,
+                                  fontSize: 15,
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                              color: isSelected ? PRIMARY_COLOR : SECONDARY_COLOR,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null || !mounted) return;
+    setState(() => _documentType = selected);
+  }
+
+  Widget _buildDocumentTypeSelector(bool isEnglish) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: _showDocumentTypeSheet,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Document type' : 'Tipo de documento',
+          labelStyle: const TextStyle(
+            color: SECONDARY_COLOR,
+            fontSize: 14,
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          filled: true,
+          fillColor: DARK_BG,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _selectedDocumentLabel,
+                style: const TextStyle(color: WHITE, fontSize: 16),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: SECONDARY_COLOR, size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
-    _emailController.dispose();
+    _cedulaController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
     final isEnglish = Localizations.localeOf(context).languageCode == 'en';
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    final cedula = _cedulaController.text.trim();
+    if (cedula.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
         _errorMessage = isEnglish
             ? 'Please complete all fields'
             : 'Completa todos los campos';
+      });
+      return;
+    }
+
+    if (!RegExp(r'^\d{6,15}$').hasMatch(cedula)) {
+      setState(() {
+        _errorMessage = isEnglish
+            ? 'Enter a valid ID number'
+            : 'Ingresa una cédula válida';
       });
       return;
     }
@@ -43,14 +207,17 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
+    var didNavigate = false;
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.login(
-        _emailController.text,
+        cedula,
         _passwordController.text,
       );
 
       if (success && mounted) {
+        didNavigate = true;
         // Login exitoso, navegar al home
         Navigator.of(
           context,
@@ -64,6 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = AppErrorMessages.map(
           e,
@@ -73,14 +241,18 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted && !didNavigate) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+
     return Scaffold(
       backgroundColor: DARKER_BG,
       appBar: AppBar(
@@ -142,12 +314,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               if (_errorMessage != null) const SizedBox(height: 20),
 
-              // Email TextField
+              _buildDocumentTypeSelector(isEnglish),
+              const SizedBox(height: 16),
+
+              // Cedula TextField
               TextField(
-                controller: _emailController,
+                controller: _cedulaController,
+                keyboardType: TextInputType.number,
                 style: const TextStyle(color: WHITE, fontSize: 16),
                 decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context, 'email'),
+                  hintText: isEnglish ? 'Document number' : _selectedDocumentLabel,
+                  hintStyle: const TextStyle(
+                    color: SECONDARY_COLOR,
+                    fontSize: 14,
+                  ),
                   labelStyle: const TextStyle(
                     color: SECONDARY_COLOR,
                     fontSize: 14,

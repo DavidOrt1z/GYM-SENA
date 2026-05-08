@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:gym_app/screens/inicio/pantalla_inicio.dart';
 import 'package:gym_app/screens/reservas/pantalla_reservas.dart';
-import 'package:gym_app/screens/progreso/pantalla_progreso.dart';
+import 'package:gym_app/screens/rutinas/pantalla_rutinas.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:gym_app/utils/constants.dart';
@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     ReservationsScreen(),
-    ProgressScreen(),
+    RoutinesScreen(),
     ProfileScreen(),
   ];
 
@@ -140,8 +140,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     whiteIconPath: 'assets/icons/Reservas.svg',
                   ),
                   _item(
-                    label: AppLocalizations.of(context, 'progreso'),
-                    whiteIconPath: 'assets/icons/Progreso.svg',
+                    label: AppLocalizations.of(context, 'rutinas'),
+                    whiteIconPath: 'assets/icons/Rutinas.svg',
+                    iconSize: 22,
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'perfil'),

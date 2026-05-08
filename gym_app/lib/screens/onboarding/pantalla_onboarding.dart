@@ -68,11 +68,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       borderRadius: BorderRadius.circular(40),
                     ),
                     child: Center(
-                      child: Image.asset(
-                        'assets/images/logo_launcher.png',
-                        width: 150,
-                        height: 150,
-                        fit: BoxFit.contain,
+                      child: ColorFiltered(
+                        colorFilter: const ColorFilter.matrix(<double>[
+                          1.8, -1.8, 0, 0, 0,
+                          0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0,
+                          0, 0, 0, 1, 0,
+                        ]),
+                        child: Image.asset(
+                          'assets/images/logocargagif.gif',
+                          width: 165,
+                          height: 165,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),

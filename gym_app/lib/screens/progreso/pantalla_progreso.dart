@@ -170,7 +170,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 18, right: 8),
+      padding: const EdgeInsets.only(left: 6, right: 6, top: 10),
       child: LineChart(
         LineChartData(
           minX: 0,
@@ -214,7 +214,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       label,
                       style: const TextStyle(
                         color: SECONDARY_COLOR,
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -228,7 +228,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               spots: _visualChartData,
               isCurved: true,
               curveSmoothness: 0.32,
-              barWidth: 3,
+              barWidth: 2.6,
               color: _chartLineColor,
               isStrokeCapRound: true,
               dotData: const FlDotData(show: false),
@@ -245,34 +245,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
       backgroundColor: DARKER_BG,
+      appBar: AppBar(
+        backgroundColor: DARKER_BG,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: WHITE, size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        centerTitle: true,
+        title: Text(
+          AppLocalizations.of(context, 'progreso'),
+          style: const TextStyle(
+            color: WHITE,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         bottom: true,
         child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(color: PRIMARY_COLOR),
               )
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        AppLocalizations.of(context, 'progreso'),
-                        style: TextStyle(
-                          color: WHITE,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
                     Text(
                       AppLocalizations.of(context, 'peso'),
                       style: TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
                         color: WHITE,
                       ),
                     ),
@@ -285,7 +294,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: DARK_BG,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF262626)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,55 +321,78 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      isEnglish ? 'Weight Progress' : 'Progreso de peso',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: WHITE,
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: DARK_BG,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF262626)),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _currentWeightText,
-                      style: const TextStyle(
-                        fontSize: 48,
-                        height: 1,
-                        fontWeight: FontWeight.w700,
-                        color: WHITE,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    RichText(
-                      text: TextSpan(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: isEnglish
-                                ? 'Last 30 days '
-                                : 'Últimos 30 días ',
-                            style: TextStyle(
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isEnglish ? 'Weight Progress' : 'Progreso de peso',
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: WHITE,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _currentWeightText,
+                                      style: const TextStyle(
+                                        fontSize: 38,
+                                        height: 1,
+                                        fontWeight: FontWeight.w800,
+                                        color: WHITE,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: (_isChangePositive ? const Color(0xFF27E27A) : ERROR_COLOR)
+                                      .withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  _recentChangeText,
+                                  style: TextStyle(
+                                    color: _isChangePositive ? const Color(0xFF27E27A) : ERROR_COLOR,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isEnglish ? 'Last 30 days' : 'Últimos 30 días',
+                            style: const TextStyle(
                               color: SECONDARY_COLOR,
-                              fontSize: 16,
+                              fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          TextSpan(
-                            text: _recentChangeText,
-                            style: TextStyle(
-                              color: _isChangePositive
-                                  ? const Color(0xFF27E27A)
-                                  : ERROR_COLOR,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(height: 310, child: _buildChart()),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    Expanded(child: _buildChart()),
-                    const SizedBox(height: 12),
                   ],
                 ),
               ),

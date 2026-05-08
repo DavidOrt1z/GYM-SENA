@@ -19,7 +19,19 @@ class AuthProvider extends ChangeNotifier {
     if (normalized.contains('invalid login credentials') ||
         normalized.contains('invalid_grant') ||
         normalized.contains('user not found')) {
-      return 'No encontramos una cuenta con ese correo o la contraseña es incorrecta';
+      return 'La cédula o la contraseña es incorrecta';
+    }
+
+    if (normalized.contains('cedula_not_found')) {
+      return 'No encontramos una cuenta con esa cédula';
+    }
+
+    if (normalized.contains('cedula_without_email')) {
+      return 'La cédula no tiene un correo asociado. Contacta al administrador';
+    }
+
+    if (normalized.contains('cedula_not_linked_to_auth')) {
+      return 'Esta cédula aún no está vinculada a tu cuenta de acceso. Regístrate nuevamente o contacta al administrador';
     }
 
     if (normalized.contains('email not confirmed')) {
@@ -41,14 +53,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Login
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String cedula, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await _authService.signIn(
-        email: email,
+      final response = await _authService.signInWithCedula(
+        cedula: cedula,
         password: password,
       );
       _isAuthenticated = response.user != null;
