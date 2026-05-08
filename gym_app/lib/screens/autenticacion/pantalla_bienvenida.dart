@@ -1,10 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:video_player/video_player.dart';
 import '../../utils/constants.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  late final VideoPlayerController _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoController = VideoPlayerController.asset(
+      'assets/images/VideoFondoLogin.mp4',
+    )
+      ..setLooping(true)
+      ..setVolume(0);
+
+    _videoController.initialize().then((_) {
+      if (!mounted) return;
+      setState(() {});
+      _videoController.play();
+    });
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,23 +41,30 @@ class WelcomeScreen extends StatelessWidget {
       backgroundColor: DARKER_BG,
       body: Stack(
         children: [
-          // Background Image
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/login.fondo.jpg'),
+          const Positioned.fill(child: ColoredBox(color: DARKER_BG)),
+          if (_videoController.value.isInitialized)
+            Positioned.fill(
+              child: FittedBox(
                 fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController.value.size.width,
+                  height: _videoController.value.size.height,
+                  child: VideoPlayer(_videoController),
+                ),
               ),
             ),
-            child: Container(
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
+                    DARKER_BG.withValues(alpha: 0.35),
                     DARKER_BG.withValues(alpha: 0.95),
                   ],
+                  stops: const [0, 0.58, 1],
                 ),
               ),
             ),
@@ -39,20 +75,7 @@ class WelcomeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logo at top
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: 60,
-                    bottom: 24,
-                    left: 24,
-                    right: 24,
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/logo.svg',
-                    height: 120,
-                    width: 120,
-                  ),
-                ),
+                const SizedBox(height: 120),
 
                 // Buttons at bottom
                 Padding(

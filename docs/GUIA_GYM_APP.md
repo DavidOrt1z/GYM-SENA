@@ -2,7 +2,7 @@
 ## Sistema de Gestión de Gimnasio - Estado Actual del Desarrollo
 
 **Fecha de Inicio:** 18 de Diciembre de 2025  
-**Última Actualización:** 26 de Abril de 2026  
+**Última Actualización:** 7 de Mayo de 2026  
 **Stack:** Flutter + Supabase (PostgreSQL) + Web Admin (Node.js + Express)
 
 ---
@@ -20,7 +20,7 @@
 | 5 | Panel Admin Web | 7-10 días | ✅ **COMPLETADA** | 100% | 28 Feb 2026 |
 | 6 | Pulido y Extras | 5-7 días | 🚀 **EN PROGRESO** | 99% | 24 Abr 2026 |
 
-**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes App/Admin + limpieza técnica ✅)
+**Progreso Total del Proyecto:** ~99% (Fase 6 - Notificaciones ✅ + Multiidioma ✅ + Onboarding ✅ + Animaciones ✅ + Testing ✅ + Ajustes App/Admin + registro por cédula + video de bienvenida + limpieza técnica ✅)
 
 ### 🎯 ¿Dónde Estoy?
 
@@ -30,7 +30,7 @@
 ✅ FASE 3 ━━━━━━━━━━━━ 100% ✓ (Completa)
 ✅ FASE 4 ━━━━━━━━━━━━ 100% ✓ (Completa - 7 Feb 2026)
 ✅ FASE 5 ━━━━━━━━━━━━ 100% ✓ (Completa - 28 Feb 2026 + Node.js)
-🚀 FASE 6 ══════════════════  99%  (En Progreso - Ajustes UI finales + reservas por fecha exacta + release APK actualizado - 24 Abr 2026)
+🚀 FASE 6 ══════════════════  99%  (En Progreso - Ajustes UI finales + registro por cédula + video de bienvenida + release APK actualizado - 7 May 2026)
 ```
 
 ---
@@ -133,6 +133,9 @@ dependencies:
   intl: ^0.18.1              ✅
   qr_flutter: ^4.1.0         ✅
   fl_chart: ^0.66.0          ✅
+  flutter_svg: ^2.0.0        ✅
+  package_info_plus: ^8.0.2  ✅
+  video_player: ^2.11.1      ✅
 ```
 
 ### 2.3 Servicios de Autenticación
@@ -165,6 +168,14 @@ dependencies:
 | 9 | Contraseña Actualizada | `pantalla_contrasena_actualizada.dart` | ✅ |
 | 10 | Políticas Privacidad | `pantalla_politicas_privacidad.dart` | ✅ |
 | 11 | Términos de Uso | `pantalla_terminos_uso.dart` | ✅ |
+
+### 2.5.1 Registro por cédula validada (Actualizado - 7 May 2026)
+- [x] Registro inicia con validación de `cedula` contra la tabla `users`
+- [x] Si la cédula existe, la app autocompleta `nombre` y `apellido`
+- [x] `nombre` y `apellido` quedan visibles solo después de validar y en modo solo lectura
+- [x] Si la cédula no existe, se bloquea el registro y se muestra mensaje para contactar al administrador
+- [x] `AuthProvider.register(...)` y `AuthService.signUp(...)` reciben `cedula`
+- [x] Modelo de usuario alineado con columnas actuales: `nombre`, `apellido`, `cedula`
 
 ### 2.6 Flujo de Recuperación de Contraseña
 
@@ -211,10 +222,10 @@ dependencies:
 - [x] Tema oscuro implementado
 
 ```dart
-PRIMARY_COLOR   = #1273D4  // Azul - Botones         ✅
-SECONDARY_COLOR = #91ADC9  // Azul grisáceo          ✅
-DARKER_BG       = #121A21  // Fondo principal        ✅
-DARK_BG         = #243647  // Campos de texto        ✅
+PRIMARY_COLOR   = #BA1505  // Rojo Jacek Gym         ✅
+SECONDARY_COLOR = #CFCFCF  // Gris claro             ✅
+DARKER_BG       = #000000  // Fondo principal        ✅
+DARK_BG         = #111111  // Superficies/campos     ✅
 WHITE           = #FFFFFF  // Títulos                ✅
 ERROR_COLOR     = #D32F2F  // Rojo error             ✅
 SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
@@ -229,6 +240,8 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 - [x] Tab Perfil
 - [x] Colores del tema aplicados
 - [x] Iconos configurados
+- [x] Íconos SVG únicos con color dinámico: Inicio, Reservas, Progreso y Perfil
+- [x] Perfil ajustado visualmente a mayor tamaño para equilibrar la barra inferior
 
 ### 3.3 Pantalla Inicio
 - [x] Crear `pantalla_inicio.dart`
@@ -238,6 +251,8 @@ SUCCESS_COLOR   = #388E3C  // Verde éxito            ✅
 - [x] Sección Instalaciones
 - [x] Sección Beneficios con iconos
 - [x] Sección Equipamiento (grid)
+- [x] Carrusel de instalaciones con auto-rotación e indicadores rojos
+- [x] Beneficios convertidos en tarjetas expandibles con textos comerciales
 - [x] Diseño responsivo para todos los tamaños de pantalla
 
 ### 3.4 Pantalla Reservas
@@ -976,7 +991,39 @@ supabase
   - [x] App: fallback seguro al crear perfil inicial para no degradar cuentas admin a member
   - [x] Admin Panel: normalización de rol (`administrador` -> `admin`) en login para evitar falsos rechazos de acceso
 
-### 6.8 Producción
+### 6.8 Ajustes Finales de Mayo (APP + ADMIN) ✅ (ACTUALIZADO - 7 May 2026)
+- [x] **Autenticación y datos de usuario (App)**
+  - [x] Registro por cédula validada contra `users`
+  - [x] Autocompletado de `nombre` y `apellido` desde Supabase
+  - [x] Corrección de esquema: uso de `nombre`, `apellido`, `cedula` en lugar de `nombre_completo`, `fullName` o `lastName`
+  - [x] Selectores de regional y centro cargados desde Supabase con dependencia regional -> centro
+- [x] **Pantalla de bienvenida (App)**
+  - [x] Fondo reemplazado por video local `assets/images/VideoFondoLogin.mp4`
+  - [x] Video en loop, sin audio y adaptado a pantalla completa con `BoxFit.cover`
+  - [x] Dependencia `video_player` agregada
+- [x] **Inicio (App)**
+  - [x] Carrusel de instalaciones con `PageView`, auto-rotación e indicadores
+  - [x] Beneficios expandibles con textos de Acceso Gratuito y Horarios Flexibles
+  - [x] Ícono SVG propio para `Acceso Gratuito`
+- [x] **Navegación inferior (App)**
+  - [x] Limpieza de SVG duplicados por color
+  - [x] Uso de SVG único por tab con color dinámico desde Flutter
+  - [x] Ícono `Perfil.svg` ajustado a mayor tamaño
+- [x] **Panel Admin - Usuarios**
+  - [x] Modal `Añadir Usuario` simplificado a Nombre, Apellido, Cédula y Rol
+  - [x] Rol visual fijo en `Usuario` y guardado interno como `member`
+  - [x] Correo sintético generado automáticamente para compatibilidad
+  - [x] Estado inicial estándar `active`
+- [x] **Panel Admin - UI y login**
+  - [x] Sidebar con efecto glass y paleta negro/rojo/blanco/gris
+  - [x] Botones primarios en rojo plano `#BA1505`
+  - [x] Modal personalizado de cerrar sesión
+  - [x] Loader visual de login conectado al GIF `assets/images/login-loader.gif.gif`
+- [x] **Verificación técnica**
+  - [x] `flutter analyze` sin issues en archivos modificados de Inicio, Bienvenida y Navegación
+  - [x] Flutter Web ejecutado en Chrome para revisión visual
+
+### 6.9 Producción
 - [ ] Configurar app para release
 - [x] Generar APK release (Android)
 - [ ] Generar AAB (Play Store)
@@ -1050,7 +1097,7 @@ gym_app/
 
 ```powershell
 # ── Flutter App ──────────────────────────────────────────────
-cd "d:\Documentos\JACEK GYM\gym_app"
+cd "D:\Documentos\GYM SENA\gym_app"
 
 # Ejecutar la app
 flutter run
@@ -1067,7 +1114,7 @@ flutter test
 flutter analyze
 
 # ── Admin Panel (Node.js) ─────────────────────────────────────
-cd "d:\Documentos\JACEK GYM\admin-panel"
+cd "D:\Documentos\GYM SENA\admin-panel"
 
 # Instalar dependencias (primera vez)
 npm install
@@ -1080,7 +1127,7 @@ npm start
 npm run dev
 
 # ── Git ──────────────────────────────────────────────────────
-cd "d:\Documentos\JACEK GYM"
+cd "D:\Documentos\GYM SENA"
 
 # Ver estado
 git status
@@ -1104,5 +1151,5 @@ git push origin main
 
 ---
 
-*Última actualización: 26 de Abril de 2026*  
-*Estado: Fase 6 casi completada (ajustes visuales/funcionales cerrados, APK release actualizado; pendiente AAB y publicación estable)*
+*Última actualización: 7 de Mayo de 2026*  
+*Estado: Fase 6 casi completada (registro por cédula, video de bienvenida, carrusel/beneficios, limpieza SVG y panel admin actualizados; pendiente AAB y publicación estable)*

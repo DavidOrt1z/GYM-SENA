@@ -65,22 +65,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   BottomNavigationBarItem _item({
     required String label,
     required String whiteIconPath,
+    double iconSize = 20,
   }) {
-    Widget svg(String path, {Color? tint}) => Padding(
+    Widget svg({required Color tint}) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SvgPicture.asset(
-        path,
-        width: 20,
-        height: 20,
-        colorFilter: tint == null
-            ? null
-            : ColorFilter.mode(tint, BlendMode.srcIn),
+        whiteIconPath,
+        width: iconSize,
+        height: iconSize,
+        colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
       ),
     );
 
     return BottomNavigationBarItem(
-      icon: svg(whiteIconPath, tint: WHITE),
-      activeIcon: svg(whiteIconPath, tint: PRIMARY_COLOR),
+      icon: svg(tint: WHITE),
+      activeIcon: svg(tint: PRIMARY_COLOR),
       label: label,
     );
   }
@@ -134,19 +133,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 items: [
                   _item(
                     label: AppLocalizations.of(context, 'inicio'),
-                    whiteIconPath: 'assets/icons/Inicio Blanco.svg',
+                    whiteIconPath: 'assets/icons/Inicio.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'reservas'),
-                    whiteIconPath: 'assets/icons/Reservas Blanco.svg',
+                    whiteIconPath: 'assets/icons/Reservas.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'progreso'),
-                    whiteIconPath: 'assets/icons/Progreso Blanco.svg',
+                    whiteIconPath: 'assets/icons/Progreso.svg',
                   ),
                   _item(
                     label: AppLocalizations.of(context, 'perfil'),
-                    whiteIconPath: 'assets/icons/Perfil Blanco.svg',
+                    whiteIconPath: 'assets/icons/Perfil.svg',
+                    iconSize: 23,
                   ),
                 ],
               ),

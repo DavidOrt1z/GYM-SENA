@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
 import 'package:gym_app/services/database_service.dart';
 import 'package:gym_app/screens/notificaciones/pantalla_notificaciones.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _homeRevealController;
   String _firstName = '';
   int _currentFacilityIndex = 0;
+  String? _expandedBenefitKey;
   Timer? _facilitiesTimer;
 
   static const List<String> _facilityImages = [
@@ -452,20 +454,30 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildBeneficiosSection(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         children: [
           _buildBeneficioItem(
-            icon: Icons.card_membership_outlined,
+            benefitKey: 'free_access',
+            iconPath: 'assets/icons/Acceso Gratuito.svg',
             title: AppLocalizations.of(context, 'free_access'),
             subtitle: AppLocalizations.of(context, 'free_access_subtitle'),
+            detail: isEnglish
+                ? 'Use the training spaces at no extra cost and enjoy the available equipment during your scheduled time.'
+                : 'Porque ponerte en forma no debería afectar tu bolsillo. ¡Entrena sin límites!.\n\nCero Costo, 100% Energía: Disfruta de todas nuestras instalaciones sin pagar ni un peso. La membresía corre por nuestra cuenta.',
           ),
           const SizedBox(height: 12),
           _buildBeneficioItem(
+            benefitKey: 'flexible_hours',
             icon: Icons.access_time_outlined,
             title: AppLocalizations.of(context, 'flexible_hours'),
             subtitle: AppLocalizations.of(context, 'flexible_hours_subtitle'),
+            detail: isEnglish
+                ? 'Choose the time slot that best fits your routine and manage your reservations from the app.'
+                : 'Un espacio que se ajusta a tu ritmo de vida. Tú decides cuándo darle duro al entrenamiento.\n\nSin Afanes: Ven cuando puedas y quieras. Nos adaptamos a tu agenda para que el gimnasio no sea un problema.',
           ),
         ],
       ),
@@ -473,41 +485,120 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildBeneficioItem({
-    required IconData icon,
+    required String benefitKey,
+    IconData? icon,
+    String? iconPath,
     required String title,
     required String subtitle,
+    required String detail,
   }) {
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
+    final isExpanded = _expandedBenefitKey == benefitKey;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          setState(() {
+            _expandedBenefitKey = isExpanded ? null : benefitKey;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: PRIMARY_COLOR,
-            borderRadius: BorderRadius.circular(12),
+            color: isExpanded ? const Color(0xFF111111) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isExpanded
+                  ? PRIMARY_COLOR.withValues(alpha: 0.45)
+                  : Colors.transparent,
+            ),
           ),
-          child: Icon(icon, color: WHITE, size: 22),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: WHITE,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: PRIMARY_COLOR,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: iconPath != null
+                        ? Center(
+                            child: SvgPicture.asset(
+                              iconPath,
+                              width: 23,
+                              height: 23,
+                              colorFilter: const ColorFilter.mode(
+                                WHITE,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          )
+                        : Icon(icon, color: WHITE, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: WHITE,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: SECONDARY_COLOR,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: SECONDARY_COLOR,
+                      size: 22,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(color: SECONDARY_COLOR, fontSize: 13),
-            ),
-          ],
+              AnimatedCrossFade(
+                firstChild: const SizedBox(width: double.infinity),
+                secondChild: Padding(
+                  padding: const EdgeInsets.only(left: 62, top: 10, right: 6),
+                  child: Text(
+                    detail,
+                    style: const TextStyle(
+                      color: SECONDARY_COLOR,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 220),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 

@@ -60,6 +60,7 @@ dependencies:
   # Notificaciones
   flutter_local_notifications: ^17.1.0
   timezone: ^0.9.4
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:
