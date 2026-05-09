@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gym_app/providers/auth_provider.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'pantalla_registro_exitoso.dart';
 import 'pantalla_terminos_uso.dart';
 import 'pantalla_politicas_privacidad.dart';
@@ -14,6 +15,13 @@ class RegisterScreen extends StatefulWidget {
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _DocumentType {
+  final int? id;
+  final String name;
+
+  const _DocumentType({required this.id, required this.name});
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -36,13 +44,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _cedulaAvailable = false;
   String? _cedulaValidationMessage;
   String? _validatedCedulaValue;
+  int? _selectedDocumentTypeId;
+  List<_DocumentType> _documentTypes = const [];
 
   Map<String, List<String>> _centersByRegion = const {};
 
   @override
   void initState() {
     super.initState();
+    _loadDocumentTypes();
     _loadRegionsAndCenters();
+  }
+
+  String get _selectedDocumentLabel {
+    if (_selectedDocumentTypeId != null) {
+      for (final type in _documentTypes) {
+        if (type.id == _selectedDocumentTypeId) return type.name;
+      }
+    }
+    return _documentTypes.isNotEmpty ? _documentTypes.first.name : 'DNI';
+  }
+
+  Future<void> _loadDocumentTypes() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('tipo_documentos')
+          .select('id, nombre')
+          .order('id');
+      final types = List<Map<String, dynamic>>.from(response)
+          .map((row) {
+            final id = row['id'];
+            final name = (row['nombre'] ?? '').toString().trim();
+            if (id is! int || name.isEmpty) return null;
+            return _DocumentType(id: id, name: name);
+          })
+          .whereType<_DocumentType>()
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _documentTypes = types.isEmpty
+            ? const [_DocumentType(id: null, name: 'DNI')]
+            : types;
+        _selectedDocumentTypeId = types.isEmpty
+            ? null
+            : _defaultDocumentType(types).id;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _documentTypes = const [_DocumentType(id: null, name: 'DNI')];
+      });
+    }
+  }
+
+  _DocumentType _defaultDocumentType(List<_DocumentType> types) {
+    for (final type in types) {
+      final normalized = type.name.toLowerCase();
+      if (normalized == 'dni' || normalized.contains('ciudadan')) {
+        return type;
+      }
+    }
+    return types.first;
   }
 
   Future<void> _loadRegionsAndCenters() async {
@@ -167,16 +230,170 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  Future<void> _pickDocumentType() async {
+    if (_documentTypes.isEmpty) return;
+    final selected = await showModalBottomSheet<int?>(
+      context: context,
+      backgroundColor: DARK_BG,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Tipo de documento',
+                        style: TextStyle(
+                          color: WHITE,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: SECONDARY_COLOR,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ..._documentTypes.map((type) {
+                  final isSelected = type.id == _selectedDocumentTypeId;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => Navigator.pop(context, type.id),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? PRIMARY_COLOR.withValues(alpha: 0.13)
+                              : const Color(0xFF151515),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected
+                                ? PRIMARY_COLOR
+                                : const Color(0xFF262626),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                type.name,
+                                style: TextStyle(
+                                  color: isSelected ? WHITE : SECONDARY_COLOR,
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              isSelected
+                                  ? Icons.check_circle_rounded
+                                  : Icons.circle_outlined,
+                              color: isSelected
+                                  ? PRIMARY_COLOR
+                                  : SECONDARY_COLOR,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == _selectedDocumentTypeId) return;
+    setState(() {
+      _selectedDocumentTypeId = selected;
+      _cedulaValidated = false;
+      _cedulaAvailable = false;
+      _cedulaValidationMessage = null;
+      _validatedCedulaValue = null;
+      _nameController.clear();
+      _lastNameController.clear();
+    });
+  }
+
+  Widget _buildDocumentTypeSelector(bool isEnglish) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: _pickDocumentType,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Document type' : 'Tipo de documento',
+          labelStyle: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          filled: true,
+          fillColor: DARK_BG,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: SECONDARY_COLOR, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _selectedDocumentLabel,
+                style: const TextStyle(color: WHITE, fontSize: 16),
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: SECONDARY_COLOR,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   bool _validateChecklistFields() {
     if (_selectedRegion != null && _selectedCenter != null) return true;
     final message = _selectedRegion == null
         ? 'Debes seleccionar una regional'
         : 'Debes seleccionar un centro de formacion';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: PRIMARY_COLOR,
-      ),
+      SnackBar(content: Text(message), backgroundColor: PRIMARY_COLOR),
     );
     return false;
   }
@@ -187,7 +404,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _cedulaValidated = false;
         _cedulaAvailable = false;
-        _cedulaValidationMessage = 'Ingresa la cédula para validar';
+        _cedulaValidationMessage =
+            'Ingresa $_selectedDocumentLabel para validar';
         _validatedCedulaValue = null;
       });
       return;
@@ -197,7 +415,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _cedulaValidated = false;
         _cedulaAvailable = false;
-        _cedulaValidationMessage = 'La cédula debe tener entre 6 y 15 dígitos';
+        _cedulaValidationMessage =
+            '$_selectedDocumentLabel debe tener entre 6 y 15 dígitos';
         _validatedCedulaValue = null;
       });
       return;
@@ -209,11 +428,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final response = await Supabase.instance.client
+      dynamic query = Supabase.instance.client
           .from('users')
-          .select('id, nombre, apellido')
-          .eq('cedula', cedula)
-          .limit(1);
+          .select('id, nombre, apellido, tipo_documento_id')
+          .eq('cedula', cedula);
+      if (_selectedDocumentTypeId != null) {
+        query = query.eq('tipo_documento_id', _selectedDocumentTypeId!);
+      }
+      final response = await query.limit(1);
       final rows = List<Map<String, dynamic>>.from(response);
       final exists = rows.isNotEmpty;
 
@@ -233,16 +455,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           } else {
             final parts = dbName.split(RegExp(r'\s+'));
             _nameController.text = parts.isNotEmpty ? parts.first : dbName;
-            _lastNameController.text =
-                parts.length > 1 ? parts.sublist(1).join(' ') : '';
+            _lastNameController.text = parts.length > 1
+                ? parts.sublist(1).join(' ')
+                : '';
           }
           _cedulaValidationMessage =
-              'Cédula validada. Completa los datos restantes para registrarte.';
+              '$_selectedDocumentLabel validado. Completa los datos restantes para registrarte.';
         } else {
           _nameController.clear();
           _lastNameController.clear();
           _cedulaValidationMessage =
-              'Esta cédula no está registrada. Contacta al administrador.';
+              'Este $_selectedDocumentLabel no está registrado con ese tipo de documento. Contacta al administrador.';
         }
       });
     } catch (_) {
@@ -252,7 +475,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _cedulaValidated = false;
         _cedulaAvailable = false;
         _validatedCedulaValue = null;
-        _cedulaValidationMessage = 'No se pudo validar la cédula. Intenta nuevamente';
+        _cedulaValidationMessage =
+            'No se pudo validar $_selectedDocumentLabel. Intenta nuevamente';
       });
     }
   }
@@ -289,6 +513,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const SizedBox(height: 8),
 
+                _buildDocumentTypeSelector(isEnglish),
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _cedulaController,
                   keyboardType: TextInputType.number,
@@ -304,8 +531,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    labelText: 'Cédula',
+                    labelText: _selectedDocumentLabel,
+                    hintText: _selectedDocumentLabel,
                     labelStyle: const TextStyle(color: SECONDARY_COLOR),
+                    hintStyle: const TextStyle(color: SECONDARY_COLOR),
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -317,7 +546,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
+                      borderSide: const BorderSide(
+                        color: PRIMARY_COLOR,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: DARK_BG,
@@ -325,10 +557,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) {
                     final trimmed = (value ?? '').trim();
                     if (trimmed.isEmpty) {
-                      return 'Por favor ingresa tu cédula';
+                      return 'Por favor ingresa tu $_selectedDocumentLabel';
                     }
                     if (!RegExp(r'^\d{6,15}$').hasMatch(trimmed)) {
-                      return 'La cédula debe tener entre 6 y 15 dígitos';
+                      return '$_selectedDocumentLabel debe tener entre 6 y 15 dígitos';
                     }
                     return null;
                   },
@@ -342,7 +574,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(PRIMARY_COLOR),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              PRIMARY_COLOR,
+                            ),
                           ),
                         )
                       : Icon(
@@ -352,11 +586,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           color: PRIMARY_COLOR,
                           size: 18,
                         ),
-                  label: const Text('Validar cédula'),
+                  label: Text('Validar $_selectedDocumentLabel'),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: PRIMARY_COLOR),
                     foregroundColor: WHITE,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -367,7 +604,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Text(
                     _cedulaValidationMessage!,
                     style: TextStyle(
-                      color: _cedulaAvailable ? const Color(0xFF7FD885) : Colors.red,
+                      color: _cedulaAvailable
+                          ? const Color(0xFF7FD885)
+                          : Colors.red,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -534,7 +773,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Expanded(
                         child: Text(
                           _regionsLoadError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                       TextButton(
@@ -673,7 +915,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           : () async {
                               if (_formKey.currentState!.validate()) {
                                 if (!_validateChecklistFields()) return;
-                                final currentCedula = _cedulaController.text.trim();
+                                final currentCedula = _cedulaController.text
+                                    .trim();
                                 final isCedulaReady =
                                     _cedulaValidated &&
                                     _cedulaAvailable &&
@@ -682,7 +925,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Debes validar una cédula disponible antes de registrarte',
+                                        'Debes validar un documento disponible antes de registrarte',
                                       ),
                                       backgroundColor: PRIMARY_COLOR,
                                     ),
@@ -716,14 +959,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: authProvider.isLoading
                           ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  WHITE,
-                                ),
-                              ),
+                              height: 34,
+                              width: 48,
+                              child: DotTriangleLoader(),
                             )
                           : Text(
                               AppLocalizations.of(context, 'registrarse'),
@@ -902,53 +1140,53 @@ class _ChecklistField extends StatelessWidget {
                   width: value != null ? 1.6 : 1,
                 ),
               ),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return ScaleTransition(scale: animation, child: child);
-                  },
-                  child: Icon(
-                    value == null
-                        ? Icons.checklist_rounded
-                        : Icons.check_circle_rounded,
-                    key: ValueKey<bool>(value != null),
-                    color: isEnabled ? PRIMARY_COLOR : SECONDARY_COLOR,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     transitionBuilder: (child, animation) {
-                      return FadeTransition(opacity: animation, child: child);
+                      return ScaleTransition(scale: animation, child: child);
                     },
-                    child: Text(
-                      value ?? placeholder,
-                      key: ValueKey<String>(value ?? placeholder),
-                      style: TextStyle(
-                        color: value == null ? SECONDARY_COLOR : WHITE,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Icon(
+                      value == null
+                          ? Icons.checklist_rounded
+                          : Icons.check_circle_rounded,
+                      key: ValueKey<bool>(value != null),
+                      color: isEnabled ? PRIMARY_COLOR : SECONDARY_COLOR,
+                      size: 20,
                     ),
                   ),
-                ),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: isEnabled ? WHITE : SECONDARY_COLOR,
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      child: Text(
+                        value ?? placeholder,
+                        key: ValueKey<String>(value ?? placeholder),
+                        style: TextStyle(
+                          color: value == null ? SECONDARY_COLOR : WHITE,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: isEnabled ? WHITE : SECONDARY_COLOR,
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ],

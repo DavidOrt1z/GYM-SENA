@@ -14,8 +14,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Navegar a Welcome después de 8 segundos
-    Future.delayed(const Duration(seconds: 8), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.of(
           context,
@@ -46,10 +45,35 @@ class _SplashScreenState extends State<SplashScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/logo_launcher.png',
-                      height: 120,
-                      width: 120,
+                    ColorFiltered(
+                      colorFilter: const ColorFilter.matrix(<double>[
+                        1.8,
+                        -1.8,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                      ]),
+                      child: Image.asset(
+                        'assets/images/logocargagif.gif',
+                        height: 150,
+                        width: 150,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     const SizedBox(height: 40),
                     const Padding(
@@ -70,16 +94,13 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             // Copyright al final - Centrado
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Text(
-                '© 2025 JACEK GYM - Todos los derechos reservados',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: WHITE.withValues(alpha: 0.7),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                ),
+            Text(
+              '© 2025 JACEK GYM - Todos los derechos reservados',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: WHITE.withValues(alpha: 0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],

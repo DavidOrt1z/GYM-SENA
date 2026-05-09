@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/utils/error_messages.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'pantalla_nueva_contrasena.dart';
 
 class VerifyResetCodeScreen extends StatefulWidget {
@@ -199,7 +200,7 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                             decoration: InputDecoration(
                               counterText: '',
                               filled: true,
-                              fillColor: const Color(0xFF243244),
+                              fillColor: DARK_BG,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
@@ -254,23 +255,17 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _verifyCode,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1976D2),
+                          backgroundColor: PRIMARY_COLOR,
+                          disabledBackgroundColor: PRIMARY_COLOR.withValues(
+                            alpha: 0.5,
+                          ),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    WHITE,
-                                  ),
-                                ),
-                              )
+                            ? const DotTriangleLoader(dotSize: 10, color: WHITE)
                             : Text(
                                 isEnglish ? 'Confirm' : 'Confirmar',
                                 style: TextStyle(

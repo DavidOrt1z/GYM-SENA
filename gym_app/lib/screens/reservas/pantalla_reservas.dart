@@ -7,6 +7,7 @@ import 'package:gym_app/models/slot_model.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/services/database_service.dart';
 import 'package:gym_app/screens/perfil/pantalla_codigo_qr.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/utils/error_messages.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
@@ -317,7 +318,7 @@ class _ReservationsScreenState extends State<ReservationsScreen>
             bottom: false,
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: PRIMARY_COLOR),
+                    child: DotTriangleLoader(dotSize: 10, color: PRIMARY_COLOR),
                   )
                 : SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),

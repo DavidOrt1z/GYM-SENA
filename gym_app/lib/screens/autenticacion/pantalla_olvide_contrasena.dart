@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/utils/error_messages.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'pantalla_verificar_codigo.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -141,7 +142,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           floatingLabelBehavior: FloatingLabelBehavior.auto,
                           filled: true,
-                          fillColor: const Color(0xFF243244),
+                          fillColor: DARK_BG,
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 18,
                             horizontal: 16,
@@ -209,23 +210,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _sendResetLink,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1976D2),
+                            backgroundColor: PRIMARY_COLOR,
+                            disabledBackgroundColor: PRIMARY_COLOR.withValues(
+                              alpha: 0.5,
+                            ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           child: _isLoading
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      WHITE,
-                                    ),
-                                  ),
-                                )
+                              ? const DotTriangleLoader(dotSize: 10, color: WHITE)
                               : Text(
                                   isEnglish
                                       ? 'Send reset code'

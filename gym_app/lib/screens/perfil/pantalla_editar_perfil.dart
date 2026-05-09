@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:gym_app/models/user_model.dart';
 import 'package:gym_app/screens/perfil/pantalla_perfil_guardado.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import '../../utils/constants.dart';
 import '../../utils/error_messages.dart';
 
@@ -296,16 +297,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           border: Border.all(color: DARKER_BG, width: 3),
                         ),
                         child: _isUploadingPhoto
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    WHITE,
-                                  ),
-                                ),
-                              )
+                            ? const DotTriangleLoader(dotSize: 8, color: WHITE)
                             : const Icon(
                                 Icons.camera_alt,
                                 color: WHITE,
@@ -379,14 +371,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   child: _isSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(WHITE),
-                          ),
-                        )
+                      ? const DotTriangleLoader(dotSize: 10, color: WHITE)
                       : Text(
                           isEnglish ? 'Save changes' : 'Guardar cambios',
                           style: TextStyle(

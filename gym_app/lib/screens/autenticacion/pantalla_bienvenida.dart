@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/screens/autenticacion/pantalla_login.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'package:video_player/video_player.dart';
 import '../../utils/constants.dart';
 
@@ -13,15 +15,15 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   late final VideoPlayerController _videoController;
+  bool _isLoginLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.asset(
-      'assets/images/VideoFondoLogin.mp4',
-    )
-      ..setLooping(true)
-      ..setVolume(0);
+    _videoController =
+        VideoPlayerController.asset('assets/images/VideoFondoLogin.mp4')
+          ..setLooping(true)
+          ..setVolume(0);
 
     _videoController.initialize().then((_) {
       if (!mounted) return;
@@ -34,6 +36,43 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   void dispose() {
     _videoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _goToLogin() async {
+    if (_isLoginLoading) return;
+
+    setState(() => _isLoginLoading = true);
+    await Future.delayed(const Duration(milliseconds: 1100));
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, animation, _) => const LoginScreen(),
+        transitionDuration: const Duration(milliseconds: 520),
+        reverseTransitionDuration: const Duration(milliseconds: 360),
+        transitionsBuilder: (_, animation, _, child) {
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+
+          return FadeTransition(
+            opacity: curvedAnimation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(curvedAnimation),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+
+    if (mounted) {
+      setState(() => _isLoginLoading = false);
+    }
   }
 
   @override
@@ -115,23 +154,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     children: [
                       // Log in Button
                       ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
+                        onPressed: _isLoginLoading ? null : _goToLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: PRIMARY_COLOR,
+                          disabledBackgroundColor: PRIMARY_COLOR.withValues(
+                            alpha: 0.8,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text(
-                          AppLocalizations.of(context, 'iniciar_sesion'),
-                          style: const TextStyle(
-                            color: WHITE,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 240),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          child: _isLoginLoading
+                              ? SizedBox(
+                                  key: const ValueKey('login-loader'),
+                                  height: 34,
+                                  width: 48,
+                                  child: DotTriangleLoader(),
+                                )
+                              : Text(
+                                  AppLocalizations.of(
+                                    context,
+                                    'iniciar_sesion',
+                                  ),
+                                  key: const ValueKey('login-text'),
+                                  style: const TextStyle(
+                                    color: WHITE,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 16),

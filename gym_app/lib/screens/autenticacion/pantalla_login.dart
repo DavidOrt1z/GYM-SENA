@@ -4,6 +4,7 @@ import 'package:gym_app/providers/auth_provider.dart';
 import 'package:gym_app/utils/constants.dart';
 import 'package:gym_app/utils/error_messages.dart';
 import 'package:gym_app/l10n/app_localizations.dart';
+import 'package:gym_app/widgets/dot_triangle_loader.dart';
 import 'pantalla_olvide_contrasena.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -74,7 +75,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded, color: SECONDARY_COLOR),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: SECONDARY_COLOR,
+                      ),
                     ),
                   ],
                 ),
@@ -87,14 +91,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(14),
                       onTap: () => Navigator.pop(context, item.key),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? PRIMARY_COLOR.withValues(alpha: 0.13)
                               : const Color(0xFF151515),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isSelected ? PRIMARY_COLOR : const Color(0xFF262626),
+                            color: isSelected
+                                ? PRIMARY_COLOR
+                                : const Color(0xFF262626),
                           ),
                         ),
                         child: Row(
@@ -105,13 +114,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                   color: isSelected ? WHITE : SECONDARY_COLOR,
                                   fontSize: 15,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                 ),
                               ),
                             ),
                             Icon(
-                              isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                              color: isSelected ? PRIMARY_COLOR : SECONDARY_COLOR,
+                              isSelected
+                                  ? Icons.check_circle_rounded
+                                  : Icons.circle_outlined,
+                              color: isSelected
+                                  ? PRIMARY_COLOR
+                                  : SECONDARY_COLOR,
                               size: 20,
                             ),
                           ],
@@ -138,10 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: isEnglish ? 'Document type' : 'Tipo de documento',
-          labelStyle: const TextStyle(
-            color: SECONDARY_COLOR,
-            fontSize: 14,
-          ),
+          labelStyle: const TextStyle(color: SECONDARY_COLOR, fontSize: 14),
           floatingLabelBehavior: FloatingLabelBehavior.auto,
           filled: true,
           fillColor: DARK_BG,
@@ -157,7 +169,10 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: PRIMARY_COLOR, width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
         child: Row(
           children: [
@@ -167,7 +182,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: const TextStyle(color: WHITE, fontSize: 16),
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: SECONDARY_COLOR, size: 22),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: SECONDARY_COLOR,
+              size: 22,
+            ),
           ],
         ),
       ),
@@ -279,17 +298,6 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              // Título principal
-              Text(
-                AppLocalizations.of(context, 'bienvenido'),
-                style: const TextStyle(
-                  color: WHITE,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 32),
-
               // Mensaje de error
               if (_errorMessage != null)
                 Container(
@@ -323,7 +331,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: WHITE, fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: isEnglish ? 'Document number' : _selectedDocumentLabel,
+                  hintText: isEnglish
+                      ? 'Document number'
+                      : _selectedDocumentLabel,
                   hintStyle: const TextStyle(
                     color: SECONDARY_COLOR,
                     fontSize: 14,
@@ -458,14 +468,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   elevation: 5,
                 ),
                 child: _isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(WHITE),
-                        ),
-                      )
+                    ? const DotTriangleLoader(dotSize: 10, color: WHITE)
                     : Text(
                         AppLocalizations.of(context, 'ingresar'),
                         style: const TextStyle(
