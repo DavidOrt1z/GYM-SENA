@@ -18,7 +18,7 @@ class AuthService {
         final existingByCedula = await _supabase
             .from('users')
             .select('id')
-            .eq('cedula', cleanCedula)
+            .eq('numero_documento', cleanCedula)
             .maybeSingle();
 
         if (existingByCedula != null) {
@@ -26,7 +26,7 @@ class AuthService {
             'id_autenticacion': user.id,
             'correo_electronico': email,
             'nombre': fullName,
-            'cedula': cleanCedula,
+            'numero_documento': cleanCedula,
             'estado': 'active',
           };
           final cleanLastName = lastName?.trim();
@@ -59,7 +59,7 @@ class AuthService {
           updateData['apellido'] = cleanLastName;
         }
         if (cleanCedula != null && cleanCedula.isNotEmpty) {
-          updateData['cedula'] = cleanCedula;
+          updateData['numero_documento'] = cleanCedula;
         }
 
         await _supabase
@@ -74,7 +74,7 @@ class AuthService {
         'correo_electronico': email,
         'nombre': fullName,
         'apellido': (lastName ?? '').trim(),
-        'cedula': (cedula ?? '').trim(),
+        'numero_documento': (cedula ?? '').trim(),
         'rol': 'member',
         'estado': 'active',
       });
@@ -134,8 +134,8 @@ class AuthService {
       final cleanCedula = cedula.trim();
       final userRecord = await _supabase
           .from('users')
-          .select('correo_electronico, nombre, apellido, cedula')
-          .eq('cedula', cleanCedula)
+          .select('correo_electronico, nombre, apellido, numero_documento')
+          .eq('numero_documento', cleanCedula)
           .maybeSingle();
 
       if (userRecord == null) {
@@ -176,8 +176,8 @@ class AuthService {
                 ? metadataLastName.trim()
                 : null;
         final cedula =
-            (userRecord['cedula']?.toString().trim().isNotEmpty ?? false)
-            ? userRecord['cedula'].toString().trim()
+            (userRecord['numero_documento']?.toString().trim().isNotEmpty ?? false)
+            ? userRecord['numero_documento'].toString().trim()
             : (metadataCedula != null && metadataCedula.trim().isNotEmpty)
                 ? metadataCedula.trim()
                 : null;
