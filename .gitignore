@@ -42,3 +42,6 @@ admin-panel/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# VS Code
+.vscode/
