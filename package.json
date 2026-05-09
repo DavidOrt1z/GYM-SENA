@@ -1,0 +1,19 @@
+{
+  "name": "JACEK GYM-admin-panel",
+  "version": "1.0.0",
+  "description": "Panel de administración - JACEK GYM",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "check:qr-reservas": "node scripts/checklist-qr-reservas.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
