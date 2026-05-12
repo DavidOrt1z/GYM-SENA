@@ -23,20 +23,15 @@ const getAuthToken = async () => {
 async function getUsers() {
     try {
         await window.configReady;
-        // Excluir administradores (rol='admin') de la lista de usuarios
-        const response = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/users?select=*&rol=neq.admin&order=fecha_creacion.desc`,
-            {
-                method: 'GET',
-                headers: await getAuthHeader()
-            }
-        );
+        // Usar el servidor Node (service role) para evitar bloqueos RLS
+        const response = await fetch(`${window.API_BASE}/api/get-users`);
 
         if (!response.ok) {
             const err = await response.text();
             throw new Error(`Error fetching users: ${response.status} ${err}`);
         }
-        return await response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error('Error:', error);
         return [];
@@ -242,7 +237,7 @@ async function cancelReservation(reservationId) {
 async function getSlots() {
     try {
         const response = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/franjas_horarias?order=fecha.asc,hora_inicio.asc`,
+            `${window.SUPABASE_URL}/rest/v1/franjas_horarias?order=hora_inicio.asc`,
             {
                 method: 'GET',
                 headers: await getAuthHeader()
@@ -259,6 +254,30 @@ async function getSlots() {
         console.error('Error:', error);
         return [];
     }
+}
+
+async function getCalendar(month) {
+    const res = await fetch(`${window.API_BASE}/api/calendar?month=${encodeURIComponent(month)}`);
+    if (!res.ok) throw new Error('Error fetching calendar');
+    return await res.json();
+}
+
+async function createCierre(data) {
+    const res = await fetch(`${window.API_BASE}/api/cierres`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error' }));
+        throw new Error(err.error || 'Error creating cierre');
+    }
+    return await res.json();
+}
+
+async function deleteCierre(id) {
+    const res = await fetch(`${window.API_BASE}/api/cierres/${id}`, { method: 'DELETE' });
+    return res.ok;
 }
 
 async function createSlot(slotData) {
@@ -464,79 +483,68 @@ async function updateEquipment(equipmentId, equipmentData) {
 async function getStatistics() {
     try {
         await window.configReady;
+
+        // Intento 1: servidor Node
+        try {
+            const res = await fetch(`${window.API_BASE}/api/get-dashboard-stats`);
+            if (res.ok) return await res.json();
+        } catch (_) {}
+
+        // Intento 2: Supabase directo
         const headers = await getAuthHeader();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
 
-        // Fecha de hoy en formato ISO para filtrar reservas de hoy
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayISO = todayStart.toISOString();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
 
-        // Llamar todo en paralelo directamente a Supabase
-        const [usersRes, slotsRes, reservasHoyRes, recentStaffRes, recentReservasRes] = await Promise.all([
+        const [usersRes, reservasHoyRes, reservasTotalRes, completadasRes, canceladasHoyRes, reservas7diasRes, recentStaffRes, recentReservasRes] = await Promise.all([
             fetch(`${window.SUPABASE_URL}/rest/v1/users?select=id`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
-            fetch(`${window.SUPABASE_URL}/rest/v1/franjas_horarias?select=id`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
             fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=id&fecha_creacion=gte.${todayISO}`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
+            fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=id`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
+            fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=id&estado=eq.completed`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
+            fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=id&estado=eq.cancelled&fecha_creacion=gte.${todayISO}`, { headers: { ...headers, 'Prefer': 'count=exact' } }),
+            fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=fecha_creacion&fecha_creacion=gte.${sevenDaysAgo.toISOString()}&order=fecha_creacion.asc`, { headers }),
             fetch(`${window.SUPABASE_URL}/rest/v1/personal?select=id,nombre_completo,rol,correo_electronico,fecha_creacion&order=fecha_creacion.desc&limit=5`, { headers }),
             fetch(`${window.SUPABASE_URL}/rest/v1/reservas?select=id,id_usuario,estado,fecha_creacion&order=fecha_creacion.desc&limit=5`, { headers })
         ]);
 
-        // Extraer conteos del header Content-Range
-        const parseCount = (res) => {
-            const range = res.headers.get('Content-Range');
-            if (!range) return 0;
-            const parts = range.split('/');
-            return parseInt(parts[1]) || 0;
-        };
+        const parseCount = r => { const range = r.headers.get('Content-Range'); return range ? parseInt(range.split('/')[1]) || 0 : 0; };
 
-        const totalUsers       = parseCount(usersRes);
-        const totalSlots       = parseCount(slotsRes);
+        const totalUsers = parseCount(usersRes);
         const todayReservations = parseCount(reservasHoyRes);
-        const recentStaff      = usersRes.ok ? await recentStaffRes.json() : [];
-        const recentReservas   = reservasHoyRes.ok ? await recentReservasRes.json() : [];
+        const totalReservas = parseCount(reservasTotalRes);
+        const completadas = parseCount(completadasRes);
+        const canceladasHoy = parseCount(canceladasHoyRes);
+        const asistenciaRate = totalReservas > 0 ? Math.round((completadas / totalReservas) * 100) : 0;
 
-        // Construir actividad reciente
+        // Reservas 7 dias
+        const reservas7diasData = reservas7diasRes.ok ? await reservas7diasRes.json() : [];
+        const diasMap = {};
+        for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); diasMap[d.toISOString().slice(0,10)] = 0; }
+        (Array.isArray(reservas7diasData) ? reservas7diasData : []).forEach(r => {
+            const key = r.fecha_creacion ? r.fecha_creacion.slice(0,10) : null;
+            if (key && diasMap[key] !== undefined) diasMap[key]++;
+        });
+        const reservasPorDia = Object.entries(diasMap).map(([fecha, total]) => ({ fecha, total }));
+
+        // Actividad reciente
+        const recentStaff = recentStaffRes.ok ? await recentStaffRes.json() : [];
+        const recentReservas = recentReservasRes.ok ? await recentReservasRes.json() : [];
         const activities = [];
         (Array.isArray(recentStaff) ? recentStaff : []).forEach(s => {
-            activities.push({
-                tipo: 'Personal',
-                descripcion: `Nuevo administrador: ${s.nombre_completo} (${s.rol})`,
-                usuario: s.correo_electronico,
-                fecha: s.fecha_creacion
-            });
+            activities.push({ tipo: 'Personal', descripcion: `Nuevo: ${s.nombre_completo} (${s.rol})`, usuario: s.correo_electronico, fecha: s.fecha_creacion });
         });
-        const mapReservationStatusToEs = (status) => {
-            switch (String(status || '').toLowerCase().trim()) {
-                case 'active':
-                    return 'activa';
-                case 'cancelled':
-                    return 'cancelada';
-                case 'completed':
-                    return 'completada';
-                case 'created':
-                    return 'creada';
-                default:
-                    return status || 'creada';
-            }
-        };
-
         (Array.isArray(recentReservas) ? recentReservas : []).forEach(r => {
-            activities.push({
-                tipo: 'Reserva',
-                descripcion: `Reserva ${mapReservationStatusToEs(r.estado)}`,
-                usuario: r.id_usuario,
-                fecha: r.fecha_creacion
-            });
+            activities.push({ tipo: 'Reserva', descripcion: `Reserva ${r.estado || 'creada'}`, usuario: r.id_usuario, fecha: r.fecha_creacion });
         });
         activities.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-        return {
-            totalUsers,
-            todayReservations,
-            totalSlots,
-            recentActivity: activities.slice(0, 8)
-        };
+        return { totalUsers, todayReservations, totalSlots: 0, asistenciaRate, canceladasHoy, reservasPorDia, recentActivity: activities.slice(0, 8) };
     } catch (error) {
         console.error('Error en getStatistics:', error);
-        return { totalUsers: 0, todayReservations: 0, totalSlots: 0, recentActivity: [] };
+        return { totalUsers: 0, todayReservations: 0, totalSlots: 0, asistenciaRate: 0, canceladasHoy: 0, reservasPorDia: [], recentActivity: [] };
     }
 }

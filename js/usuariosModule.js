@@ -185,30 +185,61 @@ function normalizeSearchText(value) {
         .trim();
 }
 
-function applyUsersSearchFilter() {
-    const normalizedQuery = normalizeSearchText(currentSearchQuery);
-    if (!normalizedQuery) {
-        renderUsersTable(allUsers, 'No hay usuarios');
-        return;
+function applyUserFilters() {
+    const rol = document.getElementById('filterRol')?.value || '';
+    const estado = document.getElementById('filterEstadoUsuario')?.value || '';
+    const tipoDoc = document.getElementById('filterTipoDoc')?.value || '';
+    const searchQuery = document.getElementById('searchInput')?.value || '';
+    currentSearchQuery = searchQuery;
+
+    let filtered = [...allUsers];
+
+    if (rol) {
+        filtered = filtered.filter((u) => normalizeRole(u.rol) === rol);
+    }
+    if (estado) {
+        filtered = filtered.filter((u) => normalizeStatus(u.estado) === estado);
+    }
+    if (tipoDoc) {
+        filtered = filtered.filter((u) => String(u.Id_tipo_documento || '') === tipoDoc);
+    }
+    if (searchQuery.trim()) {
+        const q = normalizeSearchText(searchQuery);
+        filtered = filtered.filter((u) => {
+            const haystack = [
+                u.id, u.nombre, u.apellido, u.numero_documento,
+                u.correo_electronico, getRoleLabel(u.rol), getStatusLabel(u.estado)
+            ].map((v) => normalizeSearchText(v)).join(' ');
+            return haystack.includes(q);
+        });
     }
 
-    const filtered = allUsers.filter((u) => {
-        const haystack = [
-            u.id,
-            u.nombre,
-            u.apellido,
-            u.cedula,
-            u.correo_electronico,
-            getRoleLabel(u.rol),
-            getStatusLabel(u.estado)
-        ]
-            .map((value) => normalizeSearchText(value))
-            .join(' ');
+    const hasFilters = rol || estado || tipoDoc || searchQuery.trim();
+    renderUsersTable(filtered, hasFilters ? 'No se encontraron usuarios con esos filtros' : 'No hay usuarios');
+}
 
-        return haystack.includes(normalizedQuery);
-    });
+function applyUsersSearchFilter() {
+    applyUserFilters();
+}
 
-    renderUsersTable(filtered, 'No se encontraron usuarios');
+function populateTipoDocFilter() {
+    const select = document.getElementById('filterTipoDoc');
+    if (!select || !documentTypes.length) return;
+    select.innerHTML = '<option value="">Todos</option>' +
+        documentTypes.map((t) => `<option value="${escapeHtml(String(t.id))}">${escapeHtml(t.nombre)}</option>`).join('');
+}
+
+function clearUserFilters() {
+    const filterRol = document.getElementById('filterRol');
+    const filterEstado = document.getElementById('filterEstadoUsuario');
+    const filterTipoDoc = document.getElementById('filterTipoDoc');
+    const searchInput = document.getElementById('searchInput');
+    if (filterRol) filterRol.value = '';
+    if (filterEstado) filterEstado.value = '';
+    if (filterTipoDoc) filterTipoDoc.value = '';
+    if (searchInput) searchInput.value = '';
+    currentSearchQuery = '';
+    applyUserFilters();
 }
 
 function renderUsersTable(users, emptyMessage) {
@@ -254,10 +285,11 @@ async function loadUsers() {
     try {
         await window.configReady;
         await loadDocumentTypes();
+        populateTipoDocFilter();
         const users = await getUsers();
         allUsers = users;
-        
-        applyUsersSearchFilter();
+
+        applyUserFilters();
         console.log('✅ Usuarios cargados:', users.length);
     } catch (error) {
         console.error('❌ Error cargando usuarios:', error);
@@ -279,7 +311,7 @@ function openUserModal(userId = null) {
             document.getElementById('userName').value = user.nombre || '';
             document.getElementById('userLastName').value = user.apellido || '';
             document.getElementById('userDocumentNumber').value = user.numero_documento || '';
-            setDocumentType(user.tipo_documento_id);
+            setDocumentType(user.Id_tipo_documento);
             if (roleSelect) roleSelect.value = 'member';
         }
     } else {
@@ -333,56 +365,49 @@ async function submitUserForm(e) {
     const userData = {
         nombre: name,
         apellido: lastName,
-        tipo_documento_id: Number(tipoDocumentoId),
-        cedula: documentNumber,
+        Id_tipo_documento: tipoDocumentoId,
+        numero_documento: documentNumber,
         rol: rol,
     };
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="dot-triangle-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-
-    const url = currentUserId
-        ? `${window.API_BASE}/api/users/${encodeURIComponent(currentUserId)}`
-        : `${window.SUPABASE_URL}/rest/v1/users`;
-
-    fetch(url, {
-        method: currentUserId ? 'PATCH' : 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-            'apikey': window.SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify(userData),
-    })
-        .then(async (response) => {
-            if (!response.ok) {
-                let errorMessage = 'Error al guardar el usuario';
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Si no es JSON, mantenemos el mensaje por defecto
-                }
-                throw new Error(errorMessage);
-            }
-            // Solo intentamos parsear JSON si hay contenido (POST/PATCH en Supabase pueden devolver vacío)
-            const text = await response.text();
-            return text ? JSON.parse(text) : {};
+    if (currentUserId) {
+        fetch(`${window.API_BASE}/api/users/${encodeURIComponent(currentUserId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
         })
-        .then(() => {
-            showSuccess(currentUserId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-            setTimeout(() => {
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Error al actualizar usuario');
+                alert('Usuario actualizado exitosamente.');
                 location.reload();
-            }, 1000);
+            })
+            .catch((err) => alert(`Error al guardar usuario: ${err.message}`));
+    } else {
+        const adminToken = localStorage.getItem('adminToken') || window.SUPABASE_ANON_KEY;
+        fetch(`${window.SUPABASE_URL}/rest/v1/rpc/create_user_as_admin`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({
+                p_nombre: userData.nombre,
+                p_apellido: userData.apellido,
+                p_id_tipo_documento: userData.Id_tipo_documento,
+                p_numero_documento: userData.numero_documento,
+                p_rol: userData.rol,
+            }),
         })
-        .catch((error) => {
-            console.error('Error guardando usuario:', error);
-            showError(`Error al guardar usuario: ${error.message}`);
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-        });
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || data.ok === false) throw new Error(data.message || 'Error al crear usuario');
+                alert('Usuario creado exitosamente.');
+                location.reload();
+            })
+            .catch((err) => alert(`Error al guardar usuario: ${err.message}`));
+    }
 }
 
 function editUser(userId) {
@@ -405,19 +430,23 @@ async function confirmDeleteUser(userId) {
 async function deleteUser(userId) {
     try {
         await window.configReady;
-        const response = await fetch(`${window.API_BASE}/api/users/${encodeURIComponent(userId)}`, {
-            method: 'DELETE',
+        const adminToken = localStorage.getItem('adminToken') || window.SUPABASE_ANON_KEY;
+        const response = await fetch(`${window.SUPABASE_URL}/rest/v1/rpc/delete_user_as_admin`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({ p_user_id: userId }),
         });
-        
-        if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.ok !== false) {
             console.log('✅ Usuario eliminado');
             await loadUsers();
             showSuccess('Usuario eliminado correctamente');
         } else {
-            throw new Error('Error eliminando usuario');
+            throw new Error(data.message || 'Error eliminando usuario');
         }
     } catch (error) {
         console.error('❌ Error eliminando usuario:', error);
@@ -427,7 +456,7 @@ async function deleteUser(userId) {
 
 function searchUsers(query) {
     currentSearchQuery = query || '';
-    applyUsersSearchFilter();
+    applyUserFilters();
 }
 
 function showError(msg) {
@@ -516,11 +545,28 @@ function showSuccess(msg) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    const user = checkAdminAuth();
+    if (user) {
+        loadUsers();
+    }
+
     setupDocumentTypeSelect();
-    
+
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         currentSearchQuery = searchInput.value || '';
-        searchInput.addEventListener('input', (e) => searchUsers(e.target.value));
+        searchInput.addEventListener('input', () => applyUserFilters());
     }
+
+    const filterRol = document.getElementById('filterRol');
+    if (filterRol) filterRol.addEventListener('change', applyUserFilters);
+
+    const filterEstado = document.getElementById('filterEstadoUsuario');
+    if (filterEstado) filterEstado.addEventListener('change', applyUserFilters);
+
+    const filterTipoDoc = document.getElementById('filterTipoDoc');
+    if (filterTipoDoc) filterTipoDoc.addEventListener('change', applyUserFilters);
+
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearUserFilters);
 });

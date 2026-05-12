@@ -1,4 +1,4 @@
-/* ==================== NOTIFICACIONES PAGE ==================== */
+﻿/* ==================== NOTIFICACIONES PAGE ==================== */
 
 .notificaciones-section {
     animation: fadeIn 0.25s ease-in-out;
@@ -65,7 +65,7 @@
     padding: 12px;
     border: 1px solid rgba(207, 207, 207, 0.3);
     border-radius: 6px;
-    background: #0D0D0D;
+    background: var(--bg-surface);
     color: #ffffff;
     font-size: 14px;
     transition: all 0.2s ease;
@@ -73,7 +73,7 @@
 }
 
 .form-group option {
-    background: #0D0D0D;
+    background: var(--bg-surface);
     color: #ffffff;
 }
 
@@ -99,7 +99,7 @@
     display: block;
     margin-top: 6px;
     font-size: 12px;
-    color: #CFCFCF;
+    color: var(--text-secondary);
     text-align: right;
 }
 
@@ -183,4 +183,28 @@
     .message-cell {
         max-width: 220px;
     }
+}
+
+/* ==================== LIGHT THEME OVERRIDES ==================== */
+[data-theme="light"] .section-header h1,
+[data-theme="light"] .section-header h2 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .form-group label {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .data-table tbody td {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+    background: var(--bg-surface);
+    border-color: var(--text-muted);
 }

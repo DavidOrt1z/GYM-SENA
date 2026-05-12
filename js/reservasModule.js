@@ -127,20 +127,70 @@ function normalizeSearchText(value) {
         .trim();
 }
 
+function getReservationDate(reservation) {
+    // Use the reservation's own fecha (gym visit date); fall back to creation date
+    const raw = reservation.fecha_horario
+        ? reservation.fecha_horario + 'T00:00:00'
+        : reservation.fecha_creacion;
+    return new Date(raw);
+}
+
 function applyReservationFilters() {
     const selectedFilter = document.getElementById('filterStatus')?.value ?? currentStatusFilter;
     const searchValue = document.getElementById('searchInput')?.value ?? currentSearchQuery;
     const normalizedQuery = normalizeSearchText(searchValue);
+    const fechaExacta = document.getElementById('filterFecha')?.value || '';   // YYYY-MM-DD
+    const periodoFilter = document.getElementById('filterPeriodo')?.value || '';
+    const horarioFilter = document.getElementById('filterHorario')?.value || '';
 
     currentStatusFilter = selectedFilter || '';
     currentSearchQuery = searchValue || '';
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     filteredReservations = allReservations.filter((reservation) => {
+        // Status filter
         const matchesStatus = !selectedFilter || selectedFilter === 'all'
             ? true
             : normalizeStatus(reservation.estado) === normalizeStatus(selectedFilter);
-
         if (!matchesStatus) return false;
+
+        // Horario filter — compara por hora_inicio (primeros 5 chars)
+        if (horarioFilter) {
+            const resHora = String(reservation.hora_inicio || '').substring(0, 5);
+            if (resHora !== horarioFilter) return false;
+        }
+
+        // Exact date filter (takes priority over period)
+        if (fechaExacta) {
+            const reservaFecha = reservation.fecha_horario || '';
+            if (reservaFecha !== fechaExacta) return false;
+        } else if (periodoFilter) {
+            // Period filter
+            const d = getReservationDate(reservation);
+            if (periodoFilter === 'today') {
+                const todayEnd = new Date(today);
+                todayEnd.setHours(23, 59, 59, 999);
+                if (d < today || d > todayEnd) return false;
+            } else if (periodoFilter === 'week') {
+                const weekStart = new Date(today);
+                // Monday as start of week
+                const dow = weekStart.getDay();
+                weekStart.setDate(weekStart.getDate() - (dow === 0 ? 6 : dow - 1));
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                weekEnd.setHours(23, 59, 59, 999);
+                if (d < weekStart || d > weekEnd) return false;
+            } else if (periodoFilter === 'month') {
+                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                monthEnd.setHours(23, 59, 59, 999);
+                if (d < monthStart || d > monthEnd) return false;
+            }
+        }
+
+        // Text search
         if (!normalizedQuery) return true;
 
         const userText = normalizeSearchText(reservation.usuario_display);
@@ -163,39 +213,68 @@ function applyReservationFilters() {
     displayReservations(filteredReservations);
 }
 
+function populateHorarioFilterOptions() {
+    const select = document.getElementById('filterHorario');
+    if (!select) return;
+    // Agrupar por hora_inicio (HH:MM) y mostrar etiqueta legible
+    const seen = new Map();
+    allReservations.forEach((r) => {
+        const raw = String(r.hora_inicio || '');
+        if (!raw) return;
+        const key = raw.substring(0, 5); // "HH:MM"
+        if (!seen.has(key)) {
+            seen.set(key, formatTimeValue(raw));
+        }
+    });
+    // Ordenar por hora
+    const sorted = Array.from(seen.entries()).sort(([a], [b]) => a.localeCompare(b));
+    select.innerHTML = '<option value="">Todos los horarios</option>' +
+        sorted
+            .map(([key, label]) => `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`)
+            .join('');
+}
+
+function clearReservationFilters() {
+    const filterStatus = document.getElementById('filterStatus');
+    const filterFecha = document.getElementById('filterFecha');
+    const filterPeriodo = document.getElementById('filterPeriodo');
+    const filterHorario = document.getElementById('filterHorario');
+    const searchInput = document.getElementById('searchInput');
+    if (filterStatus) filterStatus.value = '';
+    if (filterFecha) filterFecha.value = '';
+    if (filterPeriodo) filterPeriodo.value = '';
+    if (filterHorario) filterHorario.value = '';
+    if (searchInput) searchInput.value = '';
+    currentStatusFilter = '';
+    currentSearchQuery = '';
+    applyReservationFilters();
+}
+
 async function loadReservations() {
     if (reservationsLoadingInProgress) return;
     reservationsLoadingInProgress = true;
 
     console.log('📅 Cargando reservas...');
     try {
-        const [reservations, users, slots] = await Promise.all([
+        const [reservations, users] = await Promise.all([
             getReservations(),
-            getUsers(),
-            getSlots()
+            getUsers()
         ]);
 
         const usersById = new Map();
         const usersByAuthId = new Map();
-        const slotsById = new Map();
 
         for (const user of users || []) {
             if (user?.id) usersById.set(String(user.id), user);
             if (user?.id_autenticacion) usersByAuthId.set(String(user.id_autenticacion), user);
         }
 
-        for (const slot of slots || []) {
-            if (slot?.id) {
-                slotsById.set(String(slot.id), slot);
-            }
-        }
-
         allReservations = (reservations || []).map((reservation) => {
             const userId = String(reservation.id_usuario || '');
             const matchedUser = usersById.get(userId) || usersByAuthId.get(userId) || null;
             const userDisplay = buildUserDisplay(matchedUser);
-            const matchedSlot = slotsById.get(String(reservation.id_franja_horaria || '')) || null;
-            const slotDisplay = buildSlotDisplayFromReservation(reservation) || buildSlotDisplay(matchedSlot);
+            // hora_inicio/hora_fin vienen directo de reservas (enriquecido en server.js)
+            const slotDisplay = buildSlotDisplayFromReservation(reservation);
 
             return {
                 ...reservation,
@@ -206,6 +285,7 @@ async function loadReservations() {
         });
 
         applyReservationFilters();
+        populateHorarioFilterOptions();
         console.log('✅ Reservas cargadas:', allReservations.length);
     } catch (error) {
         console.error('❌ Error cargando reservas:', error);
@@ -231,7 +311,10 @@ function displayReservations(reservations) {
             <tr>
                 <td>${escapeHtml(reservationId.substring(0, 8))}...</td>
                 <td>${escapeHtml(userDisplay)}</td>
-                <td>${new Date(r.fecha_creacion).toLocaleDateString('es-ES')}</td>
+                <td>${r.fecha_horario
+                    ? new Date(r.fecha_horario + 'T00:00:00').toLocaleDateString('es-ES')
+                    : new Date(r.fecha_creacion).toLocaleDateString('es-ES')
+                }</td>
                 <td>${escapeHtml(slotDisplay)}</td>
                 <td class="status-cell">
                     <span class="status-pill ${statusClass}">
@@ -841,17 +924,44 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (e) => searchReservations(e.target.value));
     }
 
+    const filterFecha = document.getElementById('filterFecha');
+    if (filterFecha) filterFecha.addEventListener('change', () => {
+        // Clear period when a specific date is picked
+        if (filterFecha.value) {
+            const fp = document.getElementById('filterPeriodo');
+            if (fp) fp.value = '';
+        }
+        applyReservationFilters();
+    });
+
+    const filterPeriodo = document.getElementById('filterPeriodo');
+    if (filterPeriodo) filterPeriodo.addEventListener('change', () => {
+        // Clear specific date when a period is selected
+        if (filterPeriodo.value) {
+            const fd = document.getElementById('filterFecha');
+            if (fd) fd.value = '';
+        }
+        applyReservationFilters();
+    });
+
+    const filterHorario = document.getElementById('filterHorario');
+    if (filterHorario) filterHorario.addEventListener('change', applyReservationFilters);
+
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearReservationFilters);
+
     // Evita que el auto-refresh interrumpa la seleccion en filtros/edicion de estado.
+    const FILTER_SELECTORS = '#filterStatus, #filterFecha, #filterPeriodo, #filterHorario, .status-editor-select';
     document.addEventListener('focusin', (event) => {
         const target = event.target;
-        if (target instanceof Element && target.matches('#filterStatus, .status-editor-select')) {
+        if (target instanceof Element && target.matches(FILTER_SELECTORS)) {
             stopReservationsAutoRefresh();
         }
     });
 
     document.addEventListener('focusout', (event) => {
         const target = event.target;
-        if (target instanceof Element && target.matches('#filterStatus, .status-editor-select')) {
+        if (target instanceof Element && target.matches(FILTER_SELECTORS)) {
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
                     startReservationsAutoRefresh();

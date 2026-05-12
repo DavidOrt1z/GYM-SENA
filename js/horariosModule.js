@@ -1,333 +1,584 @@
 /* ==================== HORARIOS MODULE ====================
-   Módulo JavaScript para la página de Horarios
+   Templates de turnos + Calendario de cierres
 */
 
-let allSlots = [];
-let currentSearchQuery = '';
+let allTemplates = [];
+let calendarData = [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1; // 1-12
+
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAY_NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 function formatTimeWithPeriod(timeValue) {
     const raw = String(timeValue || '').trim();
     if (!raw) return '—';
-
     const hhmm = raw.substring(0, 5);
     const parts = hhmm.split(':');
     if (parts.length !== 2) return hhmm;
-
     const hour24 = Number(parts[0]);
     const minute = parts[1];
     if (Number.isNaN(hour24)) return hhmm;
-
     const period = hour24 >= 12 ? 'PM' : 'AM';
     const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
     return `${String(hour12).padStart(2, '0')}:${minute} ${period}`;
 }
 
-function normalizeSearchText(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
-}
+// ===================== TEMPLATES =====================
 
-function matchesSlotSearch(slot, query) {
-    const normalizedQuery = normalizeSearchText(query);
-    if (!normalizedQuery) return true;
-
-    const [year, month, day] = String(slot.fecha || '').split('-');
-    const dateFormatted = (day && month && year) ? `${day}/${month}/${year}` : '';
-    const start = String(slot.hora_inicio || '').substring(0, 5);
-    const end = String(slot.hora_fin || '').substring(0, 5);
-    const startWithPeriod = formatTimeWithPeriod(slot.hora_inicio);
-    const endWithPeriod = formatTimeWithPeriod(slot.hora_fin);
-
-    const haystack = [
-        slot.id,
-        slot.fecha,
-        dateFormatted,
-        start,
-        end,
-        startWithPeriod,
-        endWithPeriod,
-        `${start}-${end}`,
-        `${startWithPeriod}-${endWithPeriod}`,
-        slot.capacidad,
-        slot.cantidad_reservada
-    ]
-        .map((item) => normalizeSearchText(item))
-        .join(' ');
-
-    return haystack.includes(normalizedQuery);
-}
-
-async function loadSlots() {
-    console.log('⏰ Cargando horarios...');
-    const tbody = document.getElementById('slotsTable');
+async function loadTemplates() {
+    const tbody = document.getElementById('templatesBody');
     if (!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#CFCFCF;">Cargando...</td></tr>';
-
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Cargando...</td></tr>';
     try {
         await window.configReady;
-
-        // Cargar slots y reservas confirmadas en paralelo
-        const [slots, reservations] = await Promise.all([
-            getSlots(),
-            getReservations()
-        ]);
-
-        allSlots = slots;
-
-        // Contar reservas activas y completadas por slot_id
-        const reservedBySlot = {};
-        reservations.forEach(r => {
-            if (r.estado === 'active' || r.estado === 'completed') {
-                reservedBySlot[r.id_franja_horaria] = (reservedBySlot[r.id_franja_horaria] || 0) + 1;
-            }
-        });
-
-        if (!allSlots.length) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#CFCFCF;">No hay horarios registrados</td></tr>';
-            return;
-        }
-
-        const visibleSlots = allSlots.filter((slot) => matchesSlotSearch(slot, currentSearchQuery));
-
-        const rows = visibleSlots.map(s => {
-            // s.fecha = '2026-03-10', s.hora_inicio = '08:00:00', s.hora_fin = '09:00:00'
-            const [y, m, d]   = (s.fecha || '').split('-');
-            const dateStr     = s.fecha
-                ? `${d}/${m}/${y}`
-                : '—';
-            const startHour   = formatTimeWithPeriod(s.hora_inicio);
-            const endHour     = formatTimeWithPeriod(s.hora_fin);
-            const capacity    = s.capacidad || 0;
-            const reserved    = reservedBySlot[s.id] ?? s.cantidad_reservada ?? 0;
-            const free        = Math.max(0, capacity - reserved);
-            const pct         = capacity > 0 ? Math.round((reserved / capacity) * 100) : 0;
-            const badgeClass  = pct >= 100 ? 'full' : pct >= 80 ? 'almost-full' : 'available';
-            const badgeText   = pct >= 100 ? 'Lleno' : `${free} libre${free !== 1 ? 's' : ''}`;
-
-            return `
-                <tr>
-                    <td>${dateStr}</td>
-                    <td>${startHour}</td>
-                    <td>${endHour}</td>
-                    <td>${capacity}</td>
-                    <td>${reserved}</td>
-                    <td><span class="availability ${badgeClass}">${badgeText}</span></td>
-                    <td class="action-btns">
-                        <button class="btn btn-secondary action-btn" onclick="editSlot('${s.id}')">
-                            <img src="assets/icons/edit.svg" alt="Editar" style="width:15px;height:15px;">
-                        </button>
-                        <button class="btn btn-danger action-btn" onclick="confirmDeleteSlot('${s.id}')">
-                            <img src="assets/icons/delete.svg" alt="Eliminar" style="width:15px;height:15px;">
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = rows.join('') || '<tr><td colspan="7" style="text-align:center;color:#CFCFCF;">No se encontraron horarios</td></tr>';
-        console.log(`✅ Horarios cargados: ${allSlots.length}, visibles: ${visibleSlots.length}, Reservas: ${reservations.length}`);
-    } catch (error) {
-        console.error('❌ Error cargando horarios:', error);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#FF6B6B;">Error al cargar horarios</td></tr>';
-        showError('Error al cargar horarios');
+        const slots = await getSlots();
+        allTemplates = slots;
+        renderTemplatesTable();
+    } catch (e) {
+        console.error('Error cargando templates:', e);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#FF6B6B;">Error al cargar turnos</td></tr>';
+        showToast('Error al cargar turnos', 'error');
     }
 }
 
-function openSlotModal(slotId = null) {
-    const modal = document.getElementById('slotModal');
-    const title = document.querySelector('#slotModal .modal-header h2');
-    const form = document.getElementById('slotForm');
-    
-    if (slotId) {
-        title.textContent = 'Editar Horario';
-        const slot = allSlots.find(s => s.id === slotId);
-        if (slot) {
-            document.getElementById('slotDate').value      = slot.fecha;              // 'YYYY-MM-DD'
-            document.getElementById('slotStartTime').value = slot.hora_inicio.substring(0, 5); // 'HH:MM'
-            document.getElementById('slotEndTime').value   = slot.hora_fin.substring(0, 5);
-            document.getElementById('slotCapacity').value  = slot.capacidad ?? slot.capacity ?? '';
-            form.dataset.slotId = slotId;
+function renderTemplatesTable() {
+    const tbody = document.getElementById('templatesBody');
+    if (!tbody) return;
+    if (!allTemplates.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No hay turnos registrados. Crea el primero.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = allTemplates.map(t => {
+        const activo = t.activo !== false;
+        const badge = activo
+            ? '<span class="badge-active">Activo</span>'
+            : '<span class="badge-inactive">Inactivo</span>';
+        return `<tr>
+            <td>${t.nombre || '—'}</td>
+            <td>${formatTimeWithPeriod(t.hora_inicio)}</td>
+            <td>${formatTimeWithPeriod(t.hora_fin)}</td>
+            <td style="text-align:center">${t.capacidad || 0}</td>
+            <td>${badge}</td>
+            <td class="action-btns">
+                <button class="btn btn-secondary action-btn" onclick="openTemplateModal('${t.id}')">
+                    <img src="assets/icons/edit.svg" alt="Editar" style="width:15px;height:15px;">
+                </button>
+                <button class="btn btn-danger action-btn" onclick="confirmDeleteTemplate('${t.id}')">
+                    <img src="assets/icons/delete.svg" alt="Eliminar" style="width:15px;height:15px;">
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openTemplateModal(templateId = null) {
+    const modal = document.getElementById('templateModal');
+    const title = document.getElementById('templateModalTitle');
+    const form = document.getElementById('templateForm');
+    if (!modal) return;
+
+    if (templateId) {
+        title.textContent = 'Editar Turno';
+        const t = allTemplates.find(x => x.id === templateId || String(x.id) === String(templateId));
+        if (t) {
+            document.getElementById('templateNombre').value = t.nombre || '';
+            document.getElementById('templateStartTime').value = (t.hora_inicio || '').substring(0, 5);
+            document.getElementById('templateEndTime').value = (t.hora_fin || '').substring(0, 5);
+            document.getElementById('templateCapacity').value = t.capacidad || '';
+            form.dataset.templateId = templateId;
         }
     } else {
-        title.textContent = 'Nuevo Horario';
+        title.textContent = 'Nuevo Turno';
         form.reset();
-        delete form.dataset.slotId;
+        delete form.dataset.templateId;
     }
-    
+
     modal.classList.add('show');
+    document.getElementById('templateNombre').focus();
 }
 
-function closeSlotModal() {
-    document.getElementById('slotModal').classList.remove('show');
+function closeTemplateModal() {
+    document.getElementById('templateModal')?.classList.remove('show');
 }
 
-async function submitSlotForm(e) {
+async function submitTemplateForm(e) {
     e.preventDefault();
-    
-    const date = document.getElementById('slotDate').value;
-    const startTime = document.getElementById('slotStartTime').value;
-    const endTime = document.getElementById('slotEndTime').value;
-    const capacity = parseInt(document.getElementById('slotCapacity').value);
-    
-    if (!date || !startTime || !endTime || !capacity) {
-        showError('Por favor completa todos los campos');
-        return;
-    }
+    const nombre = document.getElementById('templateNombre').value.trim();
+    const startTime = document.getElementById('templateStartTime').value;
+    const endTime = document.getElementById('templateEndTime').value;
+    const capacity = parseInt(document.getElementById('templateCapacity').value, 10);
 
-    if (startTime >= endTime) {
-        showError('La hora de inicio debe ser menor que la hora de fin');
-        return;
-    }
+    if (!nombre) { showToast('El nombre del turno es requerido', 'error'); return; }
+    if (!startTime || !endTime) { showToast('Las horas son requeridas', 'error'); return; }
+    if (startTime >= endTime) { showToast('La hora inicio debe ser menor que la hora fin', 'error'); return; }
+    if (!capacity || capacity < 1) { showToast('La capacidad debe ser mayor a 0', 'error'); return; }
+
+    const form = document.getElementById('templateForm');
+    const templateId = form.dataset.templateId;
+
+    const payload = {
+        nombre,
+        hora_inicio: startTime + ':00',
+        hora_fin: endTime + ':00',
+        capacidad: capacity,
+        activo: true
+    };
 
     try {
-        const form = document.getElementById('slotForm');
-        const slotId = form.dataset.slotId;
-
-        // La BD espera: fecha DATE, hora_inicio TIME, hora_fin TIME
-        const payload = {
-            fecha: date,
-            hora_inicio: startTime + ':00',   // '08:00' → '08:00:00'
-            hora_fin:   endTime   + ':00',
-            capacidad: capacity
-        };
-        
-        if (slotId) {
-            const result = await updateSlot(slotId, payload);
+        if (templateId) {
+            const result = await updateSlot(templateId, payload);
             if (!result) throw new Error('updateSlot devolvió nulo');
-            console.log('✅ Horario actualizado');
+            showToast('Turno actualizado correctamente', 'success');
         } else {
-            const result = await createSlot({ ...payload, cantidad_reservada: 0 });
+            const result = await createSlot(payload);
             if (!result) throw new Error('createSlot devolvió nulo');
-            console.log('✅ Horario creado');
+            showToast('Turno creado correctamente', 'success');
         }
-        
-        closeSlotModal();
-        await loadSlots();
-        
-        if (slotId) {
-            showSuccess('Horario editado correctamente');
-        } else {
-            showSuccess('Horario creado correctamente');
-        }
-    } catch (error) {
-        console.error('❌ Error guardando horario:', error);
-        showError('Error al guardar horario: ' + error.message);
+        closeTemplateModal();
+        await loadTemplates();
+        await loadCalendar();
+    } catch (err) {
+        console.error('Error guardando turno:', err);
+        showToast('Error al guardar turno: ' + err.message, 'error');
     }
 }
 
-function editSlot(slotId) {
-    openSlotModal(slotId);
-}
-
-async function confirmDeleteSlot(slotId) {
+async function confirmDeleteTemplate(templateId) {
     const confirmed = await showDeleteConfirm({
-        title: '¿Estás seguro?',
-        message: '¡El registro será eliminado!',
-        confirmText: 'Sí, eliminarlo',
+        title: '¿Eliminar turno?',
+        message: 'Se eliminará el turno. Las reservas existentes no se verán afectadas.',
+        confirmText: 'Sí, eliminar',
         cancelText: 'Cancelar'
     });
-
     if (confirmed) {
-        deleteSlot(slotId);
+        try {
+            const ok = await deleteSlot(templateId);
+            if (ok) {
+                showToast('Turno eliminado', 'success');
+                await loadTemplates();
+                await loadCalendar();
+            } else {
+                showToast('Error al eliminar turno', 'error');
+            }
+        } catch (err) {
+            showToast('Error al eliminar turno', 'error');
+        }
     }
 }
 
-async function deleteSlot(slotId) {
+// ===================== CALENDAR =====================
+
+async function loadCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const title = document.getElementById('calendarMonthTitle');
+    if (!grid) return;
+
+    const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    if (title) title.textContent = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
+
+    grid.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:20px">Cargando...</p>';
+
     try {
-        await window.configReady;
-        const response = await fetch(
-            `${window.API_BASE}/api/slots/${encodeURIComponent(slotId)}`,
-            {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
+        calendarData = await getCalendar(monthStr);
+        renderCalendar();
+    } catch (e) {
+        console.error('Error cargando calendario:', e);
+        grid.innerHTML = '<p style="text-align:center;color:#FF6B6B;grid-column:1/-1;padding:20px">Error al cargar calendario</p>';
+    }
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    // JS weekday: 0=Sun, 1=Mon ... 6=Sat. We want Mon=0
+    let startOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+    const dayMap = {};
+    calendarData.forEach(d => { dayMap[d.fecha] = d; });
+
+    let html = '';
+
+    // Day headers
+    DAY_NAMES.forEach(d => {
+        html += `<div class="calendar-day-header">${d}</div>`;
+    });
+
+    // Empty cells before first day
+    for (let i = 0; i < startOffset; i++) {
+        html += '<div class="calendar-day empty"></div>';
+    }
+
+    // Days of month
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const fechaStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayObj = dayMap[fechaStr];
+        const date = new Date(currentYear, currentMonth - 1, day);
+        const isPast = date < today;
+        const isToday = date.getTime() === today.getTime();
+
+        let cls = 'calendar-day';
+        if (isPast) {
+            cls += ' past';
+        } else if (dayObj) {
+            cls += ` ${dayObj.estado}`;
+        } else {
+            cls += ' open';
+        }
+        if (isToday) cls += ' today';
+
+        const estado = dayObj?.estado || 'abierto';
+        html += `<div class="${cls}" data-fecha="${fechaStr}" data-estado="${estado}" onclick="openCierreModal('${fechaStr}')" title="${fechaStr}">
+            ${day}
+        </div>`;
+    }
+
+    grid.innerHTML = html;
+}
+
+function prevMonth() {
+    currentMonth--;
+    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+    loadCalendar();
+}
+
+function nextMonth() {
+    currentMonth++;
+    if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+    loadCalendar();
+}
+
+// ===================== CIERRE MODAL =====================
+
+let selectedDate = null;
+
+function openCierreModal(fecha) {
+    selectedDate = fecha;
+    const panel = document.getElementById('cierrePanel');
+    const titleEl = document.getElementById('cierrePanelTitle');
+    if (!panel || !titleEl) return;
+
+    // Limpiar seleccion anterior en calendario
+    document.querySelectorAll('.calendar-day.selected').forEach(d => d.classList.remove('selected'));
+    // Marcar nuevo dia seleccionado
+    const selectedCell = document.querySelector(`.calendar-day[data-fecha="${fecha}"]`);
+    if (selectedCell) selectedCell.classList.add('selected');
+
+    const [y, m, d] = fecha.split('-');
+    titleEl.textContent = `Gestionar ${d}/${m}/${y}`;
+
+    const dayObj = calendarData.find(x => x.fecha === fecha);
+    const cierresExistentes = dayObj?.cierres || [];
+
+    const mananaTemplates = allTemplates.filter(t => {
+        const h = parseInt(t.hora_inicio?.split(':')[0]) || 0;
+        return h < 13;
+    });
+    const tardeTemplates = allTemplates.filter(t => {
+        const h = parseInt(t.hora_inicio?.split(':')[0]) || 0;
+        return h >= 13;
+    });
+
+    const mananaTime = mananaTemplates.length > 0
+        ? `${mananaTemplates[0].hora_inicio?.slice(0,5) || '--'} - ${mananaTemplates[mananaTemplates.length-1].hora_fin?.slice(0,5) || '--'}`
+        : 'Sin turnos';
+    const tardeTime = tardeTemplates.length > 0
+        ? `${tardeTemplates[0].hora_inicio?.slice(0,5) || '--'} - ${tardeTemplates[tardeTemplates.length-1].hora_fin?.slice(0,5) || '--'}`
+        : 'Sin turnos';
+
+    const isMananaBlocked = mananaTemplates.length > 0 && mananaTemplates.every(t =>
+        cierresExistentes.some(c => !c.turno || c.turno === t.nombre)
+    );
+    const isTardeBlocked = tardeTemplates.length > 0 && tardeTemplates.every(t =>
+        cierresExistentes.some(c => !c.turno || c.turno === t.nombre)
+    );
+    const isFullBlocked = isMananaBlocked && isTardeBlocked;
+
+    const cierreMotivo = cierresExistentes[0]?.motivo || '';
+    const mananaIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    const tardeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const lockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+    const unlockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
+
+    const body = document.getElementById('cierrePanelBody');
+    body.innerHTML = `
+        <div class="shift-toggle ${isMananaBlocked ? 'blocked' : ''}" onclick="toggleShift('${fecha}', 'manana')">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:var(--warning-color)">${mananaIcon}</span>
+                <div>
+                    <div class="shift-name">Mañana</div>
+                    <div class="shift-time">${mananaTime}</div>
+                </div>
+            </div>
+            <span class="shift-status ${isMananaBlocked ? 'blocked' : 'open'}">${isMananaBlocked ? lockIcon + ' Cerrado' : unlockIcon + ' Abierto'}</span>
+        </div>
+
+        <div class="shift-toggle ${isTardeBlocked ? 'blocked' : ''}" onclick="toggleShift('${fecha}', 'tarde')">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#7B8FCE">${tardeIcon}</span>
+                <div>
+                    <div class="shift-name">Tarde</div>
+                    <div class="shift-time">${tardeTime}</div>
+                </div>
+            </div>
+            <span class="shift-status ${isTardeBlocked ? 'blocked' : 'open'}">${isTardeBlocked ? lockIcon + ' Cerrado' : unlockIcon + ' Abierto'}</span>
+        </div>
+
+        <input type="text" id="cierreMotivoInput" class="cierre-motive-input" placeholder="Motivo (obligatorio): paro SENA, mantenimiento..." value="${cierreMotivo}" required>
+
+        <div style="text-align:center;margin-top:4px;">
+            <button class="btn ${isFullBlocked ? 'btn-secondary' : 'btn-danger'} btn-sm" onclick="closeFullDay('${fecha}')">
+                ${isFullBlocked ? unlockIcon + ' Reabrir dia completo' : lockIcon + ' Cerrar dia completo'}
+            </button>
+        </div>
+    `;
+
+    panel.style.display = '';
+}
+
+async function toggleShift(fecha, jornada) {
+    const motivoInput = document.getElementById('cierreMotivoInput');
+    const motivo = motivoInput?.value?.trim() || '';
+    const mananaTemplates = allTemplates.filter(t => (parseInt(t.hora_inicio?.split(':')[0]) || 0) < 13);
+    const tardeTemplates = allTemplates.filter(t => (parseInt(t.hora_inicio?.split(':')[0]) || 0) >= 13);
+    const templates = jornada === 'manana' ? mananaTemplates : tardeTemplates;
+
+    const dayObj = calendarData.find(x => x.fecha === fecha);
+    const cierres = dayObj?.cierres || [];
+    const isCurrentlyBlocked = templates.every(t =>
+        cierres.some(c => !c.turno || c.turno === t.nombre)
+    );
+
+    if (!isCurrentlyBlocked) {
+        if (!motivo) {
+            if (motivoInput) { motivoInput.style.borderColor = 'var(--danger)'; motivoInput.focus(); }
+            showToast('El motivo es obligatorio para cerrar', 'error');
+            return;
+        }
+        const jornadaLabel = jornada === 'manana' ? 'Mañana' : 'Tarde';
+        const confirmed = await showDeleteConfirm({
+            title: `¿Cerrar jornada ${jornadaLabel}?`,
+            message: `Se cerrará la jornada de ${jornadaLabel} del ${fecha}. Motivo: ${motivo}`,
+            confirmText: 'Si, cerrar jornada',
+            cancelText: 'Cancelar'
+        });
+        if (!confirmed) return;
+    }
+
+    try {
+        if (isCurrentlyBlocked) {
+            for (const c of cierres) {
+                if (!c.turno || c.turno === '' || templates.some(t => t.nombre === c.turno)) {
+                    await deleteCierre(c.id);
                 }
             }
-        );
-        
-        if (response.ok) {
-            console.log('✅ Horario eliminado');
-            await loadSlots();
-            showSuccess('Horario eliminado correctamente');
         } else {
-            throw new Error('Error eliminando horario');
+            for (const t of templates) {
+                await createCierre({ fecha, turno: t.nombre, motivo });
+            }
         }
-    } catch (error) {
-        console.error('❌ Error eliminando horario:', error);
-        showError('Error al eliminar horario: ' + error.message);
+        if (motivoInput) motivoInput.style.borderColor = '';
+        await loadCalendar();
+        openCierreModal(fecha);
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
     }
 }
 
-function showError(msg) {
-    showToast(msg, 'error');
+async function closeFullDay(fecha) {
+    const motivoInput = document.getElementById('cierreMotivoInput');
+    const motivo = motivoInput?.value?.trim() || '';
+    const dayObj = calendarData.find(x => x.fecha === fecha);
+    const cierres = dayObj?.cierres || [];
+    const isBlocked = (dayObj?.estado === 'cerrado');
+
+    // Si va a CERRAR, validar motivo obligatorio
+    if (!isBlocked) {
+        if (!motivo) {
+            if (motivoInput) { motivoInput.style.borderColor = 'var(--danger)'; motivoInput.focus(); }
+            showToast('El motivo es obligatorio para cerrar el dia', 'error');
+            return;
+        }
+        const confirmed = await showDeleteConfirm({
+            title: '¿Cerrar dia completo?',
+            message: `Se cerrara el dia ${fecha} completamente. Motivo: ${motivo}`,
+            confirmText: 'Si, cerrar dia',
+            cancelText: 'Cancelar'
+        });
+        if (!confirmed) return;
+    }
+
+    try {
+        if (isBlocked) {
+            for (const c of cierres) await deleteCierre(c.id);
+        } else {
+            await createCierre({ fecha, turno: null, motivo });
+        }
+        if (motivoInput) motivoInput.style.borderColor = '';
+        await loadCalendar();
+        openCierreModal(fecha);
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
 }
 
-function showSuccess(msg) {
-    showToast(msg, 'success');
+async function saveCierreFromPanel(fecha) {
+    await loadCalendar();
+    openCierreModal(fecha);
+    showToast('Cambios guardados', 'success');
 }
+
+function renderCierreModalBody(fecha, dayObj) {
+    const body = document.getElementById('cierreModalBody');
+    if (!body) return;
+
+    const cierresExistentes = dayObj?.cierres || [];
+    const templateNames = allTemplates.map(t => t.nombre).filter(Boolean);
+
+    let cierreListHtml = '';
+    if (cierresExistentes.length > 0) {
+        cierreListHtml = '<div class="cierre-list"><p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;font-weight:600;">Cierres registrados:</p>';
+        cierresExistentes.forEach(c => {
+            const turnoLabel = c.turno ? `Turno: <strong>${c.turno}</strong>` : '<strong>Día completo</strong>';
+            const motivoLabel = c.motivo ? `— ${c.motivo}` : '';
+            cierreListHtml += `
+                <div class="cierre-item">
+                    <div class="cierre-info">
+                        <span class="cierre-turno">${turnoLabel}</span>
+                        <span class="cierre-motivo">${motivoLabel}</span>
+                    </div>
+                    <button class="btn btn-danger action-btn" onclick="deleteCierreAndRefresh('${c.id}', '${fecha}')">
+                        <img src="assets/icons/delete.svg" alt="Eliminar" style="width:13px;height:13px;filter:brightness(0) invert(1);">
+                    </button>
+                </div>`;
+        });
+        cierreListHtml += '</div>';
+    }
+
+    const turnoOptions = `<option value="">Día completo</option>` +
+        templateNames.map(n => `<option value="${n}">${n}</option>`).join('');
+
+    body.innerHTML = `
+        ${cierreListHtml}
+        <div class="cierre-form">
+            <h3>Registrar cierre</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="filter-label">Turno</label>
+                    <select id="cierreTurno" class="filter-select" style="width:100%">
+                        ${turnoOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="filter-label">Motivo (opcional)</label>
+                    <input type="text" id="cierreMotivo" class="filter-input" placeholder="Mantenimiento, festivo..." style="width:100%">
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+                <button class="btn btn-secondary" onclick="closeCierreModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitCierre('${fecha}')">Registrar cierre</button>
+            </div>
+        </div>`;
+}
+
+async function submitCierre(fecha) {
+    const turno = document.getElementById('cierreTurno')?.value || '';
+    const motivo = document.getElementById('cierreMotivo')?.value?.trim() || '';
+
+    try {
+        await createCierre({ fecha, turno: turno || null, motivo });
+        showToast('Cierre registrado', 'success');
+        closeCierreModal();
+        await loadCalendar();
+    } catch (err) {
+        console.error('Error creando cierre:', err);
+        showToast('Error al registrar cierre: ' + err.message, 'error');
+    }
+}
+
+async function deleteCierreAndRefresh(cierreId, fecha) {
+    try {
+        const ok = await deleteCierre(cierreId);
+        if (ok) {
+            showToast('Cierre eliminado', 'success');
+            await loadCalendar();
+            // Re-open modal with updated data
+            openCierreModal(fecha);
+        } else {
+            showToast('Error al eliminar cierre', 'error');
+        }
+    } catch (err) {
+        showToast('Error al eliminar cierre', 'error');
+    }
+}
+
+function closeCierreModal() {
+    document.getElementById('cierreModal')?.classList.remove('show');
+}
+
+// ===================== TOAST =====================
+
+function showError(msg) { showToast(msg, 'error'); }
+function showSuccess(msg) { showToast(msg, 'success'); }
 
 function showToast(msg, type = 'success') {
-    const existing = document.querySelectorAll('.toast-notification');
-    existing.forEach(t => t.remove());
-
+    document.querySelectorAll('.toast-notification').forEach(t => t.remove());
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.style.cssText = `
-        position: fixed; bottom: 28px; right: 28px; z-index: 9999;
-        padding: 14px 22px; border-radius: 8px; font-size: 14px; font-weight: 500;
-        color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-        animation: slideUp 0.3s ease;
-        background: ${type === 'success' ? '#1a7a3a' : '#c0392b'};
-        border-left: 4px solid ${type === 'success' ? '#2ecc71' : '#e74c3c'};
-        max-width: 340px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    `;
-    
+        position:fixed;bottom:28px;right:28px;z-index:9999;
+        padding:14px 22px;border-radius:8px;font-size:14px;font-weight:500;
+        color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.35);
+        animation:slideUp 0.3s ease;
+        background:${type === 'success' ? '#1a7a3a' : '#c0392b'};
+        border-left:4px solid ${type === 'success' ? '#2ecc71' : '#e74c3c'};
+        max-width:340px;display:flex;align-items:center;gap:10px;`;
+
     const icon = document.createElement('img');
     icon.src = type === 'success' ? 'assets/icons/exito.svg' : 'assets/icons/error.svg';
-    icon.style.cssText = 'width: 20px; height: 20px; flex-shrink: 0;';
-    if (type === 'success') {
-        icon.style.filter = 'brightness(0) invert(1) saturate(1)';
-    } else {
-        icon.style.filter = 'brightness(0) invert(1) saturate(2)';
-    }
-    
+    icon.style.cssText = 'width:20px;height:20px;flex-shrink:0;filter:brightness(0) invert(1);';
+
     const text = document.createElement('span');
     text.textContent = msg;
-    
+
     toast.appendChild(icon);
     toast.appendChild(text);
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
 }
 
-// Event listeners
+// ===================== EVENT LISTENERS =====================
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadSlots();
+    loadTemplates();
+    loadCalendar();
 
-    document.getElementById('addSlotBtn')?.addEventListener('click', () => openSlotModal());
-
-    const form = document.getElementById('slotForm');
-    if (form) form.addEventListener('submit', submitSlotForm);
-
-    document.getElementById('closeSlotModal')?.addEventListener('click', closeSlotModal);
-    document.getElementById('cancelSlotBtn')?.addEventListener('click', closeSlotModal);
-
-    const modal = document.getElementById('slotModal');
-    if (modal) modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeSlotModal();
+    document.getElementById('addTemplateBtn')?.addEventListener('click', () => openTemplateModal());
+    document.getElementById('toggleTemplatesBtn')?.addEventListener('click', () => {
+        const section = document.getElementById('templatesSection');
+        if (section) section.style.display = section.style.display === 'none' ? '' : 'none';
     });
 
-    document.getElementById('searchInput')?.addEventListener('input', async (e) => {
-        currentSearchQuery = e.target.value || '';
-        await loadSlots();
+    const form = document.getElementById('templateForm');
+    if (form) form.addEventListener('submit', submitTemplateForm);
+
+    document.getElementById('closeTemplateModal')?.addEventListener('click', closeTemplateModal);
+    document.getElementById('cancelTemplateBtn')?.addEventListener('click', closeTemplateModal);
+
+    document.getElementById('templateModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('templateModal')) closeTemplateModal();
     });
+
+    document.getElementById('closeCierreModal')?.addEventListener('click', closeCierreModal);
+
+    document.getElementById('prevMonthBtn')?.addEventListener('click', prevMonth);
+    document.getElementById('nextMonthBtn')?.addEventListener('click', nextMonth);
 
     document.getElementById('logoutBtn')?.addEventListener('click', async () => {
         const confirmed = await showLogoutConfirm();

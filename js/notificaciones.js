@@ -23,10 +23,11 @@ const TIPOS_NOTIFICACION = {
  */
 async function enviarNotificacionAUsuario(usuarioId, titulo, cuerpo, tipo, datos = {}) {
     try {
+        await window.configReady;
         console.log('📤 Enviando notificación al usuario:', usuarioId);
-        
+
         // Insertar directamente en BD - Supabase Realtime la propagará
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from('notificaciones_historial')
             .insert([
                 {
@@ -60,8 +61,9 @@ async function enviarNotificacionAUsuario(usuarioId, titulo, cuerpo, tipo, datos
  */
 async function enviarNotificacionBroadcast(usuariosIds, titulo, cuerpo, tipo) {
     try {
+        await window.configReady;
         console.log('📤 Enviando notificación broadcast a', usuariosIds.length, 'usuarios');
-        
+
         // Crear registro para cada usuario
         const registros = usuariosIds.map(usuarioId => ({
             usuario_id: usuarioId,
@@ -73,7 +75,7 @@ async function enviarNotificacionBroadcast(usuariosIds, titulo, cuerpo, tipo) {
             abierta: false
         }));
 
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from('notificaciones_historial')
             .insert(registros)
             .select();
@@ -97,10 +99,11 @@ async function enviarNotificacionBroadcast(usuariosIds, titulo, cuerpo, tipo) {
  */
 async function enviarNotificacionATopic(topic, titulo, cuerpo, tipo) {
     try {
+        await window.configReady;
         console.log('📤 Enviando notificación al topic:', topic);
-        
+
         // Obtener todos los usuarios suscritos al topic
-        const { data: suscripciones, error: errorSuscripciones } = await supabase
+        const { data: suscripciones, error: errorSuscripciones } = await window.supabaseClient
             .from('notif_suscripciones_topic')
             .select('usuario_id')
             .eq('topic', topic);

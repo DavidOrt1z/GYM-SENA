@@ -1,4 +1,4 @@
-/* ==================== PERSONAL.CSS ====================
+﻿/* ==================== PERSONAL.CSS ====================
    Estilos específicos para la página de Personal
 */
 
@@ -41,14 +41,14 @@
 }
 
 .btn-secondary {
-    background: #111111;
-    color: #CFCFCF;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
     border: 1px solid rgba(207, 207, 207, 0.2);
 }
 
 .btn-secondary:hover {
     background: #1A1A1A;
-    border-color: #CFCFCF;
+    border-color: var(--text-secondary);
 }
 
 .btn-secondary img {
@@ -86,7 +86,7 @@
 }
 
 .section-card {
-    background: linear-gradient(135deg, #111111 0%, #0D0D0D 100%);
+    background: var(--card-gradient);
     border: 1px solid rgba(207, 207, 207, 0.2);
     border-radius: 10px;
     padding: 24px;
@@ -131,7 +131,7 @@
 
 .badge-completed {
     background: rgba(33, 150, 243, 0.18);
-    color: #CFCFCF;
+    color: var(--text-secondary);
 }
 
 .badge-cancelled {
@@ -159,7 +159,7 @@
 }
 
 .modal-content {
-    background: #111111;
+    background: var(--bg-surface);
     border: 1px solid rgba(207, 207, 207, 0.2);
     border-radius: 10px;
     padding: 0;
@@ -191,7 +191,7 @@
 .close-btn {
     background: none;
     border: none;
-    color: #CFCFCF;
+    color: var(--text-secondary);
     font-size: 28px;
     cursor: pointer;
 }
@@ -251,14 +251,14 @@
 }
 
 .password-input-wrapper input:read-only {
-    background: #0D0D0D;
+    background: var(--bg-surface);
 }
 
 .password-btn {
-    background: #0D0D0D;
+    background: var(--bg-surface);
     border: 1px solid rgba(207, 207, 207, 0.2);
     border-radius: 6px;
-    color: #CFCFCF;
+    color: var(--text-secondary);
     cursor: pointer;
     padding: 8px 12px;
     display: flex;
@@ -271,7 +271,7 @@
 }
 
 .password-btn:hover {
-    background: #111111;
+    background: var(--bg-surface);
     border-color: #BA1505;
     color: #BA1505;
 }
@@ -293,7 +293,7 @@
     padding: 12px 14px;
     border: 1px solid rgba(207, 207, 207, 0.2);
     border-radius: 6px;
-    background: #0D0D0D;
+    background: var(--bg-surface);
     color: #FFFFFF;
     font-size: 14px;
     height: 44px;
@@ -317,8 +317,8 @@
 }
 
 .btn-secondary {
-    background: #111111;
-    color: #CFCFCF;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
     border: 1px solid rgba(207, 207, 207, 0.2);
     padding: 10px 20px;
     border-radius: 6px;
@@ -363,4 +363,28 @@
     .staff-actions {
         gap: 6px;
     }
+}
+
+/* ==================== LIGHT THEME OVERRIDES ==================== */
+[data-theme="light"] .section-header h1,
+[data-theme="light"] .section-header h2 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .form-group label {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .data-table tbody td {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+    background: var(--bg-surface);
+    border-color: var(--text-muted);
 }

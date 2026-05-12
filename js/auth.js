@@ -38,52 +38,59 @@ async function adminLogin(email, password) {
         const token = authData.access_token;
         console.log('Token obtenido:', token.substring(0, 20) + '...');
 
-        // Paso 2: Obtener datos del usuario de la tabla public.users
+        const authHeaders = {
+            'apikey': window.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        // Paso 2: Buscar en tabla users (usuarios app con rol admin)
+        let foundUser = null;
         const userResponse = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/users?correo_electronico=eq.${email}&select=*`,
-            {
-                method: 'GET',
-                headers: {
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            `${window.SUPABASE_URL}/rest/v1/users?correo_electronico=eq.${encodeURIComponent(email)}&select=*`,
+            { method: 'GET', headers: authHeaders }
+        );
+        if (userResponse.ok) {
+            const users = await userResponse.json();
+            const match = (users || []).find(u => normalizeRole(u.rol) === 'admin');
+            if (match) foundUser = { ...match, _source: 'users' };
+        }
+
+        // Paso 2b: Si no está en users, buscar en tabla personal
+        if (!foundUser) {
+            const staffResponse = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/personal?correo_electronico=eq.${encodeURIComponent(email)}&select=*`,
+                { method: 'GET', headers: authHeaders }
+            );
+            if (staffResponse.ok) {
+                const staff = await staffResponse.json();
+                if (staff && staff.length > 0) {
+                    foundUser = { ...staff[0], rol: staff[0].rol || 'admin', _source: 'personal' };
                 }
             }
-        );
+        }
 
-        const users = await userResponse.json();
-        console.log('Users Response:', userResponse.status, users);
-
-        if (!users || users.length === 0) {
+        if (!foundUser) {
             console.error('Usuario no encontrado en la BD');
             return {
                 success: false,
-                message: 'Usuario no encontrado en la base de datos'
+                message: 'Usuario no encontrado. Verifica que el administrador esté registrado.'
             };
         }
 
-        const user = users[0];
-        console.log('Usuario encontrado:', user);
-
-        // Paso 3: Verificar que sea administrador
-        const normalizedRole = normalizeRole(user.rol);
-        if (normalizedRole !== 'admin') {
-            console.error('El usuario no tiene rol admin. Rol actual:', user.rol);
-            return {
-                success: false,
-                message: 'No tienes permisos de administrador'
-            };
+        if (foundUser._source === 'users' && normalizeRole(foundUser.rol) !== 'admin') {
+            return { success: false, message: 'No tienes permisos de administrador' };
         }
 
-        console.log('✅ Login exitoso para:', user.correo_electronico);
+        console.log('✅ Login exitoso para:', foundUser.correo_electronico);
         return {
             success: true,
             token: token,
             user: {
-                id: user.id,
-                email: user.correo_electronico,
-                name: user.nombre_completo || 'Administrador',
-                role: normalizedRole
+                id: foundUser.id,
+                email: foundUser.correo_electronico,
+                name: foundUser.nombre_completo || 'Administrador',
+                role: 'admin'
             }
         };
     } catch (error) {
@@ -216,19 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-    }
-});
-
-// Logout
-document.addEventListener('DOMContentLoaded', () => {
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            const confirmed = await showLogoutConfirm();
-            if (confirmed) {
-                logoutAdmin();
-            }
-        });
     }
 });
 

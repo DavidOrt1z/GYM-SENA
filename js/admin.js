@@ -19,7 +19,8 @@ function navigateTo(section) {
     document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
     
     // Agregar clase active a item y sección seleccionada
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    const sectionEl = document.querySelector(`[data-section="${section}"]`);
+    if (sectionEl) sectionEl.classList.add('active');
     document.getElementById(`${section}-section`).classList.add('active');
     
     // Actualizar títulos

@@ -1,8 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <title>Usuarios - JACEK GYM Admin</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/usuarios.css">
@@ -85,7 +87,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Bar -->
-            <div class="top-bar"></div>
+            <div class="top-bar"><div class="top-bar-left"></div><div class="top-bar-right"><button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Cambiar tema"><span class="theme-icon"></span><span class="theme-label">Modo Claro</span></button></div><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div>
 
             <!-- Content Section -->
             <div class="content">
@@ -102,6 +104,37 @@
                             </div>
                             <button class="btn btn-primary" id="addUserBtn">+ Añadir Usuario</button>
                         </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label class="filter-label">Rol</label>
+                            <select id="filterRol" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="member">Usuario</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Estado</label>
+                            <select id="filterEstadoUsuario" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
+                                <option value="pending">Pendiente</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Tipo Documento</label>
+                            <select id="filterTipoDoc" class="filter-select">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            Limpiar
+                        </button>
                     </div>
 
                     <!-- Tabla de Usuarios -->
@@ -187,6 +220,6 @@
     <script src="js/api.js"></script>
     <script src="js/confirmDialog.js"></script>
     <script src="js/usuariosModule.js"></script>
-    <script src="js/usuariosPage.js"></script>
+    <script src="js/theme.js"></script>
 </body>
 </html>

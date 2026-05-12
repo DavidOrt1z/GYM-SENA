@@ -55,6 +55,28 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+// Ruta para obtener usuarios (usa service role para evitar RLS)
+app.get('/api/get-users', async (req, res) => {
+    try {
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('*')
+            .neq('rol', 'admin')
+            .order('fecha_creacion', { ascending: false });
+
+        if (error) {
+            console.log(`❌ Error obteniendo usuarios: ${error.message}`);
+            return res.status(400).json([]);
+        }
+
+        console.log(`✅ Usuarios obtenidos: ${users?.length || 0} registros`);
+        res.status(200).json(users || []);
+    } catch (error) {
+        console.error(`❌ ERROR en /api/get-users:`, error.message);
+        res.status(500).json([]);
+    }
+});
+
 // Ruta para obtener personal
 app.get('/api/get-staff', async (req, res) => {
     try {
@@ -94,7 +116,7 @@ app.get('/api/get-reservations', async (req, res) => {
 
         let query = supabase
             .from('reservas')
-            .select('id, id_usuario, id_franja_horaria, estado, fecha_creacion, token_qr')
+            .select('id, id_usuario, hora_inicio, hora_fin, estado, fecha_creacion, token_qr, fecha')
             .order('fecha_creacion', { ascending: false });
 
         if (estado) {
@@ -107,32 +129,14 @@ app.get('/api/get-reservations', async (req, res) => {
             return res.status(400).json({ error: error.message, data: [] });
         }
 
-        // Enriquecer reservas con datos de horario en una sola respuesta
         const reservationRows = data || [];
-        const slotIds = [...new Set(reservationRows.map(r => r.id_franja_horaria).filter(Boolean))];
-        let slotsMap = new Map();
-
-        if (slotIds.length > 0) {
-            const { data: slotsData, error: slotsError } = await supabase
-                .from('franjas_horarias')
-                .select('id, hora_inicio, hora_fin, fecha')
-                .in('id', slotIds);
-
-            if (!slotsError) {
-                slotsMap = new Map((slotsData || []).map(s => [String(s.id), s]));
-            } else {
-                console.log('⚠️ No se pudieron enriquecer horarios en /api/get-reservations:', slotsError.message);
-            }
-        }
 
         const enrichedRows = reservationRows.map(r => {
-            const slot = slotsMap.get(String(r.id_franja_horaria));
             let normalizedStatus = String(r.estado || '').toLowerCase().trim();
 
-            // Normalizacion visual: una reserva activa de fecha pasada se muestra como completada.
-            // Esto evita inconsistencias donde aparece "Activa" en dias ya vencidos.
-            if (normalizedStatus === 'active' && slot?.fecha) {
-                const slotDate = new Date(`${slot.fecha}T00:00:00`);
+            // Normalizacion visual: reserva activa de fecha pasada → completada
+            if (normalizedStatus === 'active' && r.fecha) {
+                const slotDate = new Date(`${r.fecha}T00:00:00`);
                 if (!Number.isNaN(slotDate.getTime()) && slotDate < todayStart) {
                     normalizedStatus = 'completed';
                 }
@@ -141,9 +145,9 @@ app.get('/api/get-reservations', async (req, res) => {
             return {
                 ...r,
                 estado: normalizedStatus,
-                hora_inicio: slot?.hora_inicio || null,
-                hora_fin: slot?.hora_fin || null,
-                fecha_horario: slot?.fecha || null
+                hora_inicio: r.hora_inicio || null,
+                hora_fin: r.hora_fin || null,
+                fecha_horario: r.fecha || null
             };
         });
 
@@ -183,7 +187,7 @@ async function findReservationByTokenOrId(token) {
 
     const { data: reservasData, error: reservasError } = await supabase
         .from('reservas')
-        .select('id, id_usuario, id_franja_horaria, estado, fecha_creacion, token_qr')
+        .select('id, id_usuario, hora_inicio, hora_fin, estado, fecha_creacion, token_qr, fecha')
         .eq('token_qr', token)
         .order('fecha_creacion', { ascending: false })
         .limit(1)
@@ -196,7 +200,7 @@ async function findReservationByTokenOrId(token) {
     if (!reservation) {
         const { data: byIdData, error: byIdError } = await supabase
             .from('reservas')
-            .select('id, id_usuario, id_franja_horaria, estado, fecha_creacion, token_qr')
+            .select('id, id_usuario, hora_inicio, hora_fin, estado, fecha_creacion, token_qr, fecha')
             .eq('id', token)
             .order('fecha_creacion', { ascending: false })
             .limit(1)
@@ -210,35 +214,31 @@ async function findReservationByTokenOrId(token) {
     return reservation;
 }
 
-async function sendCompletedReservationNotification({ userId, reservationId, slotId }) {
+async function sendCompletedReservationNotification({ userId, reservationId, fecha, horaInicio: horaInicioParam, horaFin: horaFinParam }) {
     if (!userId) return;
 
-    let fecha = '';
-    let horaInicio = '';
-    let horaFin = '';
+    let horaInicio = horaInicioParam || '';
+    let horaFin = horaFinParam || '';
+    let fechaStr = fecha || '';
 
-    if (slotId) {
-        const { data: slotData } = await supabase
-            .from('franjas_horarias')
-            .select('fecha, hora_inicio, hora_fin')
-            .eq('id', slotId)
+    if (!fechaStr && reservationId) {
+        const { data: resData } = await supabase
+            .from('reservas')
+            .select('fecha')
+            .eq('id', reservationId)
             .maybeSingle();
-
-        fecha = slotData?.fecha || '';
-        horaInicio = slotData?.hora_inicio || '';
-        horaFin = slotData?.hora_fin || '';
+        fechaStr = resData?.fecha || '';
     }
 
     const notificationBase = {
         titulo: 'Reserva completada',
-        cuerpo: fecha && horaInicio
-            ? `Tu reserva de ${fecha}, ${horaInicio} - ${horaFin} fue completada.`
+        cuerpo: fechaStr && horaInicio
+            ? `Tu reserva de ${fechaStr}, ${horaInicio} - ${horaFin} fue completada.`
             : 'Tu reserva fue marcada como completada.',
         tipo: 'reserva_completada',
         datos: {
             reserva_id: reservationId,
-            franja_id: slotId || null,
-            fecha,
+            fecha: fechaStr,
             hora_inicio: horaInicio,
             hora_fin: horaFin
         },
@@ -268,7 +268,7 @@ async function completeReservationBySource(reservationId) {
 
     const { data: reservationRow } = await supabase
         .from('reservas')
-        .select('id_usuario, id_franja_horaria')
+        .select('id_usuario, hora_inicio, hora_fin, fecha')
         .eq('id', reservationId)
         .maybeSingle();
 
@@ -310,7 +310,9 @@ async function completeReservationBySource(reservationId) {
             await sendCompletedReservationNotification({
                 userId: reservationRow.id_usuario,
                 reservationId,
-                slotId: reservationRow.id_franja_horaria || null
+                horaInicio: reservationRow.hora_inicio || null,
+                horaFin: reservationRow.hora_fin || null,
+                fecha: reservationRow.fecha || null
             });
         } catch (_) {
             // No bloquear validacion de QR por fallo de notificacion.
@@ -330,7 +332,7 @@ async function setReservationStatusById(reservationId, nextStatus) {
 
     const { data: rowInReservas } = await supabase
         .from('reservas')
-        .select('id, id_usuario, id_franja_horaria')
+        .select('id, id_usuario, hora_inicio, hora_fin, fecha')
         .eq('id', reservationId)
         .maybeSingle();
 
@@ -371,7 +373,9 @@ async function setReservationStatusById(reservationId, nextStatus) {
                 await sendCompletedReservationNotification({
                     userId: rowInReservas.id_usuario,
                     reservationId,
-                    slotId: rowInReservas.id_franja_horaria || null
+                    horaInicio: rowInReservas.hora_inicio || null,
+                    horaFin: rowInReservas.hora_fin || null,
+                    fecha: rowInReservas.fecha || null
                 });
             } catch (_) {
                 // No bloquear cambio de estado por fallo de notificacion.
@@ -693,7 +697,6 @@ async function buildQrLookupPayload(rawToken, completeActiveReservation = false)
     }
 
     const userId = reservation.id_usuario ? String(reservation.id_usuario) : '';
-    const slotId = reservation.id_franja_horaria ? String(reservation.id_franja_horaria) : '';
 
     let user = null;
     if (userId) {
@@ -705,16 +708,6 @@ async function buildQrLookupPayload(rawToken, completeActiveReservation = false)
             .limit(1)
             .maybeSingle();
         user = userData || null;
-    }
-
-    let slot = null;
-    if (slotId) {
-        const { data: slotData } = await supabase
-            .from('franjas_horarias')
-            .select('id, fecha, hora_inicio, hora_fin')
-            .eq('id', slotId)
-            .maybeSingle();
-        slot = slotData || null;
     }
 
     const estadoOriginal = String(reservation.estado || '').toLowerCase().trim();
@@ -783,9 +776,9 @@ async function buildQrLookupPayload(rawToken, completeActiveReservation = false)
                 : 'La reserva no esta activa para ingreso',
             usuario_nombre: userName,
             usuario_email: userEmail,
-            fecha_horario: slot?.fecha || null,
-            hora_inicio: slot?.hora_inicio || null,
-            hora_fin: slot?.hora_fin || null
+            fecha_horario: reservation.fecha || null,
+            hora_inicio: reservation.hora_inicio || null,
+            hora_fin: reservation.hora_fin || null
         }
     };
 }
@@ -1109,11 +1102,20 @@ app.get('/api/get-dashboard-stats', async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // Rango de los últimos 7 días para gráfica
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
         const [
             { count: totalUsers },
             { count: totalSlots },
             { count: todayReservations },
-            { data: recentActivity }
+            { data: recentActivity },
+            { count: totalReservas },
+            { count: reservasCompletadas },
+            { count: canceladasHoy },
+            { data: reservas7dias }
         ] = await Promise.all([
             supabase.from('users').select('*', { count: 'exact', head: true }),
             supabase.from('franjas_horarias').select('*', { count: 'exact', head: true }),
@@ -1123,7 +1125,19 @@ app.get('/api/get-dashboard-stats', async (req, res) => {
             supabase.from('reservas')
                 .select('id, id_usuario, estado, fecha_creacion')
                 .order('fecha_creacion', { ascending: false })
-                .limit(10)
+                .limit(10),
+            supabase.from('reservas').select('*', { count: 'exact', head: true }),
+            supabase.from('reservas')
+                .select('*', { count: 'exact', head: true })
+                .eq('estado', 'completed'),
+            supabase.from('reservas')
+                .select('*', { count: 'exact', head: true })
+                .eq('estado', 'cancelled')
+                .gte('fecha_creacion', today.toISOString()),
+            supabase.from('reservas')
+                .select('fecha_creacion')
+                .gte('fecha_creacion', sevenDaysAgo.toISOString())
+                .order('fecha_creacion', { ascending: true })
         ]);
 
         // Actividad reciente: últimos personal creados
@@ -1157,10 +1171,32 @@ app.get('/api/get-dashboard-stats', async (req, res) => {
         // Ordenar por fecha más reciente
         activities.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
+        // Tasa de asistencia
+        const asistenciaRate = totalReservas > 0
+            ? Math.round((reservasCompletadas / totalReservas) * 100)
+            : 0;
+
+        // Reservas por día (últimos 7 días)
+        const diasMap = {};
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0, 10);
+            diasMap[key] = 0;
+        }
+        (reservas7dias || []).forEach(r => {
+            const key = r.fecha_creacion ? r.fecha_creacion.slice(0, 10) : null;
+            if (key && diasMap[key] !== undefined) diasMap[key]++;
+        });
+        const reservasPorDia = Object.entries(diasMap).map(([fecha, total]) => ({ fecha, total }));
+
         res.status(200).json({
             totalUsers: totalUsers || 0,
             todayReservations: todayReservations || 0,
             totalSlots: totalSlots || 0,
+            asistenciaRate,
+            canceladasHoy: canceladasHoy || 0,
+            reservasPorDia,
             recentActivity: activities.slice(0, 8)
         });
 
@@ -1265,6 +1301,144 @@ app.post('/api/create-admin-user', async (req, res) => {
             error: error.message || 'Error desconocido',
             type: error.name
         });
+    }
+});
+
+// ============================================
+// RUTAS DE HORARIOS (TEMPLATES + CALENDARIO)
+// ============================================
+
+app.get('/api/calendar', async (req, res) => {
+    try {
+        const month = req.query.month;
+        if (!month) return res.status(400).json({ error: 'month required (YYYY-MM)' });
+
+        const [year, m] = month.split('-').map(Number);
+        const firstDay = new Date(year, m - 1, 1);
+        const lastDay = new Date(year, m, 0);
+
+        const { data: templates } = await supabase
+            .from('franjas_horarias')
+            .select('id, nombre, hora_inicio, hora_fin, capacidad')
+            .eq('activo', true);
+
+        const { data: cierres } = await supabase
+            .from('cierres_gym')
+            .select('id, fecha, turno, motivo')
+            .gte('fecha', firstDay.toISOString().slice(0, 10))
+            .lte('fecha', lastDay.toISOString().slice(0, 10));
+
+        const cierresMap = {};
+        (cierres || []).forEach(c => {
+            if (!cierresMap[c.fecha]) cierresMap[c.fecha] = [];
+            cierresMap[c.fecha].push(c);
+        });
+
+        const { data: reservas } = await supabase
+            .from('reservas')
+            .select('hora_inicio, fecha')
+            .eq('estado', 'active')
+            .gte('fecha', firstDay.toISOString().slice(0, 10))
+            .lte('fecha', lastDay.toISOString().slice(0, 10));
+
+        // Contar por fecha + hora_inicio (primeros 5 chars: "HH:MM")
+        const reservasCount = {};
+        (reservas || []).forEach(r => {
+            const hora = String(r.hora_inicio || '').slice(0, 5);
+            if (!hora) return;
+            const key = `${r.fecha}_${hora}`;
+            reservasCount[key] = (reservasCount[key] || 0) + 1;
+        });
+
+        const result = [];
+        const cursor = new Date(firstDay);
+        while (cursor <= lastDay) {
+            const fechaStr = cursor.toISOString().slice(0, 10);
+            const diaCierres = cierresMap[fechaStr] || [];
+            const diaCerradoCompleto = diaCierres.some(c => !c.turno || c.turno === '');
+
+            const slots = (templates || []).map(t => {
+                const turnoCerrado = diaCierres.some(c => c.turno === t.nombre);
+                const bloqueado = diaCerradoCompleto || turnoCerrado;
+                const horaKey = String(t.hora_inicio || '').slice(0, 5);
+                const reservado = reservasCount[`${fechaStr}_${horaKey}`] || 0;
+                return {
+                    slotId: t.id, nombre: t.nombre, horaInicio: t.hora_inicio,
+                    horaFin: t.hora_fin, capacidad: t.capacidad, reservado,
+                    libre: bloqueado ? 0 : Math.max(0, t.capacidad - reservado), bloqueado
+                };
+            });
+
+            const estado = diaCerradoCompleto ? 'cerrado'
+                : slots.some(s => s.bloqueado) ? 'parcial' : 'abierto';
+
+            result.push({ fecha: fechaStr, estado, slots, cierres: diaCierres, totalLibre: slots.reduce((s, x) => s + x.libre, 0) });
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        res.json(result);
+    } catch (e) {
+        console.error('Calendar error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/cierres', async (req, res) => {
+    try {
+        const { fecha, turno, motivo } = req.body;
+        if (!fecha) return res.status(400).json({ error: 'fecha requerida' });
+
+        const { data, error } = await supabase
+            .from('cierres_gym')
+            .insert({
+                fecha,
+                turno: turno || null,
+                hora_inicio: null,
+                hora_fin: null,
+                motivo: motivo || '',
+                fecha_creacion: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) return res.status(400).json({ error: error.message });
+
+        try {
+            const { data: usersData } = await supabase
+                .from('users')
+                .select('id')
+                .neq('rol', 'admin');
+            if (usersData && usersData.length > 0) {
+                const turnoMsg = turno ? ` (turno ${turno})` : '';
+                const motivoMsg = motivo ? ` por: ${motivo}` : '';
+                await supabase.from('notificaciones_historial').insert(
+                    usersData.map(u => ({
+                        id_usuario_notif: u.id,
+                        titulo: 'Gimnasio cerrado',
+                        cuerpo: `El gimnasio estara cerrado el ${fecha}${turnoMsg}${motivoMsg}`,
+                        tipo: 'cierre_gimnasio', entregada: false, abierta: false,
+                        datos: { fecha, turno: turno || 'completo', motivo: motivo || '' }
+                    }))
+                );
+            }
+        } catch (notifError) {
+            console.warn('Notificacion cierre fallo:', notifError.message);
+        }
+
+        res.json({ ok: true, data });
+    } catch (e) {
+        console.error('Cierre error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/cierres/:id', async (req, res) => {
+    try {
+        const { error } = await supabase.from('cierres_gym').delete().eq('id', req.params.id);
+        if (error) return res.status(400).json({ error: error.message });
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
