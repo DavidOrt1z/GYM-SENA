@@ -47,7 +47,6 @@ async function loadDocumentTypes() {
     if (!response.ok) throw new Error('No se pudieron cargar los tipos de documento');
     documentTypes = await response.json();
     renderDocumentOptions();
-    setDocumentType(getDefaultDocumentTypeId());
     return documentTypes;
 }
 
@@ -70,14 +69,12 @@ function renderDocumentOptions() {
 }
 
 function setDocumentType(value) {
-    const numericValue = Number(value);
-    const fallbackId = getDefaultDocumentTypeId();
-    currentDocumentTypeId = documentTypes.some((type) => Number(type.id) === numericValue)
-        ? numericValue
-        : fallbackId;
+    const numericValue = value ? Number(value) : null;
+    const isValidSelection = numericValue && documentTypes.some((type) => Number(type.id) === numericValue);
+    currentDocumentTypeId = isValidSelection ? numericValue : null;
 
     const selected = documentTypes.find((type) => Number(type.id) === Number(currentDocumentTypeId));
-    const label = selected?.nombre || 'Cédula de Ciudadanía';
+    const label = selected?.nombre || 'Elige uno...';
 
     const hidden = document.getElementById('documentTypeId');
     const display = document.getElementById('documentTypeLabel');
@@ -86,10 +83,13 @@ function setDocumentType(value) {
 
     if (hidden) hidden.value = currentDocumentTypeId ?? '';
     if (display) display.textContent = label;
-    if (numberLabel) numberLabel.textContent = label;
+    if (numberLabel) numberLabel.textContent = selected?.nombre || 'Número de Documento';
     if (numberInput) {
-        numberInput.placeholder = label;
-        numberInput.setAttribute('aria-label', label);
+        numberInput.placeholder = selected?.nombre || 'Selecciona un tipo de documento';
+        numberInput.setAttribute('aria-label', selected?.nombre || 'Número de Documento');
+        if (!isValidSelection) {
+            numberInput.value = '';
+        }
     }
 
     document.querySelectorAll('.document-option').forEach((option) => {
@@ -271,7 +271,7 @@ function openUserModal(userId = null) {
     const title = document.querySelector('#userModal .modal-header h2');
     const form = document.getElementById('userForm');
     const roleSelect = document.getElementById('userRole');
-    
+
     if (userId) {
         title.textContent = 'Editar Usuario';
         const user = allUsers.find(u => u.id === userId);
@@ -279,7 +279,7 @@ function openUserModal(userId = null) {
             document.getElementById('userName').value = user.nombre || '';
             document.getElementById('userLastName').value = user.apellido || '';
             document.getElementById('userDocumentNumber').value = user.numero_documento || '';
-            setDocumentType(user.tipo_documento_id || getDefaultDocumentTypeId());
+            setDocumentType(user.tipo_documento_id);
             if (roleSelect) roleSelect.value = 'member';
         }
     } else {
@@ -287,10 +287,10 @@ function openUserModal(userId = null) {
         form.reset();
         document.getElementById('userLastName').value = '';
         document.getElementById('userDocumentNumber').value = '';
-        setDocumentType(getDefaultDocumentTypeId());
+        setDocumentType(null);
         if (roleSelect) roleSelect.value = 'member';
     }
-    
+
     modal.classList.add('show');
 }
 
@@ -302,28 +302,49 @@ function closeUserModal() {
 async function submitUserForm(e) {
     e.preventDefault();
     await window.configReady;
-    
+
     const name = document.getElementById('userName').value.trim();
     const lastName = document.getElementById('userLastName').value.trim();
     const documentNumber = document.getElementById('userDocumentNumber').value.trim();
     const tipoDocumentoId = document.getElementById('documentTypeId').value;
     const rol = document.getElementById('userRole').value;
 
-    if (!name || !lastName || !documentNumber || !tipoDocumentoId || !rol) {
-        showError('Por favor, complete todos los campos.');
+    if (!name) {
+        showError('Por favor, ingresa el nombre.');
+        return;
+    }
+    if (!lastName) {
+        showError('Por favor, ingresa el apellido.');
+        return;
+    }
+    if (!tipoDocumentoId) {
+        showError('Por favor, elige un tipo de documento.');
+        return;
+    }
+    if (!documentNumber) {
+        showError('Por favor, ingresa el número de documento.');
+        return;
+    }
+    if (!rol) {
+        showError('Por favor, selecciona un rol.');
         return;
     }
 
     const userData = {
         nombre: name,
         apellido: lastName,
-        Id_tipo_documento: tipoDocumentoId,
-        numero_documento: documentNumber,
+        tipo_documento_id: Number(tipoDocumentoId),
+        cedula: documentNumber,
         rol: rol,
     };
 
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="dot-triangle-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
     const url = currentUserId
-        ? `${window.SUPABASE_URL}/rest/v1/users?id=eq.${currentUserId}`
+        ? `${window.API_BASE}/api/users/${encodeURIComponent(currentUserId)}`
         : `${window.SUPABASE_URL}/rest/v1/users`;
 
     fetch(url, {
@@ -335,19 +356,32 @@ async function submitUserForm(e) {
         },
         body: JSON.stringify(userData),
     })
-        .then((response) => {
+        .then(async (response) => {
             if (!response.ok) {
-                throw new Error('Error al guardar el usuario');
+                let errorMessage = 'Error al guardar el usuario';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Si no es JSON, mantenemos el mensaje por defecto
+                }
+                throw new Error(errorMessage);
             }
-            return response.json();
+            // Solo intentamos parsear JSON si hay contenido (POST/PATCH en Supabase pueden devolver vacío)
+            const text = await response.text();
+            return text ? JSON.parse(text) : {};
         })
         .then(() => {
-            alert('Usuario guardado exitosamente.');
-            location.reload();
+            showSuccess(currentUserId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         })
         .catch((error) => {
             console.error('Error guardando usuario:', error);
-            alert(`Error al guardar usuario: ${error.message}`);
+            showError(`Error al guardar usuario: ${error.message}`);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
         });
 }
 
