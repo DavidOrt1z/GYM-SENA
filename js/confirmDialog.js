@@ -41,7 +41,16 @@ function showDeleteConfirm(options = {}) {
         const okBtn = overlay.querySelector('#appConfirmOk');
         const cancelBtn = overlay.querySelector('#appConfirmCancel');
 
-        okBtn?.addEventListener('click', () => cleanup(true));
+        okBtn?.addEventListener('click', () => {
+            if (typeof window.setButtonLoading === 'function') {
+                window.setButtonLoading(okBtn, true);
+            } else if (okBtn) {
+                okBtn.disabled = true;
+            }
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            setTimeout(() => cleanup(true), 200);
+        });
         cancelBtn?.addEventListener('click', () => cleanup(false));
 
         const onKeyDown = (e) => {

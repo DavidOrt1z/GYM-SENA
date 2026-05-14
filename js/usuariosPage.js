@@ -24,10 +24,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // El rol en usuarios es fijo "Usuario"; no se inicializa custom select.
 });
 
-document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+document.getElementById('logoutBtn')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(button, true);
+    }
+
     const confirmed = await showLogoutConfirm();
     if (confirmed) {
         logoutAdmin();
+        return;
+    }
+
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(button, false);
     }
 });
 

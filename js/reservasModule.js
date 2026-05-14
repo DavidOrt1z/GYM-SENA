@@ -323,13 +323,7 @@ function displayReservations(reservations) {
                 </td>
                 <td class="actions-cell">
                     <button class="btn btn-secondary" style="padding:6px 12px;margin-right:6px;" onclick="showQRCode('${escapeHtml(reservationId)}')">QR</button>
-                    <select
-                        class="status-editor-select"
-                        aria-label="Cambiar estado"
-                        onchange="changeStatus('${escapeHtml(reservationId)}', this.value)">
-                        ${buildStatusOptions(status)}
-                    </select>
-                    <button class="btn btn-danger" style="padding:6px 12px;margin-left:6px;" onclick="confirmCancelReservation('${escapeHtml(reservationId)}')"><img src="assets/icons/delete.svg" alt="Eliminar" style="width:16px;height:16px;"></button>
+                    <button class="btn btn-danger" style="padding:6px 12px;margin-left:6px;" onclick="confirmCancelReservation('${escapeHtml(reservationId)}', this)"><img src="assets/icons/delete.svg" alt="Eliminar" style="width:16px;height:16px;"></button>
                 </td>
             </tr>
         `;
@@ -608,7 +602,7 @@ async function updateReservationStatus(reservationId, newStatus) {
     }
 }
 
-async function confirmCancelReservation(reservationId) {
+async function confirmCancelReservation(reservationId, button) {
     const confirmed = await showDeleteConfirm({
         title: '¿Estás seguro?',
         message: '¡El registro será eliminado!',
@@ -617,12 +611,15 @@ async function confirmCancelReservation(reservationId) {
     });
 
     if (confirmed) {
-        deleteReservation(reservationId);
+        deleteReservation(reservationId, button);
     }
 }
 
-async function deleteReservation(reservationId) {
+async function deleteReservation(reservationId, button) {
     try {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
         const response = await fetch(
             `${window.API_BASE}/api/reservations/${encodeURIComponent(reservationId)}`,
             {
@@ -643,6 +640,10 @@ async function deleteReservation(reservationId) {
     } catch (error) {
         console.error('❌ Error eliminando reserva:', error);
         showError('Error al eliminar reserva: ' + (error?.message || error));
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 

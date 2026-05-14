@@ -87,13 +87,12 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Bar -->
-            <div class="top-bar"><div class="top-bar-left"></div><div class="top-bar-right"><button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Cambiar tema"><span class="theme-icon"></span><span class="theme-label">Modo Claro</span></button></div><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div>
+            <div class="top-bar"><div class="top-bar-left"><h1>Reservas</h1><p>Administra y valida las reservas del gimnasio</p></div><div class="top-bar-right"><button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Cambiar tema"><span class="theme-icon"></span><span class="theme-label">Modo Claro</span></button></div><button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div>
 
             <!-- Content Section -->
             <div class="content">
                 <section class="reservas-section">
                     <div class="section-header">
-                        <h1>Gestión de Reservas</h1>
                         <div class="section-toolbar">
                             <div class="search-box">
                                 <input type="text" id="searchInput" placeholder="Buscar reserva...">
@@ -104,12 +103,6 @@
                             </div>
                             <div class="reservas-header-actions">
                                 <button id="scanQrBtn" class="btn btn-primary" type="button">Escanear QR</button>
-                                <select id="filterStatus" class="btn btn-primary">
-                                    <option value="">Todos los estados</option>
-                                    <option value="active">Activa</option>
-                                    <option value="completed">Completada</option>
-                                    <option value="cancelled">Cancelada</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -127,6 +120,15 @@
                                 <option value="today">Hoy</option>
                                 <option value="week">Esta semana</option>
                                 <option value="month">Este mes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Estado</label>
+                            <select id="filterStatus" class="filter-select">
+                                <option value="">Todos los estados</option>
+                                <option value="active">Activa</option>
+                                <option value="completed">Completada</option>
+                                <option value="cancelled">Cancelada</option>
                             </select>
                         </div>
                         <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">

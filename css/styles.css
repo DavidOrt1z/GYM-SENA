@@ -43,13 +43,13 @@
     --text-muted: #999999;
     --border: rgba(0, 0, 0, 0.12);
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --sidebar-gradient: linear-gradient(180deg, #1a1a1a 0%, #111111 58%, #0d0d0d 100%);
+    --sidebar-gradient: linear-gradient(180deg, #ffffff 0%, #f8f8f8 58%, #f1f1f1 100%);
     --card-gradient: linear-gradient(135deg, #FFFFFF 0%, #F8F8F8 100%);
     --modal-gradient: linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%);
 
     --darker-bg: var(--bg-primary);
     --dark-bg: var(--bg-surface);
-    --light-text: var(--text-secondary);
+    --light-text: #2f2f2f;
     --secondary-color: var(--text-secondary);
     --white: var(--text-primary);
     --border-color: var(--border);
@@ -196,6 +196,10 @@ body.sidebar-open {
     flex-direction: column;
     gap: 15px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(17, 17, 17, 0.35) 100%);
+}
+
+[data-theme="light"] .sidebar-footer {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.95) 100%);
 }
 
 .admin-info {
@@ -620,6 +624,13 @@ body.sidebar-open {
     transition: var(--transition);
     font-size: 14px;
     font-weight: 500;
+    position: relative;
+    --dot-size: 10px;
+    --loader-color: currentColor;
+}
+
+.btn.btn-sm {
+    --dot-size: 8px;
 }
 
 .btn:hover {
@@ -636,6 +647,82 @@ body.sidebar-open {
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(186, 21, 5, 0.3);
+}
+
+.btn.is-loading {
+    cursor: wait;
+    pointer-events: none;
+    color: transparent;
+}
+
+.btn.is-loading > * {
+    opacity: 0;
+}
+
+.btn.is-loading .btn-loader {
+    opacity: 1;
+    color: var(--loader-color, #FFFFFF);
+}
+
+.btn-loader {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.btn.is-loading .btn-loader {
+    display: flex;
+}
+
+.btn-loader .dot-triangle {
+    position: relative;
+    width: calc(var(--dot-size) * 2.5);
+    height: calc(var(--dot-size) * 2.5);
+}
+
+.btn-loader .dot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border-radius: 50%;
+    background: currentColor;
+    animation: dotTriangleMove 0.9s ease-in-out infinite;
+    transform: translate(var(--sx), var(--sy));
+}
+
+.btn-loader .dot-a {
+    --sx: calc(var(--dot-size) * 0.75);
+    --sy: 0px;
+    --ex: calc(var(--dot-size) * 1.5);
+    --ey: calc(var(--dot-size) * 1.2);
+}
+
+.btn-loader .dot-b {
+    --sx: 0px;
+    --sy: calc(var(--dot-size) * 1.2);
+    --ex: calc(var(--dot-size) * 0.75);
+    --ey: 0px;
+}
+
+.btn-loader .dot-c {
+    --sx: calc(var(--dot-size) * 1.5);
+    --sy: calc(var(--dot-size) * 1.2);
+    --ex: 0px;
+    --ey: calc(var(--dot-size) * 1.2);
+}
+
+@keyframes dotTriangleMove {
+    from {
+        transform: translate(var(--sx), var(--sy));
+    }
+    to {
+        transform: translate(var(--ex), var(--ey));
+    }
 }
 
 .section-header {
@@ -1359,6 +1446,21 @@ svg.icon {
     font-weight: 700;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    position: relative;
+    --dot-size: 8px;
+    --loader-color: currentColor;
+}
+
+.logout-confirm-btn.is-loading {
+    cursor: wait;
+    pointer-events: none;
+    color: transparent;
+}
+
+.logout-confirm-btn.is-loading .btn-loader {
+    display: flex;
+    opacity: 1;
+    color: var(--loader-color, #FFFFFF);
 }
 
 .logout-confirm-btn-danger {

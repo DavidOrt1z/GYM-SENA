@@ -64,7 +64,7 @@ function renderTemplatesTable() {
                 <button class="btn btn-secondary action-btn" onclick="openTemplateModal('${t.id}')">
                     <img src="assets/icons/edit.svg" alt="Editar" style="width:15px;height:15px;">
                 </button>
-                <button class="btn btn-danger action-btn" onclick="confirmDeleteTemplate('${t.id}')">
+                <button class="btn btn-danger action-btn" onclick="confirmDeleteTemplate('${t.id}', this)">
                     <img src="assets/icons/delete.svg" alt="Eliminar" style="width:15px;height:15px;">
                 </button>
             </td>
@@ -104,6 +104,7 @@ function closeTemplateModal() {
 
 async function submitTemplateForm(e) {
     e.preventDefault();
+    const submitButton = document.querySelector('#templateForm button[type="submit"]');
     const nombre = document.getElementById('templateNombre').value.trim();
     const startTime = document.getElementById('templateStartTime').value;
     const endTime = document.getElementById('templateEndTime').value;
@@ -125,6 +126,12 @@ async function submitTemplateForm(e) {
         activo: true
     };
 
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(submitButton, true);
+    } else if (submitButton) {
+        submitButton.disabled = true;
+    }
+
     try {
         if (templateId) {
             const result = await updateSlot(templateId, payload);
@@ -141,10 +148,16 @@ async function submitTemplateForm(e) {
     } catch (err) {
         console.error('Error guardando turno:', err);
         showToast('Error al guardar turno: ' + err.message, 'error');
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(submitButton, false);
+        } else if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 }
 
-async function confirmDeleteTemplate(templateId) {
+async function confirmDeleteTemplate(templateId, button) {
     const confirmed = await showDeleteConfirm({
         title: '¿Eliminar turno?',
         message: 'Se eliminará el turno. Las reservas existentes no se verán afectadas.',
@@ -152,6 +165,9 @@ async function confirmDeleteTemplate(templateId) {
         cancelText: 'Cancelar'
     });
     if (confirmed) {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
         try {
             const ok = await deleteSlot(templateId);
             if (ok) {
@@ -163,6 +179,10 @@ async function confirmDeleteTemplate(templateId) {
             }
         } catch (err) {
             showToast('Error al eliminar turno', 'error');
+        } finally {
+            if (typeof window.setButtonLoading === 'function') {
+                window.setButtonLoading(button, false);
+            }
         }
     }
 }
@@ -333,7 +353,7 @@ function openCierreModal(fecha) {
         <input type="text" id="cierreMotivoInput" class="cierre-motive-input" placeholder="Motivo (obligatorio): paro SENA, mantenimiento..." value="${cierreMotivo}" required>
 
         <div style="text-align:center;margin-top:4px;">
-            <button class="btn ${isFullBlocked ? 'btn-secondary' : 'btn-danger'} btn-sm" onclick="closeFullDay('${fecha}')">
+            <button class="btn ${isFullBlocked ? 'btn-secondary' : 'btn-danger'} btn-sm" onclick="closeFullDay('${fecha}', this)">
                 ${isFullBlocked ? unlockIcon + ' Reabrir dia completo' : lockIcon + ' Cerrar dia completo'}
             </button>
         </div>
@@ -391,7 +411,7 @@ async function toggleShift(fecha, jornada) {
     }
 }
 
-async function closeFullDay(fecha) {
+async function closeFullDay(fecha, button) {
     const motivoInput = document.getElementById('cierreMotivoInput');
     const motivo = motivoInput?.value?.trim() || '';
     const dayObj = calendarData.find(x => x.fecha === fecha);
@@ -414,6 +434,10 @@ async function closeFullDay(fecha) {
         if (!confirmed) return;
     }
 
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(button, true);
+    }
+
     try {
         if (isBlocked) {
             for (const c of cierres) await deleteCierre(c.id);
@@ -425,6 +449,10 @@ async function closeFullDay(fecha) {
         openCierreModal(fecha);
     } catch (err) {
         showToast('Error: ' + err.message, 'error');
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 
@@ -453,7 +481,7 @@ function renderCierreModalBody(fecha, dayObj) {
                         <span class="cierre-turno">${turnoLabel}</span>
                         <span class="cierre-motivo">${motivoLabel}</span>
                     </div>
-                    <button class="btn btn-danger action-btn" onclick="deleteCierreAndRefresh('${c.id}', '${fecha}')">
+                    <button class="btn btn-danger action-btn" onclick="deleteCierreAndRefresh('${c.id}', '${fecha}', this)">
                         <img src="assets/icons/delete.svg" alt="Eliminar" style="width:13px;height:13px;filter:brightness(0) invert(1);">
                     </button>
                 </div>`;
@@ -482,14 +510,18 @@ function renderCierreModalBody(fecha, dayObj) {
             </div>
             <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
                 <button class="btn btn-secondary" onclick="closeCierreModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitCierre('${fecha}')">Registrar cierre</button>
+                <button class="btn btn-primary" onclick="submitCierre('${fecha}', this)">Registrar cierre</button>
             </div>
         </div>`;
 }
 
-async function submitCierre(fecha) {
+async function submitCierre(fecha, button) {
     const turno = document.getElementById('cierreTurno')?.value || '';
     const motivo = document.getElementById('cierreMotivo')?.value?.trim() || '';
+
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(button, true);
+    }
 
     try {
         await createCierre({ fecha, turno: turno || null, motivo });
@@ -499,11 +531,18 @@ async function submitCierre(fecha) {
     } catch (err) {
         console.error('Error creando cierre:', err);
         showToast('Error al registrar cierre: ' + err.message, 'error');
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 
-async function deleteCierreAndRefresh(cierreId, fecha) {
+async function deleteCierreAndRefresh(cierreId, fecha, button) {
     try {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
         const ok = await deleteCierre(cierreId);
         if (ok) {
             showToast('Cierre eliminado', 'success');
@@ -515,6 +554,10 @@ async function deleteCierreAndRefresh(cierreId, fecha) {
         }
     } catch (err) {
         showToast('Error al eliminar cierre', 'error');
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 

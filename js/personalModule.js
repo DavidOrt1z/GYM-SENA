@@ -50,7 +50,7 @@ function applyStaffSearchFilter() {
                 <td>
                     <div class="staff-actions">
                         <button class="btn btn-secondary" style="padding:6px 12px;" onclick="editStaff('${s.id}')"><img src="assets/icons/edit.svg" alt="Editar" style="width:16px;height:16px;"></button>
-                        <button class="btn btn-danger" style="padding:6px 12px;" onclick="confirmDeleteStaff('${s.id}')"><img src="assets/icons/delete.svg" alt="Eliminar" style="width:16px;height:16px;"></button>
+                        <button class="btn btn-danger" style="padding:6px 12px;" onclick="confirmDeleteStaff('${s.id}', this)"><img src="assets/icons/delete.svg" alt="Eliminar" style="width:16px;height:16px;"></button>
                     </div>
                 </td>
             </tr>
@@ -163,6 +163,8 @@ function closeStaffModal() {
 
 async function submitStaffForm(e) {
     e.preventDefault();
+
+    const submitButton = document.querySelector('#staffForm button[type="submit"]');
     
     const name = document.getElementById('staffName').value.trim();
     const position = document.getElementById('staffRole').value.trim();
@@ -180,6 +182,12 @@ async function submitStaffForm(e) {
         return;
     }
     
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(submitButton, true);
+    } else if (submitButton) {
+        submitButton.disabled = true;
+    }
+
     try {
         if (currentStaffId) {
             // Editar solo en la tabla personal
@@ -233,6 +241,12 @@ async function submitStaffForm(e) {
         console.error('❌ Error en submitStaffForm:', error);
         const errorMsg = error.message || 'Error desconocido al guardar personal';
         showError(`Error al guardar personal:\n${errorMsg}`);
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(submitButton, false);
+        } else if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 }
 
@@ -240,7 +254,7 @@ function editStaff(staffId) {
     openStaffModal(staffId);
 }
 
-async function confirmDeleteStaff(staffId) {
+async function confirmDeleteStaff(staffId, button) {
     const confirmed = await showDeleteConfirm({
         title: '¿Estás seguro?',
         message: '¡El registro será eliminado!',
@@ -249,12 +263,15 @@ async function confirmDeleteStaff(staffId) {
     });
 
     if (confirmed) {
-        deleteStaff(staffId);
+        deleteStaff(staffId, button);
     }
 }
 
-async function deleteStaff(staffId) {
+async function deleteStaff(staffId, button) {
     try {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
         const response = await fetch(
             `${window.API_BASE}/api/staff/${encodeURIComponent(staffId)}`,
             {
@@ -275,6 +292,10 @@ async function deleteStaff(staffId) {
     } catch (error) {
         console.error('❌ Error eliminando personal:', error);
         showError('Error al eliminar personal: ' + error.message);
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 

@@ -148,10 +148,23 @@ function normalizeStatus(status) {
     const map = {
         activo: 'active',
         inactivo: 'inactive',
+        pendiente: 'pending',
         suspendido: 'suspended',
         bloqueado: 'blocked'
     };
     return map[raw] || raw;
+}
+
+function resolveUserStatus(user) {
+    const baseStatus = normalizeStatus(user?.estado);
+    const email = String(user?.correo_electronico || '').trim().toLowerCase();
+    const isIncompleteRegistration = !email || email.includes('@gymapp.local');
+
+    if (isIncompleteRegistration && (baseStatus === 'active' || baseStatus === 'created' || !baseStatus)) {
+        return 'pending';
+    }
+
+    return baseStatus || 'active';
 }
 
 function getStatusLabel(status) {
@@ -161,6 +174,8 @@ function getStatusLabel(status) {
             return 'Activo';
         case 'inactive':
             return 'Inactivo';
+        case 'pending':
+            return 'Pendiente';
         case 'suspended':
             return 'Suspendido';
         case 'blocked':
@@ -173,6 +188,7 @@ function getStatusLabel(status) {
 function getStatusBadgeClass(status) {
     const normalized = normalizeStatus(status);
     if (normalized === 'inactive') return 'badge-inactive';
+    if (normalized === 'pending') return 'badge-warning';
     if (normalized === 'suspended' || normalized === 'blocked') return 'badge-warning';
     return 'badge-active';
 }
@@ -198,17 +214,17 @@ function applyUserFilters() {
         filtered = filtered.filter((u) => normalizeRole(u.rol) === rol);
     }
     if (estado) {
-        filtered = filtered.filter((u) => normalizeStatus(u.estado) === estado);
+        filtered = filtered.filter((u) => resolveUserStatus(u) === estado);
     }
     if (tipoDoc) {
-        filtered = filtered.filter((u) => String(u.Id_tipo_documento || '') === tipoDoc);
+        filtered = filtered.filter((u) => String(u.id_tipo_documento ?? u.Id_tipo_documento ?? u.tipo_documento_id ?? '') === tipoDoc);
     }
     if (searchQuery.trim()) {
         const q = normalizeSearchText(searchQuery);
         filtered = filtered.filter((u) => {
             const haystack = [
                 u.id, u.nombre, u.apellido, u.numero_documento,
-                u.correo_electronico, getRoleLabel(u.rol), getStatusLabel(u.estado)
+                u.correo_electronico, getRoleLabel(u.rol), getStatusLabel(resolveUserStatus(u))
             ].map((v) => normalizeSearchText(v)).join(' ');
             return haystack.includes(q);
         });
@@ -251,7 +267,7 @@ function renderUsersTable(users, emptyMessage) {
         const roleLabel = getRoleLabel(roleValue);
         const roleClass = getRoleBadgeClass(roleValue);
 
-        const statusValue = normalizeStatus(u.estado);
+        const statusValue = resolveUserStatus(u);
         const statusLabel = getStatusLabel(statusValue);
         const statusClass = getStatusBadgeClass(statusValue);
 
@@ -271,7 +287,7 @@ function renderUsersTable(users, emptyMessage) {
                 <td><span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
                 <td>
                     <button class="btn btn-secondary" style="padding:6px 12px;margin-right:8px;" onclick="editUser('${escapeHtml(u.id)}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                    <button class="btn btn-danger" style="padding:6px 12px;" onclick="confirmDeleteUser('${escapeHtml(u.id)}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                    <button class="btn btn-danger" style="padding:6px 12px;" onclick="confirmDeleteUser('${escapeHtml(u.id)}', this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
                 </td>
             </tr>
         `;
@@ -308,10 +324,13 @@ function openUserModal(userId = null) {
         title.textContent = 'Editar Usuario';
         const user = allUsers.find(u => u.id === userId);
         if (user) {
+            const resolvedDocType = user.id_tipo_documento ?? user.Id_tipo_documento ?? user.tipo_documento_id ?? null;
+            const resolvedDocNumber = user.numero_documento ?? user.cedula ?? '';
+
             document.getElementById('userName').value = user.nombre || '';
             document.getElementById('userLastName').value = user.apellido || '';
-            document.getElementById('userDocumentNumber').value = user.numero_documento || '';
-            setDocumentType(user.Id_tipo_documento);
+            document.getElementById('userDocumentNumber').value = resolvedDocNumber;
+            setDocumentType(resolvedDocType);
             if (roleSelect) roleSelect.value = 'member';
         }
     } else {
@@ -335,11 +354,22 @@ async function submitUserForm(e) {
     e.preventDefault();
     await window.configReady;
 
+    const submitButton = document.querySelector('#userForm button[type="submit"]');
+
     const name = document.getElementById('userName').value.trim();
     const lastName = document.getElementById('userLastName').value.trim();
     const documentNumber = document.getElementById('userDocumentNumber').value.trim();
     const tipoDocumentoId = document.getElementById('documentTypeId').value;
-    const rol = document.getElementById('userRole').value;
+    const rol = document.getElementById('userRole')?.value || 'member';
+
+    const currentUser = currentUserId
+        ? allUsers.find((user) => String(user.id) === String(currentUserId))
+        : null;
+    const fallbackDocType = currentUser?.id_tipo_documento ?? currentUser?.Id_tipo_documento ?? currentUser?.tipo_documento_id ?? '';
+    const fallbackDocNumber = currentUser?.numero_documento ?? currentUser?.cedula ?? '';
+
+    const resolvedDocType = tipoDocumentoId || fallbackDocType;
+    const resolvedDocNumber = documentNumber || fallbackDocNumber;
 
     if (!name) {
         showError('Por favor, ingresa el nombre.');
@@ -349,64 +379,91 @@ async function submitUserForm(e) {
         showError('Por favor, ingresa el apellido.');
         return;
     }
-    if (!tipoDocumentoId) {
+    if (!resolvedDocType) {
         showError('Por favor, elige un tipo de documento.');
         return;
     }
-    if (!documentNumber) {
+    if (!resolvedDocNumber) {
         showError('Por favor, ingresa el número de documento.');
         return;
     }
-    if (!rol) {
-        showError('Por favor, selecciona un rol.');
+    const normalizedDocTypeId = Number(resolvedDocType);
+
+    if (!Number.isInteger(normalizedDocTypeId) || normalizedDocTypeId <= 0) {
+        showError('Tipo de documento inválido. Selecciona uno válido.');
         return;
     }
 
     const userData = {
         nombre: name,
         apellido: lastName,
-        Id_tipo_documento: tipoDocumentoId,
-        numero_documento: documentNumber,
+        id_tipo_documento: normalizedDocTypeId,
+        numero_documento: resolvedDocNumber,
         rol: rol,
     };
 
-    if (currentUserId) {
-        fetch(`${window.API_BASE}/api/users/${encodeURIComponent(currentUserId)}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-        })
-            .then(async (res) => {
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || 'Error al actualizar usuario');
-                alert('Usuario actualizado exitosamente.');
-                location.reload();
-            })
-            .catch((err) => alert(`Error al guardar usuario: ${err.message}`));
-    } else {
-        const adminToken = localStorage.getItem('adminToken') || window.SUPABASE_ANON_KEY;
-        fetch(`${window.SUPABASE_URL}/rest/v1/rpc/create_user_as_admin`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${adminToken}`,
-            },
-            body: JSON.stringify({
-                p_nombre: userData.nombre,
-                p_apellido: userData.apellido,
-                p_id_tipo_documento: userData.Id_tipo_documento,
-                p_numero_documento: userData.numero_documento,
-                p_rol: userData.rol,
-            }),
-        })
-            .then(async (res) => {
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || data.ok === false) throw new Error(data.message || 'Error al crear usuario');
-                alert('Usuario creado exitosamente.');
-                location.reload();
-            })
-            .catch((err) => alert(`Error al guardar usuario: ${err.message}`));
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(submitButton, true);
+    } else if (submitButton) {
+        submitButton.disabled = true;
+    }
+
+    let submitError = null;
+    let submitSuccessMessage = null;
+
+    try {
+        if (currentUserId) {
+            const response = await fetch(`${window.API_BASE}/api/users/${encodeURIComponent(currentUserId)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || 'Error al actualizar usuario');
+            submitSuccessMessage = 'Usuario actualizado exitosamente.';
+        } else {
+            const adminToken = localStorage.getItem('adminToken') || window.SUPABASE_ANON_KEY;
+            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/rpc/create_user_as_admin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': window.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${adminToken}`,
+                },
+                body: JSON.stringify({
+                    p_nombre: userData.nombre,
+                    p_apellido: userData.apellido,
+                    p_id_tipo_documento: userData.id_tipo_documento,
+                    p_numero_documento: userData.numero_documento,
+                    p_rol: userData.rol,
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.ok === false) throw new Error(data.message || 'Error al crear usuario');
+            submitSuccessMessage = 'Usuario creado exitosamente.';
+        }
+    } catch (err) {
+        submitError = err;
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(submitButton, false);
+        } else if (submitButton) {
+            submitButton.disabled = false;
+        }
+    }
+
+    if (submitError) {
+        showError(`Error al guardar usuario: ${submitError.message}`);
+        return;
+    }
+
+    if (submitSuccessMessage) {
+        showSuccess(submitSuccessMessage);
+        setTimeout(() => {
+            location.reload();
+        }, 900);
     }
 }
 
@@ -414,7 +471,7 @@ function editUser(userId) {
     openUserModal(userId);
 }
 
-async function confirmDeleteUser(userId) {
+async function confirmDeleteUser(userId, button) {
     const confirmed = await showDeleteConfirm({
         title: '¿Estás seguro?',
         message: '¡El registro será eliminado!',
@@ -423,12 +480,15 @@ async function confirmDeleteUser(userId) {
     });
 
     if (confirmed) {
-        deleteUser(userId);
+        deleteUser(userId, button);
     }
 }
 
-async function deleteUser(userId) {
+async function deleteUser(userId, button) {
     try {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
         await window.configReady;
         const adminToken = localStorage.getItem('adminToken') || window.SUPABASE_ANON_KEY;
         const response = await fetch(`${window.SUPABASE_URL}/rest/v1/rpc/delete_user_as_admin`, {
@@ -451,6 +511,10 @@ async function deleteUser(userId) {
     } catch (error) {
         console.error('❌ Error eliminando usuario:', error);
         showError('Error al eliminar usuario: ' + error.message);
+    } finally {
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
+        }
     }
 }
 
@@ -551,6 +615,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupDocumentTypeSelect();
+
+    document.getElementById('addUserBtn')?.addEventListener('click', () => openUserModal());
+    document.getElementById('cancelUserBtn')?.addEventListener('click', closeUserModal);
+    document.getElementById('closeUserModal')?.addEventListener('click', closeUserModal);
+    document.getElementById('userModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'userModal') closeUserModal();
+    });
+
+    const userForm = document.getElementById('userForm');
+    if (userForm) userForm.addEventListener('submit', submitUserForm);
+
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        const confirmed = await showLogoutConfirm();
+        if (confirmed) logoutAdmin();
+    });
 
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {

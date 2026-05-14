@@ -1,20 +1,30 @@
 const passwordInput = document.getElementById('password');
 const togglePasswordBtn = document.getElementById('togglePasswordBtn');
 
-function ensureGymLoader(submitButton) {
-    if (!submitButton) return null;
-    let loader = submitButton.querySelector('.gym-loader');
-    if (loader) return loader;
+function ensureButtonLoader(button) {
+    if (!button) return null;
 
-    loader = document.createElement('div');
-    loader.className = 'gym-loader';
-    loader.innerHTML = `
-        <div class="loader-stage" aria-hidden="true">
-            <img src="assets/images/logocargagif.gif" alt="">
-        </div>
-    `;
-    submitButton.appendChild(loader);
+    let loader = button.querySelector('.btn-loader');
+    if (!loader) {
+        loader = document.createElement('span');
+        loader.className = 'btn-loader';
+        loader.innerHTML = '<span class="dot-triangle">' +
+            '<span class="dot dot-a"></span>' +
+            '<span class="dot dot-b"></span>' +
+            '<span class="dot dot-c"></span>' +
+            '</span>';
+        button.appendChild(loader);
+    }
+
     return loader;
+}
+
+function setLoginButtonLoading(button, isLoading) {
+    if (!button) return;
+    ensureButtonLoader(button);
+    button.classList.toggle('is-loading', Boolean(isLoading));
+    button.disabled = Boolean(isLoading);
+    button.setAttribute('aria-busy', isLoading ? 'true' : 'false');
 }
 
 togglePasswordBtn?.addEventListener('click', () => {
@@ -35,15 +45,10 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     const password = document.getElementById('password').value;
     const submitButton = document.getElementById('submitButton');
     const errorMessage = document.getElementById('errorMessage');
-    const gymLoader = ensureGymLoader(submitButton);
-    const legacySpinner = submitButton?.querySelector('.spinner');
     const loadingStartedAt = Date.now();
     let keepLoading = false;
 
-    submitButton.classList.add('is-loading');
-    if (legacySpinner) legacySpinner.style.display = 'none';
-    if (gymLoader) gymLoader.style.display = 'block';
-    submitButton.disabled = true;
+    setLoginButtonLoading(submitButton, true);
 
     try {
         const result = await adminLogin(email, password);
@@ -67,8 +72,6 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         errorMessage.style.display = 'block';
     } finally {
         if (keepLoading) return;
-        submitButton.classList.remove('is-loading');
-        if (gymLoader) gymLoader.style.display = 'none';
-        submitButton.disabled = false;
+        setLoginButtonLoading(submitButton, false);
     }
 });

@@ -113,8 +113,11 @@ function setSendButtonLoading(loading) {
     const button = document.getElementById('sendNoticeBtn');
     if (!button) return;
 
-    button.disabled = loading;
-    button.textContent = loading ? 'Enviando...' : 'Enviar';
+    if (typeof window.setButtonLoading === 'function') {
+        window.setButtonLoading(button, loading);
+    } else {
+        button.disabled = loading;
+    }
 }
 
 function validateNoticeForm(data) {
@@ -261,9 +264,20 @@ function wirePageEvents() {
 
     document.getElementById('noticeMessage')?.addEventListener('input', updateMessageCounter);
 
-    document.getElementById('refreshHistoryBtn')?.addEventListener('click', async () => {
-        await loadHistory();
-        showSuccess('Historial actualizado');
+    document.getElementById('refreshHistoryBtn')?.addEventListener('click', async (event) => {
+        const button = event.currentTarget;
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
+
+        try {
+            await loadHistory();
+            showSuccess('Historial actualizado');
+        } finally {
+            if (typeof window.setButtonLoading === 'function') {
+                window.setButtonLoading(button, false);
+            }
+        }
     });
 
     document.getElementById('historySearchInput')?.addEventListener('input', (event) => {
@@ -271,10 +285,20 @@ function wirePageEvents() {
         applyHistoryFilter();
     });
 
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    document.getElementById('logoutBtn')?.addEventListener('click', async (event) => {
+        const button = event.currentTarget;
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, true);
+        }
+
         const confirmed = await showLogoutConfirm();
         if (confirmed) {
             logoutAdmin();
+            return;
+        }
+
+        if (typeof window.setButtonLoading === 'function') {
+            window.setButtonLoading(button, false);
         }
     });
 }

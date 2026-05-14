@@ -127,6 +127,26 @@ function logoutAdmin() {
     window.location.href = 'login.html';
 }
 
+function setupLogoutButton() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (!logoutBtn) return;
+    if (logoutBtn.dataset.bound === 'true') return;
+    logoutBtn.dataset.bound = 'true';
+
+    logoutBtn.addEventListener('click', async () => {
+        let shouldLogout = true;
+        if (typeof showLogoutConfirm === 'function') {
+            shouldLogout = await showLogoutConfirm();
+        } else {
+            shouldLogout = window.confirm('¿Cerrar sesión?');
+        }
+
+        if (shouldLogout) {
+            logoutAdmin();
+        }
+    });
+}
+
 function setupMobileSidebar() {
     const sidebar = document.querySelector('.sidebar');
     const topBar = document.querySelector('.top-bar');
@@ -224,6 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    setupLogoutButton();
 });
 
 document.addEventListener('DOMContentLoaded', () => {

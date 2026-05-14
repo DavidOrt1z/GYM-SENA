@@ -128,13 +128,11 @@ function closeUserModal() {
 }
 
 function editUser(userId) {
-    alert('Funcionalidad de edición en desarrollo');
+    showToast('Funcionalidad de edición en desarrollo', 'info');
 }
 
 function deleteUser(userId) {
-    if (confirm('¿Estás seguro?')) {
-        alert('Funcionalidad de eliminación en desarrollo');
-    }
+    showToast('Funcionalidad de eliminación en desarrollo', 'info');
 }
 
 // ==================== RESERVAS ====================
@@ -169,7 +167,7 @@ function filterReservations(filter) {
 }
 
 function showQRCode(qrToken) {
-    alert('QR Token: ' + qrToken);
+    showToast('QR Token: ' + qrToken, 'info');
 }
 
 // ==================== HORARIOS ====================
@@ -205,11 +203,11 @@ async function loadSlots() {
 }
 
 function openSlotModal() {
-    alert('Crear nuevo horario - Funcionalidad en desarrollo');
+    showToast('Crear nuevo horario - Funcionalidad en desarrollo', 'info');
 }
 
 function editSlot(slotId) {
-    alert('Editar horario - Funcionalidad en desarrollo');
+    showToast('Editar horario - Funcionalidad en desarrollo', 'info');
 }
 
 // ==================== PERSONAL ====================
@@ -239,17 +237,15 @@ async function loadStaff() {
 }
 
 function openStaffModal() {
-    alert('Agregar personal - Funcionalidad en desarrollo');
+    showToast('Agregar personal - Funcionalidad en desarrollo', 'info');
 }
 
 function editStaff(staffId) {
-    alert('Editar personal - Funcionalidad en desarrollo');
+    showToast('Editar personal - Funcionalidad en desarrollo', 'info');
 }
 
 function deleteStaff(staffId) {
-    if (confirm('¿Estás seguro?')) {
-        alert('Funcionalidad de eliminación en desarrollo');
-    }
+    showToast('Funcionalidad de eliminación en desarrollo', 'info');
 }
 
 // ==================== EQUIPAMIENTO ====================
@@ -284,17 +280,49 @@ async function loadEquipment() {
 }
 
 function openEquipmentModal() {
-    alert('Nuevo equipamiento - Funcionalidad en desarrollo');
+    showToast('Nuevo equipamiento - Funcionalidad en desarrollo', 'info');
 }
 
 function editEquipment(equipmentId) {
-    alert('Editar equipamiento - Funcionalidad en desarrollo');
+    showToast('Editar equipamiento - Funcionalidad en desarrollo', 'info');
 }
 
 function markMaintenance(equipmentId) {
-    if (confirm('¿Marcar este equipo como en mantenimiento?')) {
-        alert('Funcionalidad en desarrollo');
-    }
+    showToast('Funcionalidad en desarrollo', 'info');
+}
+
+function showToast(message, type = 'info') {
+    document.querySelectorAll('.toast-notification').forEach(t => t.remove());
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    const colors = {
+        success: { bg: '#1a7a3a', border: '#2ecc71' },
+        error: { bg: '#c0392b', border: '#e74c3c' },
+        info: { bg: '#2d3436', border: '#636e72' }
+    };
+    const palette = colors[type] || colors.info;
+
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 9999;
+        padding: 14px 22px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        animation: slideUp 0.3s ease;
+        background: ${palette.bg};
+        border-left: 4px solid ${palette.border};
+        max-width: 360px;
+    `;
+
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
 }
 
 // Cerrar modales al hacer clic afuera

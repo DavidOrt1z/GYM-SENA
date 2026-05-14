@@ -18,6 +18,41 @@ const getAuthToken = async () => {
     return window.SUPABASE_ANON_KEY;
 };
 
+function ensureButtonLoader(button) {
+    if (!button) return null;
+
+    let loader = button.querySelector('.btn-loader');
+    if (!loader) {
+        loader = document.createElement('span');
+        loader.className = 'btn-loader';
+        loader.innerHTML = '<span class="dot-triangle">' +
+            '<span class="dot dot-a"></span>' +
+            '<span class="dot dot-b"></span>' +
+            '<span class="dot dot-c"></span>' +
+            '</span>';
+        button.appendChild(loader);
+    }
+
+    return loader;
+}
+
+window.setButtonLoading = function (button, isLoading) {
+    const target = typeof button === 'string' ? document.querySelector(button) : button;
+    if (!target) return;
+
+    if (isLoading) {
+        const computedColor = getComputedStyle(target).color;
+        target.style.setProperty('--loader-color', computedColor);
+    } else {
+        target.style.removeProperty('--loader-color');
+    }
+
+    ensureButtonLoader(target);
+    target.classList.toggle('is-loading', Boolean(isLoading));
+    target.disabled = Boolean(isLoading);
+    target.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+};
+
 // ==================== USUARIOS ====================
 
 async function getUsers() {

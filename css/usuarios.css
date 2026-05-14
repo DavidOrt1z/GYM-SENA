@@ -52,9 +52,9 @@
     color: #FFFFFF;
 }
 
-.btn-primary:focus,
-.btn-primary:focus-visible,
-.btn-primary:active {
+.btn-primary:focus:not(.is-loading),
+.btn-primary:focus-visible:not(.is-loading),
+.btn-primary:active:not(.is-loading) {
     color: #FFFFFF;
 }
 

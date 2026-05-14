@@ -840,15 +840,32 @@ app.patch('/api/users/:userId', async (req, res) => {
         if (Object.prototype.hasOwnProperty.call(body, 'apellido')) {
             payload.apellido = String(body.apellido || '').trim();
         }
-        if (Object.prototype.hasOwnProperty.call(body, 'cedula')) {
-            payload.cedula = String(body.cedula || '').trim();
+        if (Object.prototype.hasOwnProperty.call(body, 'numero_documento')) {
+            payload.numero_documento = String(body.numero_documento || '').trim();
         }
-        if (Object.prototype.hasOwnProperty.call(body, 'tipo_documento_id')) {
+        if (!payload.numero_documento && Object.prototype.hasOwnProperty.call(body, 'cedula')) {
+            payload.numero_documento = String(body.cedula || '').trim();
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'id_tipo_documento')) {
+            const documentTypeId = Number(body.id_tipo_documento);
+            if (!Number.isInteger(documentTypeId) || documentTypeId <= 0) {
+                return res.status(400).json({ ok: false, message: 'Tipo de documento invalido' });
+            }
+            payload.id_tipo_documento = documentTypeId;
+        }
+        if (!payload.id_tipo_documento && Object.prototype.hasOwnProperty.call(body, 'Id_tipo_documento')) {
+            const documentTypeId = Number(body.Id_tipo_documento);
+            if (!Number.isInteger(documentTypeId) || documentTypeId <= 0) {
+                return res.status(400).json({ ok: false, message: 'Tipo de documento invalido' });
+            }
+            payload.id_tipo_documento = documentTypeId;
+        }
+        if (!payload.id_tipo_documento && Object.prototype.hasOwnProperty.call(body, 'tipo_documento_id')) {
             const documentTypeId = Number(body.tipo_documento_id);
             if (!Number.isInteger(documentTypeId) || documentTypeId <= 0) {
                 return res.status(400).json({ ok: false, message: 'Tipo de documento invalido' });
             }
-            payload.tipo_documento_id = documentTypeId;
+            payload.id_tipo_documento = documentTypeId;
         }
         if (Object.prototype.hasOwnProperty.call(body, 'rol')) {
             payload.rol = String(body.rol || 'member').trim() || 'member';
@@ -857,7 +874,7 @@ app.patch('/api/users/:userId', async (req, res) => {
             payload.estado = String(body.estado || 'active').trim() || 'active';
         }
 
-        if (!payload.nombre || !payload.apellido || !payload.tipo_documento_id) {
+        if (!payload.nombre || !payload.apellido || !payload.id_tipo_documento) {
             return res.status(400).json({ ok: false, message: 'Nombre, apellido y tipo de documento son requeridos' });
         }
 
@@ -865,15 +882,15 @@ app.patch('/api/users/:userId', async (req, res) => {
         // Probamos ambas si una falla en el updateRowWithTimestampFallback
         const result = await updateRowWithTimestampFallback('users', userId, payload, ['fecha_actualizacion', 'updated_at']);
         
-        if (!result.ok && result.error?.message?.includes("'cedula'")) {
-            console.log('⚠️ Reintentando con numero_documento en lugar de cedula...');
+        if (!result.ok && payload.numero_documento && result.error?.message?.includes('numero_documento')) {
+            console.log('⚠️ Reintentando con cedula en lugar de numero_documento...');
             const altPayload = { ...payload };
-            altPayload.numero_documento = payload.cedula;
-            delete altPayload.cedula;
+            altPayload.cedula = payload.numero_documento;
+            delete altPayload.numero_documento;
             
             const secondResult = await updateRowWithTimestampFallback('users', userId, altPayload, ['fecha_actualizacion', 'updated_at']);
             if (secondResult.ok) {
-                return res.status(200).json({ ok: true, message: 'Usuario actualizado (vía numero_documento)' });
+                return res.status(200).json({ ok: true, message: 'Usuario actualizado (vía cedula)' });
             }
             result.error = secondResult.error;
         }
